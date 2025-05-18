@@ -2,7 +2,7 @@ const express = require('express');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const jwt = require('jsonwebtoken');
-const { sql } = require('./db'); // Impor dari db.js di folder api
+const { sql } = require('./db'); // Import from db.js in api folder
 
 const router = express.Router();
 
@@ -60,7 +60,7 @@ router.get(
 
 router.get('/profile', async (req, res) => {
   try {
-    const token = req.headers.authorization?.split vár ' ')[1];
+    const token = req.headers.authorization?.split(' ')[1]; // Fixed: 'vár' to 'split'
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized: No token provided' });
     }
