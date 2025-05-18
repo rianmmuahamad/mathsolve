@@ -3,23 +3,14 @@ const multer = require('multer');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
-const sql = require('./db');
-const fs = require('fs');
-const fsPromises = fs.promises;
-const path = require('path');
+const { sql } = require('./db'); // Import from db.js in api folder
 
 const router = express.Router();
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-// Multer setup for file uploads
-const storage = multer.diskStorage({
-  destination: './uploads/',
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  }
-});
-const upload = multer({ storage });
+// Multer setup for in-memory storage
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Rate limiter: 10 images per hour
 const uploadLimiter = rateLimit({
@@ -60,11 +51,11 @@ async function getUploadHistory(userId) {
   }));
 }
 
-// Fungsi untuk konversi file ke base64
-function fileToGenerativePart(path, mimeType) {
+// Fungsi untuk konversi buffer ke base64
+function fileToGenerativePart(buffer, mimeType) {
   return {
     inlineData: {
-      data: Buffer.from(fs.readFileSync(path)).toString("base64"),
+      data: buffer.toString('base64'),
       mimeType
     },
   };
@@ -75,12 +66,13 @@ router.post('/', authenticate, uploadLimiter, upload.single('image'), async (req
   try {
     const userId = req.user.id;
     const userName = req.user.email.split('@')[0];
-    const filePath = req.file.path;
+    const fileBuffer = req.file.buffer; // Use in-memory buffer
     const mimeType = req.file.mimetype;
+    const fileName = `${Date.now()}-${req.file.originalname}`; // Generate filename for metadata
 
-    const uploadDir = path.join(__dirname, '../uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir);
+    // Validate GOOGLE_API_KEY
+    if (!process.env.GOOGLE_API_KEY) {
+      throw new Error('GOOGLE_API_KEY is not set in environment variables');
     }
 
     const history = await getUploadHistory(userId);
@@ -96,16 +88,17 @@ Anda adalah ahli matematika. Analisis gambar soal matematika yang diunggah. Beri
     `;
 
     const requestTokens = estimateTokens(prompt) + 1500;
-    const imagePart = fileToGenerativePart(filePath, mimeType);
+    const imagePart = fileToGenerativePart(fileBuffer, mimeType);
     const result = await model.generateContent([prompt, imagePart]);
 
     const responseText = result.response.text();
     const responseTokens = estimateTokens(responseText);
     const totalTokens = requestTokens + responseTokens;
 
+    // Store filename (or path-like string) in database for reference
     await sql`
       INSERT INTO uploads (user_id, image_path, response)
-      VALUES (${userId}, ${filePath}, ${responseText});
+      VALUES (${userId}, ${fileName}, ${responseText});
     `;
 
     res.json({ response: responseText });
@@ -126,17 +119,6 @@ Anda adalah ahli matematika. Analisis gambar soal matematika yang diunggah. Beri
 
     console.log(`Processed image for ${userName}: ${responseText}`);
     console.log(`Usage for ${userId}: ${used}/${limit} (${percentage}%)`);
-
-    setTimeout(async () => {
-      try {
-        if (fs.existsSync(filePath)) {
-          await fsPromises.unlink(filePath);
-          console.log(`Deleted image: ${filePath}`);
-        }
-      } catch (err) {
-        console.error(`Error deleting image ${filePath}:`, err);
-      }
-    }, 24 * 60 * 60 * 1000);
   } catch (err) {
     console.error('Upload error:', err);
     res.status(500).json({ error: 'Maaf, terjadi kesalahan saat memproses gambar. Silakan coba lagi dengan gambar beresolusi lebih rendah.' });
