@@ -1,19 +1,19 @@
-require('dotenv').config(); // Load environment variables (for local development)
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const authRoutes = require('./auth'); // Adjusted path to match your auth.js
-const uploadRoutes = require('./api/upload'); // Adjusted path to match your upload.js
-const { sql, initDB } = require('./api/db'); // Import sql and initDB from db.js
+const authRoutes = require('./auth'); // Path relatif di folder api
+const uploadRoutes = require('./upload'); // Path relatif di folder api
+const { initDB } = require('./db'); // Path relatif di folder api
 
 const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../public'))); // public di root proyek
 
 // Routes
-app.use('/auth', authRoutes);
-app.use('/upload', uploadRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Serve frontend
 app.get('*', (req, res) => {
@@ -21,13 +21,13 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Initialize database and start server (for local development)
+// Initialize database and start server
 async function startServer() {
   try {
     await initDB(); // Initialize database with retries
     console.log('Database initialized successfully');
 
-    // Only start server locally (not needed on Vercel)
+    // Start server only for local development
     if (process.env.NODE_ENV !== 'production') {
       const PORT = process.env.PORT || 3000;
       app.listen(PORT, () => {
@@ -35,12 +35,11 @@ async function startServer() {
       });
     }
   } catch (err) {
-    console.error('Failed to initialize database:', err);
-    process.exit(1); // Exit process if DB initialization fails
+    console.error('Failed to start server:', err);
+    process.exit(1);
   }
 }
 
-// Start the server
 startServer();
 
 module.exports = app;
