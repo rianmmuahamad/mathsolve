@@ -45,6 +45,10 @@ router.get(
   passport.authenticate('google', { session: false, failureRedirect: '/login.html' }),
   (req, res) => {
     try {
+      // Validate JWT_SECRET
+      if (!process.env.JWT_SECRET) {
+        throw new Error('JWT_SECRET is not set in environment variables');
+      }
       const token = jwt.sign(
         { id: req.user.id, email: req.user.email },
         process.env.JWT_SECRET,
@@ -60,9 +64,13 @@ router.get(
 
 router.get('/profile', async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1]; // Fixed: 'vár' to 'split'
+    const token = req.headers.authorization?.split(' ')[1]; // Fixed from previous error
     if (!token) {
       return res.status(401).json({ error: 'Unauthorized: No token provided' });
+    }
+    // Validate JWT_SECRET
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not set in environment variables');
     }
     const user = jwt.verify(token, process.env.JWT_SECRET);
     const userData = await sql`SELECT display_name, email FROM users WHERE id = ${user.id}`;
