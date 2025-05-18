@@ -6,12 +6,10 @@ const sql = neon(process.env.NEON_DATABASE_URL || '');
 // Initialize database tables and ensure schema
 async function initDB() {
   try {
-    // Validate NEON_DATABASE_URL
     if (!process.env.NEON_DATABASE_URL) {
       throw new Error('NEON_DATABASE_URL is not set in environment variables');
     }
 
-    // Create users table if not exists
     await sql`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -22,7 +20,6 @@ async function initDB() {
     `;
     console.log('Users table checked/created');
 
-    // Check if 'display_name' column exists
     const columnCheck = await sql`
       SELECT column_name 
       FROM information_schema.columns 
@@ -37,7 +34,6 @@ async function initDB() {
       console.log('display_name column already exists in users table');
     }
 
-    // Create uploads table if not exists
     await sql`
       CREATE TABLE IF NOT EXISTS uploads (
         id SERIAL PRIMARY KEY,
