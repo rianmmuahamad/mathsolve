@@ -43,63 +43,24 @@
     .math-output { line-height: 1.8; font-size: 1.05rem; }
     .math-output p { margin-bottom: 1rem; }
     .math-output p:last-child { margin-bottom: 0; }
-    .math-output ul, .math-output ol { margin-bottom: 1rem; padding-left: 2rem; }
-    .math-output li { margin-bottom: 0.5rem; }
     .drop-zone { border: 2px dashed #cbd5e1; transition: all 0.3s ease; }
     .drop-zone.active { border-color: #0ea5e9; background-color: #f0f9ff; }
-    .solution-step { position: relative; padding: 1rem 1.5rem; margin-bottom: 1.5rem; background: #f8fafc; border-radius: 8px; }
+    .solution-step { position: relative; padding-left: 2rem; }
     .solution-step:before {
       content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-      width: 4px; background: linear-gradient(to bottom, #0ea5e9, #7dd3fc);
-      border-radius: 0 4px 4px 0;
+      width: 3px; background: linear-gradient(to bottom, #0ea5e9, #7dd3fc);
+      border-radius: 3px;
     }
-    .solution-content p:first-child { margin-top: 0; }
+    .solution-content p:first-child { margin-top: 0.1rem; }
     .profile-popup { animation: slide-down 0.3s ease-out; }
-    .math-output {
-    line-height: 1.8;
-    font-size: 1.05rem;
-}
-
-.math-output p {
-    margin-bottom: 1rem;
-}
-
-.math-output p:last-child {
-    margin-bottom: 0;
-}
-
-.math-output .solution-step {
-    position: relative;
-    padding: 1rem 1.5rem;
-    margin-bottom: 1.5rem;
-    background: #f8fafc;
-    border-radius: 8px;
-}
-
-.math-output .solution-step:before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: linear-gradient(to bottom, #0ea5e9, #7dd3fc);
-    border-radius: 0 4px 4px 0;
-}
-
-.math-output .solution-content p:first-child {
-    margin-top: 0;
-}
-
-.math-output .solution-content div[class*="my-"] {
-    display: block;
-    text-align: center;
-    margin: 1rem 0;
-}
-
-.math-output .solution-content p {
-    line-height: 1.6;
-}
+    .math-equation { 
+      display: inline-block;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      background-color: #f8fafc;
+      border-radius: 0.375rem;
+      border-left: 3px solid #0ea5e9;
+    }
   </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -222,9 +183,9 @@
         </div>
       </div>
     </div>
-  </footer>
-
+  </footer> <!-- Header and other HTML remains the same until the script section -->
   <script>
+    // Previous JavaScript code remains the same until the formatMathResponse function
     const token = new URLSearchParams(window.location.search).get('token');
     if (!token) {
       window.location.href = '/login.html';
@@ -260,6 +221,7 @@
       popup.classList.toggle('hidden');
     }
 
+    // Close popup when clicking outside
     document.addEventListener('click', (e) => {
       const profile = document.getElementById('profile');
       const popup = document.getElementById('profilePopup');
@@ -384,143 +346,114 @@
         alert('Gagal menyalin solusi.');
       });
     });
-
     function formatMathResponse(response) {
-    if (!response || response.trim() === "") {
+      if (!response || response.trim() === "") {
         return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
-    }
+      }
 
-    // 1. Preprocessing - Normalize the response
-    let currentResponse = response.trim()
-        .replace(/\n\s*\n+/g, '\n\n')  // Normalize multiple newlines
-        .replace(/\\\(/g, '$')         // Convert \( to $
-        .replace(/\\\)/g, '$')         // Convert \) to $
-        .replace(/\\\[/g, '$$')        // Convert \[ to $$
-        .replace(/\\\]/g, '$$');       // Convert \] to $$
+      // 1. Pre-process the response to handle special cases
+      let processedResponse = response
+        // Handle numbered steps with various formats
+        .replace(/(\n|^)(\d+[.)]\s+)/g, '$1STEP$2')
+        .replace(/(\n|^)(Langkah\s+\d+[:.]?\s+)/gi, '$1STEP$2')
+        // Mark equations for later processing
+        .replace(/(\n|^)([\w\s]*=[^=\n]+)/g, '$1EQUATION$2');
 
-    // 2. Split into logical sections
-    const sections = currentResponse.split(/(?=\nStep|\nLangkah|\nSolusi|\nPenyelesaian)/i);
-    
-    let htmlOutput = '';
+      // 2. Split into sections
+      const sections = processedResponse.split(/(STEP|EQUATION)/).filter(Boolean);
+      
+      let htmlOutput = '';
+      let currentType = null;
+      let stepCounter = 0;
 
-    sections.forEach((section, index) => {
-        // Check if this is a step/solution section
-        const isStep = section.match(/^(Step|Langkah|Solusi|Penyelesaian)\s*\d*/i);
+      for (let i = 0; i < sections.length; i++) {
+        const section = sections[i].trim();
         
-        if (isStep) {
-            // Extract step number and content
-            const stepMatch = section.match(/^(.*?)(:|\n|$)/);
-            const stepTitle = stepMatch ? stepMatch[0].trim() : `Bagian ${index + 1}`;
-            const stepContent = stepMatch ? section.slice(stepMatch[0].length).trim() : section;
-            
+        if (section === 'STEP') {
+          currentType = 'STEP';
+          stepCounter++;
+        } 
+        else if (section === 'EQUATION') {
+          currentType = 'EQUATION';
+        }
+        else {
+          if (currentType === 'STEP') {
             htmlOutput += `
-                <div class="solution-step">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${index + 1}.</div>
-                        <div class="solution-content flex-grow">
-                            ${formatStepContent(stepContent)}
-                        </div>
-                    </div>
-                </div>`;
-        } else {
-            // Regular content (introduction or explanation)
-            htmlOutput += formatRegularContent(section);
+              <div class="solution-step mb-5">
+                <div class="flex items-start">
+                  <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${stepCounter}.</div>
+                  <div class="solution-content flex-grow">${formatTextSection(section)}</div>
+                </div>
+              </div>`;
+          } 
+          else if (currentType === 'EQUATION') {
+            htmlOutput += `<div class="math-equation">${formatEquation(section)}</div>`;
+          } 
+          else {
+            // Regular text
+            htmlOutput += formatTextSection(section);
+          }
+          currentType = null;
         }
-    });
+      }
 
-    // If no steps were found, treat the whole response as regular content
-    if (htmlOutput === '') {
-        htmlOutput = formatRegularContent(currentResponse);
+      // If no steps were found, treat the whole response as a single block
+      if (stepCounter === 0) {
+        htmlOutput = formatTextSection(response);
+      }
+
+      return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
     }
 
-    return htmlOutput;
-}
+    function formatTextSection(text) {
+      if (!text) return '';
+      
+      // Process markdown
+      let processed = text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>');
 
-function formatStepContent(content) {
-    // Split content into paragraphs
-    const paragraphs = content.split(/\n\s*\n+/);
-    
-    let formattedContent = '';
-    
-    paragraphs.forEach(para => {
-        if (!para.trim()) return;
-        
-        // Check for math expressions
-        const hasMath = para.match(/\$.*?\$|\$\$.*?\$\$/);
-        
-        if (hasMath) {
-            // For paragraphs with math, we want to preserve line breaks around them
-            const lines = para.split('\n');
-            
-            lines.forEach(line => {
-                if (line.trim()) {
-                    // Check if line is purely math
-                    if (line.match(/^\s*(\$|\$\$).*?(\$|\$\$)\s*$/)) {
-                        formattedContent += `<div class="my-2">${line}</div>`;
-                    } else {
-                        // Mixed text and math
-                        formattedContent += `<p>${formatInlineMath(line)}</p>`;
-                    }
-                }
-            });
-        } else {
-            // Regular text paragraph
-            formattedContent += `<p>${para}</p>`;
-        }
-    });
-    
-    return formattedContent;
-}
+      // Convert to paragraphs
+      const paragraphs = processed.split(/\n\s*\n+/).filter(p => p.trim());
+      return paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+    }
 
-function formatRegularContent(content) {
-    // Split into paragraphs
-    const paragraphs = content.split(/\n\s*\n+/);
-    
-    return paragraphs.map(para => {
-        if (!para.trim()) return '';
-        
-        // Check if paragraph contains math
-        if (para.match(/\$.*?\$|\$\$.*?\$\$/)) {
-            // Handle math paragraphs specially
-            const lines = para.split('\n');
-            return lines.map(line => {
-                if (line.match(/^\s*(\$|\$\$).*?(\$|\$\$)\s*$/)) {
-                    return `<div class="my-3">${line}</div>`;
-                }
-                return `<p>${formatInlineMath(line)}</p>`;
-            }).join('');
-        }
-        
-        // Regular text paragraph
-        return `<p>${para}</p>`;
-    }).join('');
-}
+    function formatEquation(equation) {
+      if (!equation) return '';
+      
+      // Clean up the equation
+      let cleaned = equation
+        .replace(/^EQUATION/, '')
+        .replace(/\s+/g, ' ')
+        .trim();
 
-function formatInlineMath(text) {
-    // Convert simple expressions to proper LaTeX
-    return text
-        .replace(/\$([^$]+)\$/g, (match, expr) => {
-            // Clean up common math expressions
-            expr = expr.trim();
-            
-            // Handle fractions
-            expr = expr.replace(/(\w+)\/(\w+)/g, '\\frac{$1}{$2}');
-            
-            // Handle exponents
-            expr = expr.replace(/(\w+)\^(\w+)/g, '$1^{$2}');
-            
-            // Handle square roots
-            expr = expr.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
-            
-            return `\\(${expr}\\)`;
-        })
-        .replace(/\$\$([^$]+)\$\$/g, (match, expr) => {
-            // Clean up display math
-            expr = expr.trim();
-            return `\\[${expr}\\]`;
-        });
-}
+      // Convert common math expressions to LaTeX
+      cleaned = cleaned
+        // Fractions a/b
+        .replace(/(\d+)\/(\d+)/g, '\\frac{$1}{$2}')
+        // Exponents x^2
+        .replace(/([a-zA-Z0-9\)])\^([a-zA-Z0-9\(])/g, '$1^{$2}')
+        // Square roots √x or sqrt(x)
+        .replace(/√(\w+)/g, '\\sqrt{$1}')
+        .replace(/sqrt\(([^)]+)\)/gi, '\\sqrt{$1}')
+        // Greek letters and symbols
+        .replace(/pi/g, '\\pi')
+        .replace(/theta/g, '\\theta')
+        .replace(/alpha/g, '\\alpha')
+        .replace(/beta/g, '\\beta')
+        .replace(/<=/g, '\\leq')
+        .replace(/>=/g, '\\geq')
+        .replace(/!=/g, '\\neq')
+        // Integrals and derivatives
+        .replace(/∫/g, '\\int')
+        .replace(/d\/dx/g, '\\frac{d}{dx}');
 
+      // Wrap in LaTeX delimiters
+      return `\\(${cleaned}\\)`;
+    }
+
+    // Rest of your JavaScript code remains the same
     loadProfile();
   </script>
 </body>
