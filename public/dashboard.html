@@ -489,6 +489,90 @@ function formatTextSection(text) {
     return paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
 }
 
+function formatMathResponse(response) {
+    if (!response || response.trim() === "") {
+        return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
+    }
+
+    // Enhanced equation detection with better pattern matching
+    let processedResponse = response
+        // Normalize step indicators
+        .replace(/(\n|^)(\d+[.)]\s+|\d+\)\s+|\d+\.\s+|\d+\s+)/g, '$1STEP$2')
+        .replace(/(\n|^)(Langkah\s+\d+[:.]?\s+)/gi, '$1STEP$2')
+        // Mark equations with better pattern matching
+        .replace(/(\n|^)([\w\s]*=[^=\n]+)/g, '$1EQUATION$2')
+        .replace(/(\n|^)(.*?([a-zA-Z0-9]\s*[\/^√]|\d+\s*\/\s*\d+|\b(sin|cos|tan|log|ln|lim|√|sqrt|akar)\b).*?)(\n|$)/g, '$1EQUATION$2$4');
+
+    // Split into sections
+    const sections = processedResponse.split(/(STEP|EQUATION)/).filter(Boolean);
+    
+    let htmlOutput = '';
+    let currentType = null;
+    let stepCounter = 0;
+
+    for (let i = 0; i < sections.length; i++) {
+        const section = sections[i].trim();
+        
+        if (section === 'STEP') {
+            currentType = 'STEP';
+            stepCounter++;
+        } 
+        else if (section === 'EQUATION') {
+            currentType = 'EQUATION';
+        }
+        else {
+            if (currentType === 'STEP') {
+                htmlOutput += `
+                    <div class="solution-step mb-5">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${stepCounter}.</div>
+                            <div class="solution-content flex-grow">${formatTextSection(section)}</div>
+                        </div>
+                    </div>`;
+            } 
+            else if (currentType === 'EQUATION') {
+                const formattedEquation = formatEquation(section);
+                if (formattedEquation.includes('\\frac') || 
+                    formattedEquation.includes('\\sqrt') || 
+                    formattedEquation.includes('\\begin') ||
+                    section.includes('=')) {
+                    htmlOutput += `<div class="math-equation">${formattedEquation}</div>`;
+                } else {
+                    htmlOutput += `<span class="math-inline">${formattedEquation}</span>`;
+                }
+            } 
+            else {
+                // Regular text
+                htmlOutput += formatTextSection(section);
+            }
+            currentType = null;
+        }
+    }
+
+    // If no steps were found, treat the whole response as a single block
+    if (stepCounter === 0) {
+        htmlOutput = formatTextSection(response);
+    }
+
+    return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
+}
+
+function formatTextSection(text) {
+    if (!text) return '';
+    
+    // Process markdown and special patterns
+    let processed = text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>')
+        // Convert simple fractions not caught by equation detection
+        .replace(/(\d+)\s*\/\s*(\d+)(?![^{]*})/g, '<span class="math-inline">\\(\\frac{$1}{$2}\\)</span>');
+
+    // Convert to paragraphs
+    const paragraphs = processed.split(/\n\s*\n+/).filter(p => p.trim());
+    return paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+}
+
 function formatEquation(equation) {
     if (!equation) return '';
     
@@ -498,48 +582,50 @@ function formatEquation(equation) {
         .replace(/\s+/g, ' ')
         .trim();
 
-    // Convert common math expressions to LaTeX
+    // Convert common math expressions to LaTeX - IMPROVED VERSION
     cleaned = cleaned
-        // Fractions (all cases)
-        .replace(/(\d*\.?\d+)\s*\/\s*(\d*\.?\d+)/g, '\\frac{$1}{$2}')
-        .replace(/([a-zA-Z])\s*\/\s*([a-zA-Z])/g, '\\frac{$1}{$2}')
-        .replace(/([a-zA-Z])\s*\/\s*(\d+)/g, '\\frac{$1}{$2}')
-        .replace(/(\d+)\s*\/\s*([a-zA-Z])/g, '\\frac{$1}{$2}')
+        // Fractions (all cases) - improved regex
+        .replace(/(\d*\.?\d+|[a-zA-Z])\s*\/\s*(\d*\.?\d+|[a-zA-Z])(?![^{]*})/g, '\\frac{$1}{$2}')
+        .replace(/(\d+)\s*per\s*(\d+)/gi, '\\frac{$1}{$2}')
         .replace(/bagi\s+/g, '\\frac{')
-        .replace(/(\d+)\s*per\s*(\d+)/g, '\\frac{$1}{$2}')
         
-        // Square roots (all variants)
-        .replace(/√(\w+|\([^)]+\))/g, '\\sqrt{$1}')
-        .replace(/sqrt\(([^)]+)\)/gi, '\\sqrt{$1}')
-        .replace(/akar\s+(kuadrat\s+)?dari\s+(\w+|\([^)]+\))/gi, '\\sqrt{$2}')
+        // Square roots (all variants) - improved handling
+        .replace(/√\s*([^)\s]+|\([^)]+\))/g, '\\sqrt{$1}')
+        .replace(/sqrt\s*\(([^)]+)\)/gi, '\\sqrt{$1}')
+        .replace(/akar\s+(kuadrat\s+)?dari\s+([^.\s]+)/gi, '\\sqrt{$2}')
         
-        // Exponents
-        .replace(/([a-zA-Z0-9\)\]}])\s*\^\s*([a-zA-Z0-9\(\[\{])/g, '$1^{$2}')
-        .replace(/([a-zA-Z0-9\)\]}])\s*\^\s*(\d+)/g, '$1^{$2}')
+        // Exponents - improved handling
+        .replace(/([a-zA-Z0-9)])\s*\^\s*([a-zA-Z0-9(])/g, '$1^{$2}')
+        .replace(/([a-zA-Z0-9)])\s*\^\s*(\d+)/g, '$1^{$2}')
         .replace(/(\d+)\s*\^\s*(\d+)/g, '$1^{$2}')
         .replace(/pangkat\s+(\d+)/g, '^{$1}')
         
         // Greek letters and symbols
         .replace(/\bpi\b/g, '\\pi')
-        .replace(/\btheta\b/g, '\\theta')
-        .replace(/\balpha\b/g, '\\alpha')
-        .replace(/\bbeta\b/g, '\\beta')
-        .replace(/<=/g, '\\leq')
-        .replace(/>=/g, '\\geq')
-        .replace(/!=/g, '\\neq')
-        .replace(/->/g, '\\rightarrow')
-        .replace(/=>/g, '\\Rightarrow')
+        .replace(/\btheta\b|\bθ\b/g, '\\theta')
+        .replace(/\balpha\b|\bα\b/g, '\\alpha')
+        .replace(/\bbeta\b|\bβ\b/g, '\\beta')
+        .replace(/<=|≤/g, '\\leq')
+        .replace(/>=|≥/g, '\\geq')
+        .replace(/!=|≠/g, '\\neq')
+        .replace(/->|→/g, '\\rightarrow')
+        .replace(/=>|⇒/g, '\\Rightarrow')
         .replace(/∞/g, '\\infty')
         .replace(/±/g, '\\pm')
         
-        // Functions
-        .replace(/(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g, '\\$1($2)')
-        .replace(/(log|ln)\(([^)]+)\)/g, '\\$1($2)')
-        .replace(/(lim|sum|prod)\(([^)]+)\)/g, '\\$1($2)')
+        // Functions - improved
+        .replace(/\b(sin|cos|tan|cot|sec|csc)\s*\(([^)]+)\)/g, '\\$1($2)')
+        .replace(/\b(log|ln)\s*\(([^)]+)\)/g, '\\$1($2)')
+        .replace(/\b(lim|sum|prod)\s*\(([^)]+)\)/g, '\\$1\\limits_{$2}')
         
         // Vectors and matrices
-        .replace(/\\vec\{([^}]+)\}/g, '\\overrightarrow{$1}')
-        .replace(/\\matrix\{([^}]+)\}/g, '\\begin{matrix} $1 \\end{matrix}');
+        .replace(/\\vec\s*\{([^}]+)\}/g, '\\overrightarrow{$1}')
+        .replace(/\\matrix\s*\{([^}]+)\}/g, '\\begin{matrix} $1 \\end{matrix}')
+        
+        // Parentheses scaling
+        .replace(/\((.*?)\)/g, '\\left($1\\right)')
+        .replace(/\[(.*?)\]/g, '\\left[$1\\right]')
+        .replace(/\{(.*?)\}/g, '\\left\\{$1\\right\\}');
 
     // Handle special mathematical expressions
     cleaned = cleaned
@@ -551,17 +637,18 @@ function formatEquation(equation) {
         .replace(/\(a\s*\+\s*b\)\^n/gi, '(a + b)^n')
         
         // Euler's formula
-        .replace(/e\^\(iθ\)\s*=\s*cosθ\s*\+\s*i\s*sinθ/gi, 
+        .replace(/e\^\(i[θθ]\s*\)\s*=\s*cos[θθ]\s*\+\s*i\s*sin[θθ]/gi, 
             'e^{i\\theta} = \\cos\\theta + i\\sin\\theta')
         
         // Summation notation
-        .replace(/Σ\(([^)]+)\)/g, '\\sum $1');
+        .replace(/Σ\s*\(([^)]+)\)/g, '\\sum\\limits_{$1}');
 
     // Final cleanup
     cleaned = cleaned
         .replace(/\s+/g, ' ')
         .replace(/(\\[a-z]+)\s*\{/g, '$1{')
-        .replace(/\}\s*\{/g, '}{');
+        .replace(/\}\s*\{/g, '}{')
+        .replace(/\\\s*\\/g, '\\\\');
 
     // Wrap in LaTeX delimiters with displaystyle for better rendering
     return `\\(\\displaystyle ${cleaned}\\)`;
