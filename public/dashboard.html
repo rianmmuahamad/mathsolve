@@ -35,9 +35,9 @@
             fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
             slideDown: { '0%': { transform: 'translateY(-10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
           },
-        }
-      }
-    }
+        },
+      },
+    };
   </script>
   <style>
     .math-output { line-height: 1.8; font-size: 1.05rem; }
@@ -186,7 +186,7 @@
     async function loadProfile() {
       try {
         const res = await fetch('/api/auth/profile', {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
@@ -213,7 +213,6 @@
       popup.classList.toggle('hidden');
     }
 
-    // Close popup when clicking outside
     document.addEventListener('click', (e) => {
       const profile = document.getElementById('profile');
       const popup = document.getElementById('profilePopup');
@@ -223,8 +222,14 @@
     });
 
     const spinner = new Spinner({
-      lines: 12, length: 6, width: 2.5, radius: 10, color: '#0ea5e9',
-      speed: 1, trail: 60, shadow: false
+      lines: 12,
+      length: 6,
+      width: 2.5,
+      radius: 10,
+      color: '#0ea5e9',
+      speed: 1,
+      trail: 60,
+      shadow: false,
     });
 
     const dropZone = document.getElementById('dropZone');
@@ -234,11 +239,18 @@
 
     dropZone.addEventListener('click', () => fileInput.click());
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, preventDefault, false));
-    function preventDefault(e) { e.preventDefault(); e.stopPropagation(); }
+    function preventDefault(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     ['dragenter', 'dragover'].forEach(eName => dropZone.addEventListener(eName, highlight, false));
     ['dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, unhighlight, false));
-    function highlight() { dropZone.classList.add('active'); }
-    function unhighlight() { dropZone.classList.remove('active'); }
+    function highlight() {
+      dropZone.classList.add('active');
+    }
+    function unhighlight() {
+      dropZone.classList.remove('active');
+    }
     dropZone.addEventListener('drop', handleDrop, false);
 
     function handleDrop(e) {
@@ -298,7 +310,7 @@
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` },
-          body: formData
+          body: formData,
         });
         const data = await res.json();
         if (!res.ok) {
@@ -332,7 +344,9 @@
         const copyBtn = document.getElementById('copySolution');
         const originalHTML = copyBtn.innerHTML;
         copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Tersalin!`;
-        setTimeout(() => { copyBtn.innerHTML = originalHTML; }, 2000);
+        setTimeout(() => {
+          copyBtn.innerHTML = originalHTML;
+        }, 2000);
       }).catch(err => {
         console.error('Gagal menyalin:', err);
         alert('Gagal menyalin solusi.');
@@ -340,113 +354,43 @@
     });
 
     function formatMathResponse(response) {
-      if (!response || response.trim() === "") {
+      if (!response || response.trim() === '') {
         return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
       }
 
-      let currentResponse = response;
+      // Handle Markdown for bold and italic
+      let formattedResponse = response
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>');
 
-      // 1. Konversi ekspresi matematika ke LaTeX
-      // Pecahan (a/b)
-      currentResponse = currentResponse.replace(
-        /(?<![\$\\])(?<!\^\{)(\b\d+(?:\.\d+)?|\([^)]+\))\s*\/\s*(\d+(?:\.\d+)?|\([^)]+\))\b(?![\}\s]*\^)/g,
-        (match, num, denom) => `\\(\\frac{${num}}{${denom}}\\)`
-      );
-
-      // Eksponen (a^b)
-      currentResponse = currentResponse.replace(
-        /(\b[a-zA-Z][\w%]*\b|\b\d+(?:\.\d+)?%?\b|\([^)]+\)|\|[^|]+\|)\s*\^\s*([\w\d.\{\}\+\-\*\/]+%?)/g,
-        (match, base, exponent) => {
-          const cleanedExponent = exponent.startsWith('{') && exponent.endsWith('}') ? exponent : `{${exponent}}`;
-          return `\\(${base}^${cleanedExponent}\\)`;
-        }
-      );
-
-      // Akar (sqrt, cbrt, dll.)
-      currentResponse = currentResponse.replace(
-        /\b(sqrt|cbrt|nrt)\s*\[([^\]]+)\]/g,
-        (match, rootType, content) => {
-          if (rootType === 'sqrt') return `\\(\\sqrt{${content}}\\)`;
-          if (rootType === 'cbrt') return `\\(\\sqrt[3]{${content}}\\)`;
-          return `\\(\\sqrt[${rootType}]{${content}}\\)`;
-        }
-      );
-
-      // Fungsi trigonometri
-      currentResponse = currentResponse.replace(
-        /\b(sin|cos|tan|cot|sec|csc)\s*\(([^)]+)\)/g,
-        (match, func, arg) => `\\(${func}\\left(${arg}\\right)\\)`
-      );
-
-      // Simbol khusus
-      const symbolMap = {
-        'pi': '\\pi',
-        'theta': '\\theta',
-        'alpha': '\\alpha',
-        'beta': '\\beta',
-        'infinity': '\\infty',
-        '<=': '\\leq',
-        '>=': '\\geq',
-        '!=': '\\neq'
-      };
-      for (const [key, value] of Object.entries(symbolMap)) {
-        currentResponse = currentResponse.replace(
-          new RegExp(`\\b${key}\\b`, 'g'),
-          `\\(${value}\\)`
-        );
-      }
-
-      // Matriks
-      currentResponse = currentResponse.replace(
-        /\[\s*([^;]+)\s*;\s*([^;]+)\s*\]/g,
-        (match, row1, row2) => {
-          const r1 = row1.trim().split(/\s+/).join('&');
-          const r2 = row2.trim().split(/\s+/).join('&');
-          return `\\(\\begin{pmatrix}${r1}\\\\${r2}\\end{pmatrix}\\)`;
-        }
-      );
-
-      // 2. Konversi Markdown
-      currentResponse = currentResponse.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      currentResponse = currentResponse.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-      // 3. Format blok teks
-      function formatBlockToHtml(textBlock) {
-        if (!textBlock || textBlock.trim() === "") return "";
-        const paragraphs = textBlock.trim().split(/\n\s*\n+/);
-        return paragraphs
-          .map(para => {
-            if (para.trim() === "") return "";
-            const lines = para.split('\n').map(line => line.trim()).filter(line => line).join('<br>');
-            return `<p>${lines}</p>`;
-          })
-          .join('');
-      }
-
-      // 4. Pisahkan langkah-langkah
-      const sections = currentResponse.split(/\bStep\s+/i);
+      // Split response into sections (e.g., steps)
+      const sections = formattedResponse.split(/\bLangkah\s+/i);
       let htmlOutput = '';
 
-      // Pendahuluan
-      if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
-        htmlOutput += formatBlockToHtml(sections[0]);
+      // Handle introduction (before steps)
+      if (sections.length > 0 && sections[0].trim() !== '' && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
+        htmlOutput += `<p>${sections[0].trim().replace(/\n\s*\n+/g, '</p><p>')}</p>`;
       }
 
-      // Langkah-langkah
+      // Handle steps
       if (sections.length > 1) {
         for (let i = 1; i < sections.length; i++) {
           let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
-          if (stepText === "") continue;
+          if (stepText === '') continue;
+          // Split into paragraphs
+          const paragraphs = stepText.split(/\n\s*\n+/).filter(p => p.trim() !== '');
+          const formattedParagraphs = paragraphs.map(p => `<p>${p.trim()}</p>`).join('');
           htmlOutput += `
             <div class="solution-step mb-5">
               <div class="flex items-start">
                 <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
-                <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
+                <div class="solution-content flex-grow">${formattedParagraphs}</div>
               </div>
             </div>`;
         }
-      } else if (htmlOutput.trim() === "" && response.trim() !== "") {
-        htmlOutput = formatBlockToHtml(response);
+      } else if (htmlOutput.trim() === '' && response.trim() !== '') {
+        // If no steps, treat as single block
+        htmlOutput = `<p>${formattedResponse.replace(/\n\s*\n+/g, '</p><p>')}</p>`;
       }
 
       return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
