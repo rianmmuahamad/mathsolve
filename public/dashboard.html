@@ -86,6 +86,45 @@
   display: inline-block !important;
   margin: 0.3rem 0 !important;
 }
+.math-equation {
+    display: block;
+    margin: 1rem 0;
+    padding: 1rem;
+    background-color: #f8fafc;
+    border-radius: 0.5rem;
+    border-left: 4px solid #0ea5e9;
+    overflow-x: auto;
+    text-align: center;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+.math-inline {
+    display: inline-block;
+    margin: 0 0.2rem;
+    vertical-align: middle;
+}
+
+.math-equation mjx-container, 
+.math-inline mjx-container {
+    display: inline-block !important;
+    margin: 0.1rem 0 !important;
+}
+
+.math-equation::-webkit-scrollbar {
+    height: 5px;
+}
+
+.math-equation::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+}
+
+.solution-step .math-equation {
+    margin: 0.5rem 0;
+    padding: 0.8rem;
+    background-color: #f0f9ff;
+}
   </style>
 </head>
 <body class="bg-gray-50 font-sans">
