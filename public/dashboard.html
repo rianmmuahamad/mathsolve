@@ -41,17 +41,21 @@
   </script>
   <style>
     .math-output { line-height: 1.8; font-size: 1.05rem; }
-    .math-output p { margin-bottom: 1rem; }
+    .math-output p { margin-bottom: 1.25rem; }
     .math-output p:last-child { margin-bottom: 0; }
     .drop-zone { border: 2px dashed #cbd5e1; transition: all 0.3s ease; }
     .drop-zone.active { border-color: #0ea5e9; background-color: #f0f9ff; }
-    .solution-step { position: relative; padding-left: 2rem; }
+    .solution-step { position: relative; padding-left: 2.5rem; margin-bottom: 1.5rem; }
     .solution-step:before {
       content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-      width: 3px; background: linear-gradient(to bottom, #0ea5e9, #7dd3fc);
-      border-radius: 3px;
+      width: 4px; background: linear-gradient(to bottom, #0ea5e9, #7dd3fc);
+      border-radius: 4px;
     }
-    .solution-content p:first-child { margin-top: 0.1rem; }
+    .solution-step-number { font-weight: 600; color: #0ea5e9; }
+    .solution-content { flex-grow: 1; }
+    .solution-content p { margin-bottom: 0.75rem; }
+    .solution-content p:last-child { margin-bottom: 0; }
+    .math-equation { display: block; margin: 1rem 0; padding: 0.5rem 1rem; background: #f8fafc; border-radius: 6px; }
     .profile-popup { animation: slide-down 0.3s ease-out; }
   </style>
 </head>
@@ -84,7 +88,7 @@
               <div id="profileEmail" class="text-sm text-gray-500"></div>
             </div>
           </div>
-          <a href="/api/auth/logout" class="block w-full bg-primary-600 text-white text-center py-2 rounded-md hover:bg-primary-700 transition-colors">Logout</a>
+          <a href="/api/auth/logout" class="block w-full bg-primary-600 text-white text-center py-2ACITY rounded-md hover:bg-primary-700 transition-colors">Logout</a>
         </div>
       </div>
     </div>
@@ -358,18 +362,84 @@
         return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
       }
 
-      // Handle Markdown for bold and italic
+      // Step 1: Handle Markdown for bold and italic
       let formattedResponse = response
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>');
 
-      // Split response into sections (e.g., steps)
+      // Step 2: Convert plain-text math to LaTeX
+      formattedResponse = formattedResponse.replace(
+        /(?<!\\)(?:\|[^|]+\||\w+\^\w+|\w+\/\w+|[\w\s\+\-\*\/=]+(?=\s*=)|[A-Za-z0-9\s\+\-\*\/\|\^\(\)]+)/g,
+        (match) => {
+          // Skip if already in LaTeX or if it's purely text (e.g., "Diketahui")
+          if (match.includes('\\(') || match.includes('\\[') || match.match(/^[A-Za-z\s.,:]+$/)) return match;
+
+          // Handle vector notation (e.g., V(V) → \vec{V})
+          if (match.match(/^V\([^()]+?\)$/)) {
+            const vectorContent = match.match(/^V\(([^()]+)\)$/)[1];
+            return `\\( \\vec{${vectorContent}} \\)`;
+          }
+
+          // Handle absolute values and exponents (e.g., |a|^(-1)*(2) → \lvert a \rvert^{-1} \times 2)
+          if (match.match(/\|[^|]+\|\^\([^()]+?\)\*\([^()]+?\)/)) {
+            const parts = match.match(/\|([^|]+)\|\^\(([^()]+)\)\*\(([^()]+)\)/);
+            return `\\( \\lvert ${parts[1]} \\rvert^{${parts[2]}} \\times ${parts[3]} \\)`;
+          }
+          if (match.match(/\|[^|]+\|\^\([^()]+?\)/)) {
+            const parts = match.match(/\|([^|]+)\|\^\(([^()]+)\)/);
+            return `\\( \\lvert ${parts[1]} \\rvert^{${parts[2]}} \\)`;
+          }
+          if (match.match(/\|[^|]+\|/)) {
+            const content = match.match(/\|([^|]+)\|/)[1];
+            return `\\( \\lvert ${content} \\rvert \\)`;
+          }
+
+          // Handle fractions (e.g., a/b → \frac{a}{b})
+          if (match.match(/^\w+\/\w+$/)) {
+            const [num, denom] = match.split('/');
+            return `\\( \\frac{${num}}{${denom}} \\)`;
+          }
+
+          // Handle exponents (e.g., a^b → a^{b})
+          if (match.match(/\w+\^\w+/)) {
+            const [base, exp] = match.split('^');
+            return `\\( ${base}^{${exp}} \\)`;
+          }
+
+          // Replace multiplication (e.g., * → \times)
+          match = match.replace(/\*/g, '\\times');
+
+          // Handle general math expressions (e.g., a + b = c)
+          return `\\[${match}\\]`;
+        }
+      );
+
+      // Step 3: Replace common symbols
+      const symbolMap = {
+        'pi': '\\pi',
+        'theta': '\\theta',
+        'alpha': '\\alpha',
+        'beta': '\\beta',
+        'infinity': '\\infty',
+        '<=': '\\leq',
+        '>=': '\\geq',
+        '!=': '\\neq',
+      };
+      for (const [key, value] of Object.entries(symbolMap)) {
+        formattedResponse = formattedResponse.replace(
+          new RegExp(`\\b${key}\\b`, 'g'),
+          `\\(${value}\\)`
+        );
+      }
+
+      // Step 4: Split response into sections (e.g., steps)
       const sections = formattedResponse.split(/\bLangkah\s+/i);
       let htmlOutput = '';
 
       // Handle introduction (before steps)
       if (sections.length > 0 && sections[0].trim() !== '' && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
-        htmlOutput += `<p>${sections[0].trim().replace(/\n\s*\n+/g, '</p><p>')}</p>`;
+        const introParagraphs = sections[0].trim().split(/\n\s*\n+/).filter(p => p.trim() !== '');
+        htmlOutput += introParagraphs.map(p => `<p>${p.trim()}</p>`).join('');
       }
 
       // Handle steps
@@ -377,20 +447,36 @@
         for (let i = 1; i < sections.length; i++) {
           let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
           if (stepText === '') continue;
-          // Split into paragraphs
+
+          // Split step into paragraphs
           const paragraphs = stepText.split(/\n\s*\n+/).filter(p => p.trim() !== '');
-          const formattedParagraphs = paragraphs.map(p => `<p>${p.trim()}</p>`).join('');
+
+          // Format each paragraph, wrapping equations in a styled div
+          const formattedParagraphs = paragraphs.map(para => {
+            // Detect if the paragraph looks like an equation (contains math symbols)
+            if (para.match(/\\\[.*?\\\]/) || para.match(/\\\(.*?\\\)/)) {
+              return `<div class="math-equation">${para}</div>`;
+            }
+            return `<p>${para.trim()}</p>`;
+          }).join('');
+
           htmlOutput += `
-            <div class="solution-step mb-5">
+            <div class="solution-step">
               <div class="flex items-start">
-                <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
-                <div class="solution-content flex-grow">${formattedParagraphs}</div>
+                <div class="flex-shrink-0 mt-1 mr-3 solution-step-number">${i}.</div>
+                <div class="solution-content">${formattedParagraphs}</div>
               </div>
             </div>`;
         }
       } else if (htmlOutput.trim() === '' && response.trim() !== '') {
         // If no steps, treat as single block
-        htmlOutput = `<p>${formattedResponse.replace(/\n\s*\n+/g, '</p><p>')}</p>`;
+        const paragraphs = formattedResponse.split(/\n\s*\n+/).filter(p => p.trim() !== '');
+        htmlOutput = paragraphs.map(para => {
+          if (para.match(/\\\[.*?\\\]/) || para.match(/\\\(.*?\\\)/)) {
+            return `<div class="math-equation">${para}</div>`;
+          }
+          return `<p>${para.trim()}</p>`;
+        }).join('');
       }
 
       return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
