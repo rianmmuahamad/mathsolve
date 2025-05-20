@@ -61,6 +61,31 @@
       border-radius: 0.375rem;
       border-left: 3px solid #0ea5e9;
     }
+    .math-equation {
+  display: block;
+  margin: 1rem 0;
+  padding: 0.8rem;
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  border-left: 4px solid #0ea5e9;
+  overflow-x: auto;
+  font-size: 1.1rem;
+  text-align: center;
+}
+
+.math-equation::-webkit-scrollbar {
+  height: 5px;
+}
+
+.math-equation::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 10px;
+}
+
+.math-equation mjx-container {
+  display: inline-block !important;
+  margin: 0.3rem 0 !important;
+}
   </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -347,111 +372,161 @@
       });
     });
     function formatMathResponse(response) {
-      if (!response || response.trim() === "") {
+    if (!response || response.trim() === "") {
         return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
-      }
+    }
 
-      // 1. Pre-process the response to handle special cases
-      let processedResponse = response
-        // Handle numbered steps with various formats
+    // Pre-process the response to handle special cases
+    let processedResponse = response
+        // Normalize step indicators
         .replace(/(\n|^)(\d+[.)]\s+)/g, '$1STEP$2')
         .replace(/(\n|^)(Langkah\s+\d+[:.]?\s+)/gi, '$1STEP$2')
-        // Mark equations for later processing
-        .replace(/(\n|^)([\w\s]*=[^=\n]+)/g, '$1EQUATION$2');
+        // Mark equations and important math expressions
+        .replace(/(\n|^)([\w\s]*=[^=\n]+)/g, '$1EQUATION$2')
+        .replace(/(\n|^)(.*?(?:√|sqrt|\\frac|^|\s)(?:\([^)]+\)|\w+).*?)(\n|$)/g, '$1EQUATION$2$3');
 
-      // 2. Split into sections
-      const sections = processedResponse.split(/(STEP|EQUATION)/).filter(Boolean);
-      
-      let htmlOutput = '';
-      let currentType = null;
-      let stepCounter = 0;
+    // Split into sections
+    const sections = processedResponse.split(/(STEP|EQUATION)/).filter(Boolean);
+    
+    let htmlOutput = '';
+    let currentType = null;
+    let stepCounter = 0;
 
-      for (let i = 0; i < sections.length; i++) {
+    for (let i = 0; i < sections.length; i++) {
         const section = sections[i].trim();
         
         if (section === 'STEP') {
-          currentType = 'STEP';
-          stepCounter++;
+            currentType = 'STEP';
+            stepCounter++;
         } 
         else if (section === 'EQUATION') {
-          currentType = 'EQUATION';
+            currentType = 'EQUATION';
         }
         else {
-          if (currentType === 'STEP') {
-            htmlOutput += `
-              <div class="solution-step mb-5">
-                <div class="flex items-start">
-                  <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${stepCounter}.</div>
-                  <div class="solution-content flex-grow">${formatTextSection(section)}</div>
-                </div>
-              </div>`;
-          } 
-          else if (currentType === 'EQUATION') {
-            htmlOutput += `<div class="math-equation">${formatEquation(section)}</div>`;
-          } 
-          else {
-            // Regular text
-            htmlOutput += formatTextSection(section);
-          }
-          currentType = null;
+            if (currentType === 'STEP') {
+                htmlOutput += `
+                    <div class="solution-step mb-5">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${stepCounter}.</div>
+                            <div class="solution-content flex-grow">${formatTextSection(section)}</div>
+                        </div>
+                    </div>`;
+            } 
+            else if (currentType === 'EQUATION') {
+                const formattedEquation = formatEquation(section);
+                htmlOutput += formattedEquation.includes('\\frac') || formattedEquation.includes('\\sqrt') 
+                    ? `<div class="math-equation">${formattedEquation}</div>`
+                    : `<div class="math-inline">${formattedEquation}</div>`;
+            } 
+            else {
+                // Regular text
+                htmlOutput += formatTextSection(section);
+            }
+            currentType = null;
         }
-      }
-
-      // If no steps were found, treat the whole response as a single block
-      if (stepCounter === 0) {
-        htmlOutput = formatTextSection(response);
-      }
-
-      return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
     }
 
-    function formatTextSection(text) {
-      if (!text) return '';
-      
-      // Process markdown
-      let processed = text
+    // If no steps were found, treat the whole response as a single block
+    if (stepCounter === 0) {
+        htmlOutput = formatTextSection(response);
+    }
+
+    return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
+}
+
+function formatTextSection(text) {
+    if (!text) return '';
+    
+    // Process markdown and special patterns
+    let processed = text
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>');
+        .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>')
+        // Convert simple fractions not caught by equation detection
+        .replace(/(\d+)\/(\d+)/g, '<span class="math-inline">\\(\\frac{$1}{$2}\\)</span>');
 
-      // Convert to paragraphs
-      const paragraphs = processed.split(/\n\s*\n+/).filter(p => p.trim());
-      return paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
-    }
+    // Convert to paragraphs
+    const paragraphs = processed.split(/\n\s*\n+/).filter(p => p.trim());
+    return paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+}
 
-    function formatEquation(equation) {
-      if (!equation) return '';
-      
-      // Clean up the equation
-      let cleaned = equation
+function formatEquation(equation) {
+    if (!equation) return '';
+    
+    // Clean up the equation
+    let cleaned = equation
         .replace(/^EQUATION/, '')
         .replace(/\s+/g, ' ')
         .trim();
 
-      // Convert common math expressions to LaTeX
-      cleaned = cleaned
-        // Fractions a/b
-        .replace(/(\d+)\/(\d+)/g, '\\frac{$1}{$2}')
-        // Exponents x^2
-        .replace(/([a-zA-Z0-9\)])\^([a-zA-Z0-9\(])/g, '$1^{$2}')
-        // Square roots √x or sqrt(x)
-        .replace(/√(\w+)/g, '\\sqrt{$1}')
+    // Convert common math expressions to LaTeX
+    cleaned = cleaned
+        // Fractions (all cases)
+        .replace(/(\d*\.?\d+)\s*\/\s*(\d*\.?\d+)/g, '\\frac{$1}{$2}')
+        .replace(/([a-zA-Z])\s*\/\s*([a-zA-Z])/g, '\\frac{$1}{$2}')
+        .replace(/([a-zA-Z])\s*\/\s*(\d+)/g, '\\frac{$1}{$2}')
+        .replace(/(\d+)\s*\/\s*([a-zA-Z])/g, '\\frac{$1}{$2}')
+        .replace(/bagi\s+/g, '\\frac{')
+        .replace(/(\d+)\s*per\s*(\d+)/g, '\\frac{$1}{$2}')
+        
+        // Square roots (all variants)
+        .replace(/√(\w+|\([^)]+\))/g, '\\sqrt{$1}')
         .replace(/sqrt\(([^)]+)\)/gi, '\\sqrt{$1}')
+        .replace(/akar\s+(kuadrat\s+)?dari\s+(\w+|\([^)]+\))/gi, '\\sqrt{$2}')
+        
+        // Exponents
+        .replace(/([a-zA-Z0-9\)\]}])\s*\^\s*([a-zA-Z0-9\(\[\{])/g, '$1^{$2}')
+        .replace(/([a-zA-Z0-9\)\]}])\s*\^\s*(\d+)/g, '$1^{$2}')
+        .replace(/(\d+)\s*\^\s*(\d+)/g, '$1^{$2}')
+        .replace(/pangkat\s+(\d+)/g, '^{$1}')
+        
         // Greek letters and symbols
-        .replace(/pi/g, '\\pi')
-        .replace(/theta/g, '\\theta')
-        .replace(/alpha/g, '\\alpha')
-        .replace(/beta/g, '\\beta')
+        .replace(/\bpi\b/g, '\\pi')
+        .replace(/\btheta\b/g, '\\theta')
+        .replace(/\balpha\b/g, '\\alpha')
+        .replace(/\bbeta\b/g, '\\beta')
         .replace(/<=/g, '\\leq')
         .replace(/>=/g, '\\geq')
         .replace(/!=/g, '\\neq')
-        // Integrals and derivatives
-        .replace(/∫/g, '\\int')
-        .replace(/d\/dx/g, '\\frac{d}{dx}');
+        .replace(/->/g, '\\rightarrow')
+        .replace(/=>/g, '\\Rightarrow')
+        .replace(/∞/g, '\\infty')
+        .replace(/±/g, '\\pm')
+        
+        // Functions
+        .replace(/(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g, '\\$1($2)')
+        .replace(/(log|ln)\(([^)]+)\)/g, '\\$1($2)')
+        .replace(/(lim|sum|prod)\(([^)]+)\)/g, '\\$1($2)')
+        
+        // Vectors and matrices
+        .replace(/\\vec\{([^}]+)\}/g, '\\overrightarrow{$1}')
+        .replace(/\\matrix\{([^}]+)\}/g, '\\begin{matrix} $1 \\end{matrix}');
 
-      // Wrap in LaTeX delimiters
-      return `\\(${cleaned}\\)`;
-    }
+    // Handle special mathematical expressions
+    cleaned = cleaned
+        // Quadratic formula
+        .replace(/x\s*=\s*\(\s*-b\s*±\s*√\(b\^2\s*-\s*4ac\)\s*\)\s*\/\s*2a/gi, 
+            'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}')
+        
+        // Binomial theorem
+        .replace(/\(a\s*\+\s*b\)\^n/gi, '(a + b)^n')
+        
+        // Euler's formula
+        .replace(/e\^\(iθ\)\s*=\s*cosθ\s*\+\s*i\s*sinθ/gi, 
+            'e^{i\\theta} = \\cos\\theta + i\\sin\\theta')
+        
+        // Summation notation
+        .replace(/Σ\(([^)]+)\)/g, '\\sum $1');
+
+    // Final cleanup
+    cleaned = cleaned
+        .replace(/\s+/g, ' ')
+        .replace(/(\\[a-z]+)\s*\{/g, '$1{')
+        .replace(/\}\s*\{/g, '}{');
+
+    // Wrap in LaTeX delimiters with displaystyle for better rendering
+    return `\\(\\displaystyle ${cleaned}\\)`;
+}
 
     // Rest of your JavaScript code remains the same
     loadProfile();
