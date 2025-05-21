@@ -415,243 +415,230 @@
         return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
     }
 
-    // Pre-process the response to handle special cases
+    // Pre-process the response to identify steps and equations
     let processedResponse = response
-        // Normalize step indicators
-        .replace(/(\n|^)(\d+[.)]\s+)/g, '$1STEP$2')
-        .replace(/(\n|^)(Langkah\s+\d+[:.]?\s+)/gi, '$1STEP$2')
-        // Mark equations and important math expressions
-        .replace(/(\n|^)([\w\s]*=[^=\n]+)/g, '$1EQUATION$2')
-        .replace(/(\n|^)(.*?(?:√|sqrt|\\frac|^|\s)(?:\([^)]+\)|\w+).*?)(\n|$)/g, '$1EQUATION$2$3');
+        // Mark step indicators more consistently
+        .replace(/(\n|^)(\d+[.)]\s+)/g, '\nSTEP-MARKER$2')
+        .replace(/(\n|^)(Langkah\s+\d+[:.]?\s+)/gi, '\nSTEP-MARKER$2');
 
-    // Split into sections
-    const sections = processedResponse.split(/(STEP|EQUATION)/).filter(Boolean);
+    // Split by steps first
+    const stepSections = processedResponse.split('STEP-MARKER');
     
     let htmlOutput = '';
-    let currentType = null;
-    let stepCounter = 0;
-
-    for (let i = 0; i < sections.length; i++) {
-        const section = sections[i].trim();
+    
+    // Process introduction/header if exists
+    if (stepSections[0].trim()) {
+        htmlOutput += `<div class="mb-5">${formatTextWithMath(stepSections[0])}</div>`;
+    }
+    
+    // Process each step
+    for (let i = 1; i < stepSections.length; i++) {
+        const section = stepSections[i].trim();
+        if (!section) continue;
         
-        if (section === 'STEP') {
-            currentType = 'STEP';
-            stepCounter++;
-        } 
-        else if (section === 'EQUATION') {
-            currentType = 'EQUATION';
-        }
-        else {
-            if (currentType === 'STEP') {
-                htmlOutput += `
-                    <div class="solution-step mb-5">
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${stepCounter}.</div>
-                            <div class="solution-content flex-grow">${formatTextSection(section)}</div>
-                        </div>
-                    </div>`;
-            } 
-            else if (currentType === 'EQUATION') {
-                const formattedEquation = formatEquation(section);
-                htmlOutput += formattedEquation.includes('\\frac') || formattedEquation.includes('\\sqrt') 
-                    ? `<div class="math-equation">${formattedEquation}</div>`
-                    : `<div class="math-inline">${formattedEquation}</div>`;
-            } 
-            else {
-                // Regular text
-                htmlOutput += formatTextSection(section);
-            }
-            currentType = null;
+        // Extract step number and content
+        const stepMatch = section.match(/^(\d+[.)]|\S+\s+\d+[:.]?)\s+(.*)/s);
+        if (stepMatch) {
+            const [, stepIndicator, content] = stepMatch;
+            htmlOutput += `
+                <div class="solution-step mb-5">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${stepIndicator}</div>
+                        <div class="solution-content flex-grow">${formatTextWithMath(content)}</div>
+                    </div>
+                </div>`;
+        } else {
+            // Fallback for non-standard formatted steps
+            htmlOutput += `
+                <div class="solution-step mb-5">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
+                        <div class="solution-content flex-grow">${formatTextWithMath(section)}</div>
+                    </div>
+                </div>`;
         }
     }
-
-    // If no steps were found, treat the whole response as a single block
-    if (stepCounter === 0) {
-        htmlOutput = formatTextSection(response);
+    
+    // If no steps were found, format the entire content
+    if (stepSections.length <= 1) {
+        htmlOutput = formatTextWithMath(response);
     }
-
+    
     return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
 }
 
-function formatTextSection(text) {
+function formatTextWithMath(text) {
     if (!text) return '';
     
-    // Process markdown and special patterns
-    let processed = text
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>')
-        // Convert simple fractions not caught by equation detection
-        .replace(/(\d+)\/(\d+)/g, '<span class="math-inline">\\(\\frac{$1}{$2}\\)</span>');
-
-    // Convert to paragraphs
-    const paragraphs = processed.split(/\n\s*\n+/).filter(p => p.trim());
-    return paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
-}
-
-function formatMathResponse(response) {
-    if (!response || response.trim() === "") {
-        return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
-    }
-
-    // Enhanced equation detection with better pattern matching
-    let processedResponse = response
-        // Normalize step indicators
-        .replace(/(\n|^)(\d+[.)]\s+|\d+\)\s+|\d+\.\s+|\d+\s+)/g, '$1STEP$2')
-        .replace(/(\n|^)(Langkah\s+\d+[:.]?\s+)/gi, '$1STEP$2')
-        // Mark equations with better pattern matching
-        .replace(/(\n|^)([\w\s]*=[^=\n]+)/g, '$1EQUATION$2')
-        .replace(/(\n|^)(.*?([a-zA-Z0-9]\s*[\/^√]|\d+\s*\/\s*\d+|\b(sin|cos|tan|log|ln|lim|√|sqrt|akar)\b).*?)(\n|$)/g, '$1EQUATION$2$4');
-
-    // Split into sections
-    const sections = processedResponse.split(/(STEP|EQUATION)/).filter(Boolean);
+    // Split text into paragraphs
+    const paragraphs = text.split(/\n\s*\n+/).filter(p => p.trim());
+    let formattedText = '';
     
-    let htmlOutput = '';
-    let currentType = null;
-    let stepCounter = 0;
-
-    for (let i = 0; i < sections.length; i++) {
-        const section = sections[i].trim();
+    for (let paragraph of paragraphs) {
+        // Process equations within the paragraph
+        let parts = paragraph.split(/\n/);
+        let processedParts = [];
         
-        if (section === 'STEP') {
-            currentType = 'STEP';
-            stepCounter++;
-        } 
-        else if (section === 'EQUATION') {
-            currentType = 'EQUATION';
-        }
-        else {
-            if (currentType === 'STEP') {
-                htmlOutput += `
-                    <div class="solution-step mb-5">
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${stepCounter}.</div>
-                            <div class="solution-content flex-grow">${formatTextSection(section)}</div>
-                        </div>
-                    </div>`;
-            } 
-            else if (currentType === 'EQUATION') {
-                const formattedEquation = formatEquation(section);
-                if (formattedEquation.includes('\\frac') || 
-                    formattedEquation.includes('\\sqrt') || 
-                    formattedEquation.includes('\\begin') ||
-                    section.includes('=')) {
-                    htmlOutput += `<div class="math-equation">${formattedEquation}</div>`;
-                } else {
-                    htmlOutput += `<span class="math-inline">${formattedEquation}</span>`;
-                }
-            } 
-            else {
-                // Regular text
-                htmlOutput += formatTextSection(section);
+        for (let part of parts) {
+            // Check if this is likely an equation
+            const isEquation = isEquationLine(part);
+            
+            if (isEquation) {
+                processedParts.push(`<div class="math-equation">${formatEquation(part)}</div>`);
+            } else {
+                // Process inline math and text formatting
+                processedParts.push(formatTextLine(part));
             }
-            currentType = null;
         }
+        
+        formattedText += `<p>${processedParts.join(' ')}</p>`;
     }
-
-    // If no steps were found, treat the whole response as a single block
-    if (stepCounter === 0) {
-        htmlOutput = formatTextSection(response);
-    }
-
-    return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
+    
+    return formattedText;
 }
 
-function formatTextSection(text) {
+function isEquationLine(line) {
+    // Detect if a line is likely an equation
+    const trimmed = line.trim();
+    
+    // Check for common equation indicators
+    if (/^.*?=.*$/.test(trimmed)) return true; // Contains equals sign
+    if (/\\frac|\\sqrt|\\sum|\\prod|\\int/.test(trimmed)) return true; // Contains LaTeX commands
+    if (/\$\$.*?\$\$|\$.*?\$/.test(trimmed)) return true; // Already has math delimiters
+    if (/√|\^|÷|\*|±|≤|≥|≠|∫|∑|∏|∞/.test(trimmed)) return true; // Contains math symbols
+    if (/([a-zA-Z])\s*\/\s*([a-zA-Z0-9])|([0-9])\s*\/\s*([a-zA-Z0-9])/.test(trimmed)) return true; // Contains fractions
+    
+    // More comprehensive check for complex math expressions
+    const mathPatterns = [
+        /\b[a-z]\([a-z]\)\b/i, // Function notation like f(x)
+        /\b[a-z][0-9]\b/i,     // Variables with subscripts like x1, y2
+        /\b(sin|cos|tan|log|ln)\b/i, // Math functions
+    ];
+    
+    for (let pattern of mathPatterns) {
+        if (pattern.test(trimmed)) return true;
+    }
+    
+    return false;
+}
+
+function formatTextLine(text) {
     if (!text) return '';
     
-    // Process markdown and special patterns
+    // Process markdown-style and inline math
     let processed = text
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        .replace(/\*(.*?)\*/g, '<em>$1</em>')
-        .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>')
-        // Convert simple fractions not caught by equation detection
-        .replace(/(\d+)\s*\/\s*(\d+)(?![^{]*})/g, '<span class="math-inline">\\(\\frac{$1}{$2}\\)</span>');
+        .replace(/\*(.*?)\*\*/g, '<em>$1</em>')
+        .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 rounded">$1</code>');
+    
+    // Process inline math expressions
+    processed = processed.replace(/(\b\d+\s*[+\-*/]\s*\d+\b|\b[a-z]\s*[+\-*/=]\s*[a-z0-9]|\b\d+\s*\/\s*\d+\b)/gi, function(match) {
+        // Skip already processed expressions
+        if (match.includes('\\(') || match.includes('<span')) return match;
+        return `<span class="math-inline">\\(${formatInlineEquation(match)}\\)</span>`;
+    });
+    
+    // Additional pattern for inline fractions and square roots
+    processed = processed.replace(/\b(√[a-z0-9]+|\d+\/\d+|[a-z]\^\d+)\b/gi, function(match) {
+        return `<span class="math-inline">\\(${formatInlineEquation(match)}\\)</span>`;
+    });
+    
+    return processed;
+}
 
-    // Convert to paragraphs
-    const paragraphs = processed.split(/\n\s*\n+/).filter(p => p.trim());
-    return paragraphs.map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+function formatInlineEquation(equation) {
+    // Simpler version of formatEquation for inline expressions
+    return formatEquationContent(equation, true);
 }
 
 function formatEquation(equation) {
     if (!equation) return '';
     
     // Clean up the equation
-    let cleaned = equation
-        .replace(/^EQUATION/, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-    // Convert common math expressions to LaTeX - IMPROVED VERSION
-    cleaned = cleaned
-        // Fractions (all cases) - improved regex
-        .replace(/(\d*\.?\d+|[a-zA-Z])\s*\/\s*(\d*\.?\d+|[a-zA-Z])(?![^{]*})/g, '\\frac{$1}{$2}')
-        .replace(/(\d+)\s*per\s*(\d+)/gi, '\\frac{$1}{$2}')
-        .replace(/bagi\s+/g, '\\frac{')
-        
-        // Square roots (all variants) - improved handling
-        .replace(/√\s*([^)\s]+|\([^)]+\))/g, '\\sqrt{$1}')
-        .replace(/sqrt\s*\(([^)]+)\)/gi, '\\sqrt{$1}')
-        .replace(/akar\s+(kuadrat\s+)?dari\s+([^.\s]+)/gi, '\\sqrt{$2}')
-        
-        // Exponents - improved handling
-        .replace(/([a-zA-Z0-9)])\s*\^\s*([a-zA-Z0-9(])/g, '$1^{$2}')
-        .replace(/([a-zA-Z0-9)])\s*\^\s*(\d+)/g, '$1^{$2}')
-        .replace(/(\d+)\s*\^\s*(\d+)/g, '$1^{$2}')
-        .replace(/pangkat\s+(\d+)/g, '^{$1}')
-        
-        // Greek letters and symbols
-        .replace(/\bpi\b/g, '\\pi')
-        .replace(/\btheta\b|\bθ\b/g, '\\theta')
-        .replace(/\balpha\b|\bα\b/g, '\\alpha')
-        .replace(/\bbeta\b|\bβ\b/g, '\\beta')
-        .replace(/<=|≤/g, '\\leq')
-        .replace(/>=|≥/g, '\\geq')
-        .replace(/!=|≠/g, '\\neq')
-        .replace(/->|→/g, '\\rightarrow')
-        .replace(/=>|⇒/g, '\\Rightarrow')
-        .replace(/∞/g, '\\infty')
-        .replace(/±/g, '\\pm')
-        
-        // Functions - improved
-        .replace(/\b(sin|cos|tan|cot|sec|csc)\s*\(([^)]+)\)/g, '\\$1($2)')
-        .replace(/\b(log|ln)\s*\(([^)]+)\)/g, '\\$1($2)')
-        .replace(/\b(lim|sum|prod)\s*\(([^)]+)\)/g, '\\$1\\limits_{$2}')
-        
-        // Vectors and matrices
-        .replace(/\\vec\s*\{([^}]+)\}/g, '\\overrightarrow{$1}')
-        .replace(/\\matrix\s*\{([^}]+)\}/g, '\\begin{matrix} $1 \\end{matrix}')
-        
-        // Parentheses scaling
-        .replace(/\((.*?)\)/g, '\\left($1\\right)')
-        .replace(/\[(.*?)\]/g, '\\left[$1\\right]')
-        .replace(/\{(.*?)\}/g, '\\left\\{$1\\right\\}');
-
-    // Handle special mathematical expressions
-    cleaned = cleaned
-        // Quadratic formula
-        .replace(/x\s*=\s*\(\s*-b\s*±\s*√\(b\^2\s*-\s*4ac\)\s*\)\s*\/\s*2a/gi, 
-            'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}')
-        
-        // Binomial theorem
-        .replace(/\(a\s*\+\s*b\)\^n/gi, '(a + b)^n')
-        
-        // Euler's formula
-        .replace(/e\^\(i[θθ]\s*\)\s*=\s*cos[θθ]\s*\+\s*i\s*sin[θθ]/gi, 
-            'e^{i\\theta} = \\cos\\theta + i\\sin\\theta')
-        
-        // Summation notation
-        .replace(/Σ\s*\(([^)]+)\)/g, '\\sum\\limits_{$1}');
-
-    // Final cleanup
-    cleaned = cleaned
-        .replace(/\s+/g, ' ')
-        .replace(/(\\[a-z]+)\s*\{/g, '$1{')
-        .replace(/\}\s*\{/g, '}{')
-        .replace(/\\\s*\\/g, '\\\\');
-
+    let cleaned = equation.trim();
+    
+    // If already wrapped in LaTeX delimiters, extract content
+    if (cleaned.startsWith('$$') && cleaned.endsWith('$$')) {
+        cleaned = cleaned.substring(2, cleaned.length - 2);
+    } else if (cleaned.startsWith('$') && cleaned.endsWith('$')) {
+        cleaned = cleaned.substring(1, cleaned.length - 1);
+    } else if (cleaned.startsWith('\\(') && cleaned.endsWith('\\)')) {
+        cleaned = cleaned.substring(2, cleaned.length - 2);
+    }
+    
+    // Format the equation content
+    cleaned = formatEquationContent(cleaned, false);
+    
     // Wrap in LaTeX delimiters with displaystyle for better rendering
     return `\\(\\displaystyle ${cleaned}\\)`;
+}
+
+function formatEquationContent(equation, isInline) {
+    let cleaned = equation
+        .replace(/\s+/g, ' ')
+        .trim();
+    
+    // Convert common math expressions to LaTeX
+    cleaned = cleaned
+        // Fractions
+        .replace(/(\d*\.?\d+)\s*\/\s*(\d*\.?\d+)/g, '\\frac{$1}{$2}')
+        .replace(/([a-zA-Z])\s*\/\s*([a-zA-Z0-9])/g, '\\frac{$1}{$2}')
+        .replace(/(\d+)\s*\/\s*([a-zA-Z])/g, '\\frac{$1}{$2}')
+        
+        // Square roots
+        .replace(/√\s*(\w+|\([^)]+\))/g, '\\sqrt{$1}')
+        .replace(/sqrt\s*\(?\s*([^)]+)\s*\)?/gi, '\\sqrt{$1}')
+        .replace(/akar\s+(kuadrat\s+)?dari\s+(\w+|\([^)]+\))/gi, '\\sqrt{$2}')
+        
+        // Exponents
+        .replace(/([a-zA-Z0-9])\s*\^\s*(\d+)/g, '$1^{$2}')
+        .replace(/([a-zA-Z0-9])\s*\^\s*\{\s*([^}]+)\s*\}/g, '$1^{$2}')
+        .replace(/\(([^)]+)\)\s*\^\s*(\d+)/g, '($1)^{$2}')
+        .replace(/pangkat\s+(\d+)/g, '^{$1}')
+        
+        // Subscripts
+        .replace(/([a-zA-Z])_(\d+)/g, '$1_{$2}')
+        
+        // Greek letters
+        .replace(/\bpi\b/g, '\\pi')
+        .replace(/\balpha\b/g, '\\alpha')
+        .replace(/\bbeta\b/g, '\\beta')
+        .replace(/\bgamma\b/g, '\\gamma')
+        .replace(/\bdelta\b/g, '\\delta')
+        .replace(/\btheta\b/g, '\\theta')
+        .replace(/\bomega\b/g, '\\omega')
+        
+        // Math symbols
+        .replace(/≤|<=/g, '\\leq')
+        .replace(/≥|>=/g, '\\geq')
+        .replace(/≠|!=/g, '\\neq')
+        .replace(/±/g, '\\pm')
+        .replace(/∞/g, '\\infty')
+        .replace(/×/g, '\\times')
+        .replace(/÷/g, '\\div')
+        .replace(/\.\.\./g, '\\ldots')
+        
+        // Operators
+        .replace(/\bsum\b/g, '\\sum')
+        .replace(/\bprod\b/g, '\\prod')
+        .replace(/\bint\b/g, '\\int')
+        
+        // Functions
+        .replace(/\b(sin|cos|tan|cot|sec|csc|log|ln|lim)\b/g, '\\$1')
+        
+        // Quadratic formula (special case)
+        .replace(/x\s*=\s*\(\s*-b\s*±\s*√\(b\^2\s*-\s*4ac\)\s*\)\s*\/\s*\(2a\)/gi, 
+                'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}');
+    
+    // Clean up spacing around operators
+    cleaned = cleaned
+        .replace(/([=+\-*/])/g, ' $1 ')
+        .replace(/\s+/g, ' ')
+        .replace(/\\frac\s+\{/g, '\\frac{')
+        .replace(/\}\s+\{/g, '}{')
+        .replace(/\\sqrt\s+\{/g, '\\sqrt{');
+    
+    return cleaned;
 }
 
     // Rest of your JavaScript code remains the same
