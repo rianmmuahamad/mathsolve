@@ -53,15 +53,6 @@
     }
     .solution-content p:first-child { margin-top: 0.1rem; }
     .profile-popup { animation: slide-down 0.3s ease-out; }
-    .math-equation { 
-      display: inline-block;
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      background-color: #f8fafc;
-      border-radius: 0.375rem;
-      border-left: 3px solid #0ea5e9;
-    }
-   
   </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -184,9 +175,9 @@
         </div>
       </div>
     </div>
-  </footer> <!-- Header and other HTML remains the same until the script section -->
+  </footer>
+
   <script>
-    // Previous JavaScript code remains the same until the formatMathResponse function
     const token = new URLSearchParams(window.location.search).get('token');
     if (!token) {
       window.location.href = '/login.html';
@@ -347,6 +338,7 @@
         alert('Gagal menyalin solusi.');
       });
     });
+
     function formatMathResponse(response) {
     if (!response || response.trim() === "") {
         return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
@@ -577,8 +569,6 @@ function formatEquationContent(equation, isInline) {
     
     return cleaned;
 }
-
-    // Rest of your JavaScript code remains the same
     loadProfile();
   </script>
 </body>
