@@ -344,220 +344,166 @@
     return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
   }
 
-  // Langkah pertama: tandai bagian yang sudah dalam format LaTeX (\(...\) atau $...$)
-  // dengan placeholder untuk mengamankannya dari penggantian berikutnya
-  const latexBlocks = [];
-  let currentResponse = response.replace(/\\[\(\[].*?\\[\)\]]|\$.*?\$/g, match => {
-    latexBlocks.push(match);
-    return `###LATEX_PLACEHOLDER_${latexBlocks.length - 1}###`;
-  });
+  let currentResponse = response;
 
-  // Fungsi untuk mengganti simbol khusus secara global
-  const replaceSymbols = (text) => {
-    const symbolMap = {
-      'pi': '\\pi',
-      'theta': '\\theta',
-      'alpha': '\\alpha',
-      'beta': '\\beta',
-      'gamma': '\\gamma',
-      'delta': '\\delta',
-      'epsilon': '\\epsilon',
-      'zeta': '\\zeta',
-      'eta': '\\eta',
-      'mu': '\\mu',
-      'sigma': '\\sigma',
-      'omega': '\\omega',
-      'phi': '\\phi',
-      'lambda': '\\lambda',
-      'tau': '\\tau',
-      'infinity': '\\infty',
-      '<=': '\\leq',
-      '>=': '\\geq',
-      '!=': '\\neq',
-      '+-': '\\pm',
-      '-+': '\\mp',
-      '<<': '\\ll',
-      '>>': '\\gg',
-      'int': '\\int',
-      'sum': '\\sum',
-      'prod': '\\prod',
-      'lim': '\\lim',
-      'therefore': '\\therefore',
-      'because': '\\because',
-      '->': '\\rightarrow',
-      '<-': '\\leftarrow',
-      '<->': '\\leftrightarrow',
-      '=>': '\\Rightarrow',
-      '<=': '\\Leftarrow',
-      '<=>': '\\Leftrightarrow',
-    };
+  try {
+    // Pre-process: Protect existing LaTeX expressions
+    const protectedBlocks = [];
+    currentResponse = currentResponse.replace(/\\\((.*?)\\\)/g, (match) => {
+      protectedBlocks.push(match);
+      return `__PROTECTED_BLOCK_${protectedBlocks.length - 1}__`;
+    });
 
-    let result = text;
-    for (const [key, value] of Object.entries(symbolMap)) {
-      const regex = new RegExp(`\\b${key}\\b`, 'g');
-      result = result.replace(regex, `\\(${value}\\)`);
-    }
-    return result;
-  };
+    // Convert explicit mathematical expressions
+    // Look for patterns like "matematika: x^2 + 3x - 5 = 0" and wrap them in LaTeX
+    currentResponse = currentResponse.replace(
+      /(persamaan|rumus|formula|ekspresi|matematika):\s*([^.!?\n]+)/gi,
+      (match, prefix, expr) => `${prefix}: \\(${expr.trim()}\\)`
+    );
 
-  // Akar kuadrat, kubik, dan n-root
-  currentResponse = currentResponse.replace(
-    /\b(sqrt|cbrt)\s*\(\s*([^)]+)\s*\)/g, 
-    (match, rootType, content) => {
-      if (rootType === 'sqrt') return `\\(\\sqrt{${content}}\\)`;
-      if (rootType === 'cbrt') return `\\(\\sqrt[3]{${content}}\\)`;
-      return `\\(\\sqrt{${content}}\\)`;
-    }
-  );
+    // Process mathematical expressions
 
-  // Format nRoot yang lebih umum
-  currentResponse = currentResponse.replace(
-    /\b(nroot|root)\s*(\d+)\s*\(\s*([^)]+)\s*\)/g,
-    (match, rootType, n, content) => `\\(\\sqrt[${n}]{${content}}\\)`
-  );
+    // 1. Fractions (a/b) - safe pattern
+    currentResponse = currentResponse.replace(
+      /(\d+(?:\.\d+)?|\([^)]+\))\s*\/\s*(\d+(?:\.\d+)?|\([^)]+\))/g,
+      (match, num, denom) => `\\(\\frac{${num}}{${denom}}\\)`
+    );
 
-  // Format akar dengan tanda akar √
-  currentResponse = currentResponse.replace(
-    /√\s*\(\s*([^)]+)\s*\)/g, 
-    (match, content) => `\\(\\sqrt{${content}}\\)`
-  );
-
-  // Format akar dengan √ diikuti dengan ekspresi tanpa tanda kurung
-  currentResponse = currentResponse.replace(
-    /√\s*([^()\s]+)/g, 
-    (match, content) => `\\(\\sqrt{${content}}\\)`
-  );
-
-  // Format akar dengan notasi n√
-  currentResponse = currentResponse.replace(
-    /(\d+)√\s*\(\s*([^)]+)\s*\)/g, 
-    (match, n, content) => `\\(\\sqrt[${n}]{${content}}\\)`
-  );
-
-  // Format akar dengan notasi n√ tanpa tanda kurung
-  currentResponse = currentResponse.replace(
-    /(\d+)√\s*([^()\s]+)/g, 
-    (match, n, content) => `\\(\\sqrt[${n}]{${content}}\\)`
-  );
-
-  // Pecahan (a/b) dengan berbagai format
-  currentResponse = currentResponse.replace(
-    /(?<![\/\\\$a-zA-Z0-9])(\d+(?:\.\d+)?|\([^)]+\))\s*\/\s*(\d+(?:\.\d+)?|\([^)]+\))/g,
-    (match, num, denom) => `\\(\\frac{${num}}{${denom}}\\)`
-  );
-
-  // Pecahan dengan variabel
-  currentResponse = currentResponse.replace(
-    /(?<![\/\\\$a-zA-Z0-9])((?:[a-zA-Z][\w\*]*(?:\([^)]+\))?|\d+(?:\.\d+)?|\([^)]+\)))\s*\/\s*((?:[a-zA-Z][\w\*]*(?:\([^)]+\))?|\d+(?:\.\d+)?|\([^)]+\)))/g,
-    (match, num, denom) => `\\(\\frac{${num}}{${denom}}\\)`
-  );
-
-  // Eksponen (a^b) - berbagai format
-  currentResponse = currentResponse.replace(
-    /(\b\w+|\d+(?:\.\d+)?|\([^)]+\))\s*\^\s*\{([^}]+)\}/g,
-    (match, base, exponent) => `\\(${base}^{${exponent}}\\)`
-  );
-
-  currentResponse = currentResponse.replace(
-    /(\b\w+|\d+(?:\.\d+)?|\([^)]+\))\s*\^\s*(\d+|\w+|\([^)]+\))/g,
-    (match, base, exponent) => `\\(${base}^{${exponent}}\\)`
-  );
-
-  // Fungsi trigonometri dan lainnya
-  currentResponse = currentResponse.replace(
-    /\b(sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|sinh|cosh|tanh|log|ln)\s*\(\s*([^)]+)\s*\)/g,
-    (match, func, arg) => `\\(\\${func}\\left(${arg}\\right)\\)`
-  );
-
-  // Matriks (format general)
-  currentResponse = currentResponse.replace(
-    /\[\s*([^;]+)\s*;\s*([^;]+)(?:\s*;\s*([^;]+))?\s*\]/g,
-    (match, row1, row2, row3) => {
-      const r1 = row1.trim().split(/\s*,\s*|\s+/).join('&');
-      const r2 = row2.trim().split(/\s*,\s*|\s+/).join('&');
-      const matrixRows = [r1, r2];
-      if (row3) {
-        const r3 = row3.trim().split(/\s*,\s*|\s+/).join('&');
-        matrixRows.push(r3);
+    // 2. Exponents (a^b) - safe pattern
+    currentResponse = currentResponse.replace(
+      /([a-zA-Z\d]+|\([^)]+\))\s*\^\s*(\d+|\{[^}]+\}|\([^)]+\))/g,
+      (match, base, exp) => {
+        // If exponent is already in braces, keep it as is, otherwise add them
+        const exponent = exp.startsWith('{') ? exp : `{${exp}}`;
+        return `\\(${base}^${exponent}\\)`;
       }
-      return `\\(\\begin{pmatrix}${matrixRows.join('\\\\')}\\end{pmatrix}\\)`;
+    );
+
+    // 3. Square roots
+    currentResponse = currentResponse.replace(
+      /(?:akar|sqrt)\s*\(([^)]+)\)/gi,
+      (match, content) => `\\(\\sqrt{${content}}\\)`
+    );
+    
+    currentResponse = currentResponse.replace(
+      /akar\s+(\d+)\s+dari\s+([^.!?\n,]+)/gi,
+      (match, n, expr) => `\\(\\sqrt[${n}]{${expr.trim()}}\\)`
+    );
+
+    // 4. Common mathematical functions
+    const mathFuncs = ['sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'log', 'ln'];
+    
+    for (const func of mathFuncs) {
+      const funcRegex = new RegExp(`\\b${func}\\s*\\(([^)]+)\\)`, 'g');
+      currentResponse = currentResponse.replace(
+        funcRegex,
+        (match, arg) => `\\(\\text{${func}}\\left(${arg}\\right)\\)`
+      );
     }
-  );
 
-  // Limit notasi
-  currentResponse = currentResponse.replace(
-    /lim_\{([^}]+)\}\s*([^$\n]+)/g,
-    (match, bottom, expr) => `\\(\\lim_{${bottom}} ${expr}\\)`
-  );
+    // 5. Mathematical symbols - safe replacements
+    const symbolReplacements = [
+      { pattern: /\bpi\b/gi, replacement: '\\(\\pi\\)' },
+      { pattern: /\btheta\b/gi, replacement: '\\(\\theta\\)' },
+      { pattern: /\balpha\b/gi, replacement: '\\(\\alpha\\)' },
+      { pattern: /\bbeta\b/gi, replacement: '\\(\\beta\\)' },
+      { pattern: /\binfinity\b/gi, replacement: '\\(\\infty\\)' },
+      { pattern: /<=/g, replacement: '\\(\\leq\\)' },
+      { pattern: />=/g, replacement: '\\(\\geq\\)' },
+      { pattern: /!=/g, replacement: '\\(\\neq\\)' }
+    ];
 
-  // Integral notasi
-  currentResponse = currentResponse.replace(
-    /int_\{([^}]+)\}\^\{([^}]+)\}\s*([^$\n]+)\s*d([a-zA-Z])/g,
-    (match, bottom, top, expr, variable) => `\\(\\int_{${bottom}}^{${top}} ${expr}\\,d${variable}\\)`
-  );
-
-  // Penjumlahan (sigma) notasi
-  currentResponse = currentResponse.replace(
-    /sum_\{([^}]+)\}\^\{([^}]+)\}\s*([^$\n]+)/g,
-    (match, bottom, top, expr) => `\\(\\sum_{${bottom}}^{${top}} ${expr}\\)`
-  );
-
-  // Produk (pi) notasi
-  currentResponse = currentResponse.replace(
-    /prod_\{([^}]+)\}\^\{([^}]+)\}\s*([^$\n]+)/g,
-    (match, bottom, top, expr) => `\\(\\prod_{${bottom}}^{${top}} ${expr}\\)`
-  );
-
-  // Tambahkan simbol khusus
-  currentResponse = replaceSymbols(currentResponse);
-
-  // Kembalikan placeholder LaTeX ke bentuk aslinya
-  currentResponse = currentResponse.replace(/###LATEX_PLACEHOLDER_(\d+)###/g, (match, index) => latexBlocks[parseInt(index)]);
-
-  // Konversi Markdown
-  currentResponse = currentResponse.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  currentResponse = currentResponse.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-  // Format blok teks
-  function formatBlockToHtml(textBlock) {
-    if (!textBlock || textBlock.trim() === "") return "";
-    const paragraphs = textBlock.trim().split(/\n\s*\n+/);
-    return paragraphs
-      .map(para => {
-        if (para.trim() === "") return "";
-        const lines = para.split('\n').map(line => line.trim()).filter(line => line).join('<br>');
-        return `<p>${lines}</p>`;
-      })
-      .join('');
-  }
-
-  // Pisahkan langkah-langkah
-  const sections = currentResponse.split(/\bStep\s+/i);
-  let htmlOutput = '';
-
-  // Pendahuluan
-  if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
-    htmlOutput += formatBlockToHtml(sections[0]);
-  }
-
-  // Langkah-langkah
-  if (sections.length > 1) {
-    for (let i = 1; i < sections.length; i++) {
-      let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
-      if (stepText === "") continue;
-      htmlOutput += `
-        <div class="solution-step mb-5">
-          <div class="flex items-start">
-            <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
-            <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
-          </div>
-        </div>`;
+    for (const { pattern, replacement } of symbolReplacements) {
+      currentResponse = currentResponse.replace(pattern, replacement);
     }
-  } else if (htmlOutput.trim() === "" && response.trim() !== "") {
-    htmlOutput = formatBlockToHtml(response);
-  }
 
-  return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
+    // 6. Simple matrices
+    currentResponse = currentResponse.replace(
+      /\[\s*([^;\]]+)\s*;\s*([^;\]]+)\s*\]/g,
+      (match, row1, row2) => {
+        const r1 = row1.trim().split(/\s*,\s*|\s+/).join('&');
+        const r2 = row2.trim().split(/\s*,\s*|\s+/).join('&');
+        return `\\(\\begin{pmatrix}${r1}\\\\${r2}\\end{pmatrix}\\)`;
+      }
+    );
+
+    // 7. Integrals
+    currentResponse = currentResponse.replace(
+      /integral\s+dari\s+([^.!?\n]+?)\s+(?:terhadap|d)([xyz])/gi,
+      (match, expr, variable) => `\\(\\int ${expr.trim()}\\,d${variable}\\)`
+    );
+
+    // 8. Derivatives
+    currentResponse = currentResponse.replace(
+      /turunan\s+dari\s+([^.!?\n]+?)\s+(?:terhadap|d)([xyz])/gi,
+      (match, expr, variable) => `\\(\\frac{d}{d${variable}}\\left[${expr.trim()}\\right]\\)`
+    );
+
+    // Restore protected blocks
+    protectedBlocks.forEach((block, index) => {
+      currentResponse = currentResponse.replace(`__PROTECTED_BLOCK_${index}__`, block);
+    });
+
+    // Format text styling (bold, italic)
+    currentResponse = currentResponse.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    currentResponse = currentResponse.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+    // Format paragraphs
+    function formatBlockToHtml(textBlock) {
+      if (!textBlock || textBlock.trim() === "") return "";
+      
+      // Split text into paragraphs by blank lines
+      const paragraphs = textBlock.trim().split(/\n\s*\n+/);
+      
+      return paragraphs
+        .map(para => {
+          if (para.trim() === "") return "";
+          
+          // Process lines in each paragraph
+          const lines = para.split('\n')
+            .map(line => line.trim())
+            .filter(line => line)
+            .join('<br>');
+          
+          return `<p>${lines}</p>`;
+        })
+        .join('');
+    }
+
+    // Look for step-by-step solution format - safe pattern
+    const sections = currentResponse.split(/(?:Step|Langkah)\s+/i);
+    let htmlOutput = '';
+
+    // Process introduction if exists
+    if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
+      htmlOutput += formatBlockToHtml(sections[0]);
+    }
+
+    // Process steps
+    if (sections.length > 1) {
+      for (let i = 1; i < sections.length; i++) {
+        let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
+        if (stepText === "") continue;
+        htmlOutput += `
+          <div class="solution-step mb-5">
+            <div class="flex items-start">
+              <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
+              <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
+            </div>
+          </div>`;
+      }
+    } else if (htmlOutput.trim() === "" && response.trim() !== "") {
+      // If no steps found, format as regular content
+      htmlOutput = formatBlockToHtml(response);
+    }
+
+    return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
+
+  } catch (error) {
+    console.error('Error in formatMathResponse:', error);
+    // Fallback: return simple formatted text
+    return `<p>${response.replace(/\n/g, '<br>')}</p>`;
+  }
 }
     loadProfile();
   </script>
