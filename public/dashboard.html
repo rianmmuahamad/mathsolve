@@ -9,32 +9,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script>
-    // MathJax Configuration
-    window.MathJax = {
-      tex: {
-        inlineMath: [['\\(', '\\)']],
-        displayMath: [['\\[', '\\]']],
-        processEscapes: true,
-        processEnvironments: true,
-        tags: 'ams',
-      },
-      chtml: {
-        scale: 1.0,
-        linebreaks: { automatic: true },
-      },
-      options: {
-        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
-        ignoreHtmlClass: 'tex2jax_ignore',
-      },
-      startup: {
-        ready: () => {
-          MathJax.startup.defaultReady();
-          // Ensure MathJax is fully loaded before any rendering
-          window.MathJaxReady = true;
-        }
-      }
-    };
-
     tailwind.config = {
       theme: {
         extend: {
@@ -239,6 +213,7 @@
       popup.classList.toggle('hidden');
     }
 
+    // Close popup when clicking outside
     document.addEventListener('click', (e) => {
       const profile = document.getElementById('profile');
       const popup = document.getElementById('profilePopup');
@@ -338,18 +313,8 @@
         document.getElementById('responseText').innerHTML = formatMathResponse(data.response);
         document.getElementById('response').classList.remove('hidden');
 
-        // Use MathJax.typeset() instead of typesetPromise
-        if (window.MathJax && window.MathJaxReady) {
-          MathJax.typeset([document.getElementById('responseText')]);
-        } else {
-          console.warn('MathJax not ready yet. Retrying in 100ms...');
-          setTimeout(() => {
-            if (window.MathJax && window.MathJaxReady) {
-              MathJax.typeset([document.getElementById('responseText')]);
-            } else {
-              console.error('MathJax failed to initialize.');
-            }
-          }, 100);
+        if (window.MathJax) {
+          MathJax.typesetPromise([document.getElementById('responseText')]).catch(err => console.error('MathJax error:', err));
         }
       } catch (err) {
         document.getElementById('emptyState').classList.remove('hidden');
@@ -374,27 +339,6 @@
       });
     });
 
-    // Helper function to calculate GCD for fraction simplification
-    function gcd(a, b) {
-      a = Math.abs(a);
-      b = Math.abs(b);
-      while (b) {
-        let temp = b;
-        b = a % b;
-        a = temp;
-      }
-      return a;
-    }
-
-    // Helper function to simplify fractions
-    function simplifyFraction(numerator, denominator) {
-      const divisor = gcd(numerator, denominator);
-      return {
-        num: numerator / divisor,
-        den: denominator / divisor
-      };
-    }
-
     function formatMathResponse(response) {
       if (!response || response.trim() === "") {
         return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
@@ -402,169 +346,163 @@
 
       let currentResponse = response;
 
-      // 1. Preprocess existing LaTeX fractions (e.g., \[\frac{18}{28}\])
+      // PERHATIAN: Konversi ke LaTeX di sini bersifat heuristik dan mungkin memerlukan penyesuaian
+      // lebih lanjut tergantung kompleksitas output dari backend.
+      // Urutan replace dan kecocokan regex sangat penting.
+
+      // 1. Konversi ekspresi matematika ke LaTeX
+      // Pecahan (a/b)
+      // Regex ini mencoba menghindari pemrosesan ulang jika string sudah mengandung LaTeX.
       currentResponse = currentResponse.replace(
-        /\\\[\\frac\{(\d+)\}\{(\d+)\}\\\]/g,
+        /(?<![\$\\])(?<!\\frac\{)(?<!\\begin\{pmatrix\})(?<!\^\{)(\b[a-zA-Z0-9\.\(\)]+|\([^)]+\))\s*\/\s*([a-zA-Z0-9\.\(\)]+|\([^)]+\))\b(?![\}\s]*\^)(?!.*;)(?!.*\\end\{pmatrix\})/g,
         (match, num, denom) => {
-          const { num: simplifiedNum, den: simplifiedDen } = simplifyFraction(parseInt(num), parseInt(denom));
-          return `\\(\\frac{${simplifiedNum}}{${simplifiedDen}}\\)`;
+            // Hindari membungkus ulang jika num atau denom sudah merupakan ekspresi LaTeX sederhana dari aturan lain (misal simbol)
+            const cleanNum = num.replace(/^\\\\\((.*)\\\\\)$/, '$1');
+            const cleanDenom = denom.replace(/^\\\\\((.*)\\\\\)$/, '$1');
+            return `\\(\\frac{${cleanNum}}{${cleanDenom}}\\)`
         }
       );
-
-      // 2. Convert fractions not already in LaTeX (e.g., 18/28)
+      
+      // Eksponen (a^b)
+      // Regex ini mencoba untuk menangani basis yang mungkin sudah merupakan LaTeX sederhana atau dalam kurung.
       currentResponse = currentResponse.replace(
-        /(?<![\$\\])(?<!\^\{)([\w\d\(\)\+\-\*\/\.]+)\s*\/\s*([\w\d\(\)\+\-\*\/\.]+)\b(?![\}\s]*\^)/g,
-        (match, num, denom) => {
-          if (num.match(/http/) || denom.match(/http/)) return match; // Skip URLs
-          const numVal = parseFloat(num);
-          const denomVal = parseFloat(denom);
-          if (!isNaN(numVal) && !isNaN(denomVal) && denomVal !== 0) {
-            const { num: simplifiedNum, den: simplifiedDen } = simplifyFraction(numVal, denomVal);
-            return `\\(\\frac{${simplifiedNum}}{${simplifiedDen}}\\)`;
-          }
-          return `\\(\\frac{${num.trim()}}{${denom.trim()}}\\)`;
-        }
-      );
-
-      // 3. Convert exponents (e.g., a^b)
-      currentResponse = currentResponse.replace(
-        /([\w\d\(\)\|\+\-\*\/\.]+)\s*\^\s*([\w\d\(\)\{\}\+\-\*\/\.]+)/g,
+        /(\\(?:[a-zA-Z]+(?:\{[^}]*\})?|[^\s(){}])|\b[a-zA-Z][\w%]*\b|\b\d+(?:\.\d+)?%?\b|\([^)]+\)|\|[^|]+\|)\s*\^\s*([\w\d.\{\}\+\-\*\/]+%?)/g,
         (match, base, exponent) => {
-          const cleanedBase = base.trim();
-          const cleanedExponent = exponent.startsWith('{') && exponent.endsWith('}') ? exponent : `{${exponent.trim()}}`;
-          return `\\(${cleanedBase}^${cleanedExponent}\\)`;
+          let cleanBase = base;
+          // Jika basis adalah ekspresi dalam kurung yang berisi LaTeX dari aturan sebelumnya,
+          // misal (\\frac{a}{b}), kita ingin menjadi (\frac{a}{b}) sebagai basis.
+          if (base.startsWith("(") && base.endsWith(")")) {
+            const contentInParen = base.substring(1, base.length - 1);
+            if (contentInParen.startsWith("\\(") && contentInParen.endsWith("\\)")) {
+              // Mengambil konten LaTeX mentah dan tetap membungkusnya dengan kurung untuk presedensi
+              cleanBase = `(${contentInParen.substring(2, contentInParen.length - 2)})`;
+            }
+          } else if (base.startsWith("\\(") && base.endsWith("\\)")) {
+            // Jika basis itu sendiri adalah hasil LaTeX sebelumnya, gunakan kontennya.
+            cleanBase = base.substring(2, base.length - 2);
+          }
+          
+          const cleanedExponent = exponent.startsWith('{') && exponent.endsWith('}') ? exponent : `{${exponent}}`;
+          return `\\(${cleanBase}^${cleanedExponent}\\)`;
         }
       );
 
-      // 4. Convert roots (e.g., sqrt[x], cbrt[x])
+      // Akar (sqrt, cbrt, dll.)
       currentResponse = currentResponse.replace(
-        /\b(sqrt|cbrt|root\s*\(\s*(\d+)\s*\))\s*\[([^\]]+)\]/g,
-        (match, rootType, n, content) => {
-          if (rootType === 'sqrt') return `\\(\\sqrt{${content.trim()}}\\)`;
-          if (rootType === 'cbrt') return `\\(\\sqrt[3]{${content.trim()}}\\)`;
-          return `\\(\\sqrt[${n}]{${content.trim()}}\\)`;
+        /\b(sqrt|cbrt|nrt)\s*\[([^\]]+)\]/g,
+        (match, rootType, content) => {
+          const cleanContent = content.replace(/^\\\\\((.*)\\\\\)$/, '$1');
+          if (rootType === 'sqrt') return `\\(\\sqrt{${cleanContent}}\\)`
+          if (rootType === 'cbrt') return `\\(\\sqrt[3]{${cleanContent}}\\)`
+          // Untuk 'nrt', ini akan menghasilkan \sqrt[nrt]{...}, yang mungkin tidak standar
+          // kecuali 'nrt' adalah variabel yang didefinisikan.
+          return `\\(\\sqrt[${rootType}]{${cleanContent}}\\)`
         }
       );
 
-      // 5. Convert mathematical functions (e.g., sin(x), log(x))
-      const mathFunctions = [
-        'sin', 'cos', 'tan', 'cot', 'sec', 'csc',
-        'arcsin', 'arccos', 'arctan', 'arccot', 'arcsec', 'arccsc',
-        'log', 'ln', 'exp'
-      ];
-      const funcRegex = new RegExp(`\\b(${mathFunctions.join('|')})\\s*\\(([^)]+)\\)`, 'g');
+      // Fungsi trigonometri
       currentResponse = currentResponse.replace(
-        funcRegex,
-        (match, func, arg) => `\\(\\${func}\\left(${arg.trim()}\\right)\\)`
+        /\b(sin|cos|tan|cot|sec|csc)\s*\(([^)]+)\)/g,
+        (match, func, arg) => {
+            const cleanArg = arg.replace(/^\\\\\((.*)\\\\\)$/, '$1');
+            return `\\(${func}\\left(${cleanArg}\\right)\\)`
+        }
       );
 
-      // 6. Convert special symbols
+      // Simbol khusus
       const symbolMap = {
-        'pi': '\\pi',
-        'theta': '\\theta',
-        'alpha': '\\alpha',
-        'beta': '\\beta',
-        'gamma': '\\gamma',
-        'delta': '\\delta',
-        'phi': '\\phi',
-        'infinity': '\\infty',
-        '<=': '\\leq',
-        '>=': '\\geq',
-        '!=': '\\neq',
-        'approx': '\\approx',
-        'pm': '\\pm',
-        'times': '\\times',
-        'div': '\\div'
+        'pi': '\\pi', 'theta': '\\theta', 'alpha': '\\alpha',
+        'beta': '\\beta', 'gamma': '\\gamma', 'delta': '\\delta',
+        'epsilon': '\\epsilon', 'zeta': '\\zeta', 'eta': '\\eta',
+        'iota': '\\iota', 'kappa': '\\kappa', 'lambda': '\\lambda',
+        'mu': '\\mu', 'nu': '\\nu', 'xi': '\\xi',
+        'omicron': '\\omicron', 'rho': '\\rho', 'sigma': '\\sigma',
+        'tau': '\\tau', 'upsilon': '\\upsilon', 'phi': '\\phi',
+        'chi': '\\chi', 'psi': '\\psi', 'omega': '\\omega',
+        'infinity': '\\infty', '<=': '\\leq', '>=': '\\geq',
+        '!=': '\\neq', '->': '\\rightarrow', '<->': '\\leftrightarrow',
+        'sum': '\\sum', 'prod': '\\prod', 'integral': '\\int'
+        // Tambahkan simbol lain jika perlu
       };
       for (const [key, value] of Object.entries(symbolMap)) {
+        // Menggunakan lookarounds untuk memastikan tidak mengganti bagian dari kata lain atau URL
         currentResponse = currentResponse.replace(
-          new RegExp(`\\b${key}\\b`, 'g'),
+          new RegExp(`(?<![a-zA-Z0-9])(${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})(?![a-zA-Z0-9])`, 'g'),
           `\\(${value}\\)`
         );
       }
-
-      // 7. Convert matrices
+      
+      // Matriks - diubah untuk menggunakan $$...$$ untuk display mode
       currentResponse = currentResponse.replace(
-        /\[\s*([^\]]*?)\s*\]/g,
+        /\[\s*([^;]+)\s*;\s*([^;]+)\s*\]/g, // Ini hanya contoh untuk matriks 2xN. Perlu diperluas jika format backend berbeda.
+        (match, row1, row2) => {
+          const r1 = row1.trim().split(/\s+/).join(' & ');
+          const r2 = row2.trim().split(/\s+/).join(' & ');
+          return `$$\\begin{pmatrix}${r1}\\\\\n${r2}\\end{pmatrix}$$`; // Menggunakan $$ untuk display
+        }
+      );
+       // Matriks dengan lebih banyak baris, misal: [r1_1 r1_2 ; r2_1 r2_2 ; r3_1 r3_2]
+      currentResponse = currentResponse.replace(
+        /\[\s*([^;\]]+(?:;[^;\]]+)*)\s*\]/g,
         (match, content) => {
-          const rows = content.split(';').map(row => row.trim()).filter(row => row);
-          if (rows.length < 1) return match;
-          const matrixRows = rows.map(row => {
-            const elements = row.split(/\s+/).filter(el => el).join('&');
-            return elements;
-          }).join('\\\\');
-          return `\\(\\begin{pmatrix}${matrixRows}\\end{pmatrix}\\)`;
+            const rows = content.split(';')
+                .map(row => row.trim().split(/\s+/).join(' & '))
+                .join('\\\\\n');
+            if (rows.includes('&')) { // Hanya jika ada elemen kolom (mengandung &)
+                 return `$$\\begin{pmatrix}\n${rows}\n\\end{pmatrix}$$`;
+            }
+            return match; // Kembalikan seperti semula jika tidak terlihat seperti matriks yang dimaksud
         }
       );
 
-      // 8. Convert multi-line equations with align
-      currentResponse = currentResponse.replace(
-        /([^=]+)\s*=\s*([^=\n]+(?:\s*=\s*[^=\n]+)*)/g,
-        (match, left, right) => {
-          const equations = right.split(/\s*=\s*/).map(eq => eq.trim());
-          if (equations.length > 1) {
-            const aligned = [left.trim(), ...equations].map((eq, i) => {
-              return i === 0 ? `${eq} &=` : `&=${eq}`;
-            }).join('\\\\');
-            return `\\[\\begin{aligned}${aligned}\\end{aligned}\\]`;
-          }
-          return `\\(${left.trim()}=${right.trim()}\\)`;
-        }
-      );
 
-      // 9. Convert Markdown
+      // 2. Konversi Markdown (sederhana)
       currentResponse = currentResponse.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
       currentResponse = currentResponse.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
-      // 10. Format text blocks
+      // 3. Format blok teks menjadi HTML
       function formatBlockToHtml(textBlock) {
         if (!textBlock || textBlock.trim() === "") return "";
+        // Pisahkan berdasarkan dua atau lebih newline untuk paragraf
         const paragraphs = textBlock.trim().split(/\n\s*\n+/);
         return paragraphs
           .map(para => {
             if (para.trim() === "") return "";
-            const lines = para.split('\n').map(line => line.trim()).filter(line => line).join('<br>');
+            // Ganti newline tunggal dengan <br>, kecuali jika sudah di dalam $$...$$
+            let lines = para.replace(/(?<!\$\$)\n(?!\$\$)/g, '<br>');
             return `<p>${lines}</p>`;
           })
-          .filter(p => p)
           .join('');
       }
 
-      // 11. Split into steps (e.g., Langkah 1:)
-      const sections = currentResponse.split(/(Langkah\s+\d+[:.]?)\s*/i);
+      // 4. Pisahkan langkah-langkah
+      const sections = currentResponse.split(/\bStep\s+/i);
       let htmlOutput = '';
 
-      // Handle introduction (before steps)
-      if (sections.length > 0 && sections[0].trim() !== "") {
+      // Pendahuluan (teks sebelum "Step 1")
+      if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
         htmlOutput += formatBlockToHtml(sections[0]);
       }
 
-      // Handle steps
-      for (let i = 1; i < sections.length; i += 2) {
-        const stepLabel = sections[i]; // e.g., "Langkah 1:"
-        let stepText = sections[i + 1] ? sections[i + 1].trim() : '';
-        if (stepText === "") continue;
-        const stepNumber = stepLabel.match(/\d+/) ? stepLabel.match(/\d+/)[0] : (i + 1) / 2;
-        htmlOutput += `
-          <div class="solution-step mb-5">
-            <div class="flex items-start">
-              <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${stepNumber}.</div>
-              <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
-            </div>
-          </div>`;
+      // Langkah-langkah
+      if (sections.length > 1) {
+        for (let i = 1; i < sections.length; i++) {
+          let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim(); // Hapus "1.", "2:", dll.
+          if (stepText === "") continue;
+          htmlOutput += `
+            <div class="solution-step mb-5">
+              <div class="flex items-start">
+                <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
+                <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
+              </div>
+            </div>`;
+        }
+      } else if (htmlOutput.trim() === "" && response.trim() !== "") {
+        // Jika tidak ada "Step" yang ditemukan, format seluruh respons yang sudah ditransformasi
+        htmlOutput = formatBlockToHtml(currentResponse); // Menggunakan currentResponse yang sudah diolah
       }
 
-      // Fallback if no steps are found
-      if (!htmlOutput || htmlOutput.trim() === "") {
-        htmlOutput = formatBlockToHtml(currentResponse);
-      }
-
-      // Final fallback for failed LaTeX
-      if (!htmlOutput || htmlOutput.trim() === "") {
-        htmlOutput = `<p class="text-gray-500">${response.replace(/</g, '<').replace(/>/g, '>')}</p>`;
-      }
-
-      return htmlOutput;
+      return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
     }
 
     loadProfile();
