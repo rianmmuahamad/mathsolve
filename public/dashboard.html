@@ -27,6 +27,8 @@
       word-break: break-word;
       overflow-wrap: break-word;
       white-space: normal;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-solution h2 {
@@ -46,6 +48,7 @@
     .math-solution p {
       margin-bottom: 1rem;
       word-break: break-word;
+      overflow-wrap: break-word;
     }
 
     .math-solution strong {
@@ -62,6 +65,7 @@
       padding-left: 2rem;
       margin-bottom: 1.5rem;
       word-break: break-word;
+      overflow-wrap: break-word;
     }
 
     .solution-step .step-number {
@@ -92,6 +96,8 @@
       border-radius: 0.375rem;
       font-family: 'Times New Roman', serif;
       word-break: break-word;
+      overflow-wrap: break-word;
+      max-width: 100%;
     }
 
     .math-section {
@@ -144,14 +150,33 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
-    /* Updated MathJax styling to prevent overflow without scrollbar */
-    .MathJax {
+    /* Enhanced MathJax and Solution Text Styling */
+    .MathJax, .MathJax_Display {
       display: inline-flex !important;
       flex-wrap: wrap !important;
       max-width: 100% !important;
       white-space: normal !important;
       overflow-wrap: break-word !important;
       word-break: break-word !important;
+      overflow-x: hidden !important;
+      box-sizing: border-box;
+    }
+
+    .solution-text-container {
+      max-width: 100%;
+      overflow-x: hidden;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+
+    /* Ensure MathJax equations wrap in narrow containers */
+    @media (max-width: 768px) {
+      .MathJax, .MathJax_Display {
+        font-size: 0.9em !important;
+      }
+      .math-solution p {
+        font-size: 0.95em;
+      }
     }
   </style>
 </head>
@@ -273,12 +298,12 @@
                 <h3 class="font-medium text-gray-800">Detail Solusi</h3>
                 <button id="copySolution" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 a 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                   </svg>
                   Salin
                 </button>
               </div>
-              <div id="solutionText" class="prose max-w-none word-break"></div>
+              <div id="solutionText" class="prose max-w-none solution-text-container"></div>
             </div>
           </div>
         </div>
