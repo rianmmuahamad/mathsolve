@@ -178,21 +178,6 @@
   </footer>
 
   <script>
-    // Configure MathJax
-    window.MathJax = {
-      tex: {
-        inlineMath: [['\\(', '\\)']],
-        displayMath: [['\\[', '\\]']],
-        processEscapes: true,
-        processEnvironments: true
-      },
-      options: {
-        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
-        ignoreHtmlClass: 'tex2jax_ignore',
-        processHtmlClass: 'tex2jax_process'
-      }
-    };
-
     const token = new URLSearchParams(window.location.search).get('token');
     if (!token) {
       window.location.href = '/login.html';
@@ -361,123 +346,148 @@
 
       let currentResponse = response;
 
-      // 1. Enhanced LaTeX conversion for mathematical expressions
-      // Fractions (e.g., a/b, (a+b)/c)
-      currentResponse = currentResponse.replace(
-        /(?<![\$\\])(?:(\([^)]+\)|\d+(?:\.\d+)?|\w)\s*\/\s*(\([^)]+\)|\d+(?:\.\d+)?|\w))\b(?![\}\s]*\^)/g,
-        (match, num, denom) => `\\(\\frac{${num}}{${denom}}\\)`
-      );
+      // PERHATIAN: Konversi ke LaTeX di sini bersifat heuristik dan mungkin memerlukan penyesuaian
+      // lebih lanjut tergantung kompleksitas output dari backend.
+      // Urutan replace dan kecocokan regex sangat penting.
 
-      // Exponents (e.g., a^b, x^2, (x+1)^n)
+      // 1. Konversi ekspresi matematika ke LaTeX
+      // Pecahan (a/b)
+      // Regex ini mencoba menghindari pemrosesan ulang jika string sudah mengandung LaTeX.
       currentResponse = currentResponse.replace(
-        /(?<![\$\\])(?:(\([^)]+\)|\b[\w\d]+(?:\.\d+)?%?)\s*\^\s*([\w\d.\{\}\+\-\*\/]+%?))\b/g,
+        /(?<![\$\\])(?<!\\frac\{)(?<!\\begin\{pmatrix\})(?<!\^\{)(\b[a-zA-Z0-9\.\(\)]+|\([^)]+\))\s*\/\s*([a-zA-Z0-9\.\(\)]+|\([^)]+\))\b(?![\}\s]*\^)(?!.*;)(?!.*\\end\{pmatrix\})/g,
+        (match, num, denom) => {
+            // Hindari membungkus ulang jika num atau denom sudah merupakan ekspresi LaTeX sederhana dari aturan lain (misal simbol)
+            const cleanNum = num.replace(/^\\\\\((.*)\\\\\)$/, '$1');
+            const cleanDenom = denom.replace(/^\\\\\((.*)\\\\\)$/, '$1');
+            return `\\(\\frac{${cleanNum}}{${cleanDenom}}\\)`
+        }
+      );
+      
+      // Eksponen (a^b)
+      // Regex ini mencoba untuk menangani basis yang mungkin sudah merupakan LaTeX sederhana atau dalam kurung.
+      currentResponse = currentResponse.replace(
+        /(\\(?:[a-zA-Z]+(?:\{[^}]*\})?|[^\s(){}])|\b[a-zA-Z][\w%]*\b|\b\d+(?:\.\d+)?%?\b|\([^)]+\)|\|[^|]+\|)\s*\^\s*([\w\d.\{\}\+\-\*\/]+%?)/g,
         (match, base, exponent) => {
+          let cleanBase = base;
+          // Jika basis adalah ekspresi dalam kurung yang berisi LaTeX dari aturan sebelumnya,
+          // misal (\\frac{a}{b}), kita ingin menjadi (\frac{a}{b}) sebagai basis.
+          if (base.startsWith("(") && base.endsWith(")")) {
+            const contentInParen = base.substring(1, base.length - 1);
+            if (contentInParen.startsWith("\\(") && contentInParen.endsWith("\\)")) {
+              // Mengambil konten LaTeX mentah dan tetap membungkusnya dengan kurung untuk presedensi
+              cleanBase = `(${contentInParen.substring(2, contentInParen.length - 2)})`;
+            }
+          } else if (base.startsWith("\\(") && base.endsWith("\\)")) {
+            // Jika basis itu sendiri adalah hasil LaTeX sebelumnya, gunakan kontennya.
+            cleanBase = base.substring(2, base.length - 2);
+          }
+          
           const cleanedExponent = exponent.startsWith('{') && exponent.endsWith('}') ? exponent : `{${exponent}}`;
-          return `\\(${base}^${cleanedExponent}\\)`;
+          return `\\(${cleanBase}^${cleanedExponent}\\)`;
         }
       );
 
-      // Square roots and nth roots (e.g., sqrt(x), sqrt[3]{x})
+      // Akar (sqrt, cbrt, dll.)
       currentResponse = currentResponse.replace(
-        /\b(sqrt|nrt|cbrt)\s*(?:\[([^\]]+)\])?\s*\{([^\}]+)\}/g,
-        (match, rootType, n, content) => {
-          if (rootType === 'sqrt' && !n) return `\\(\\sqrt{${content}}\\)`;
-          if (rootType === 'cbrt') return `\\(\\sqrt[3]{${content}}\\)`;
-          return `\\(\\sqrt[${n || rootType}]{${content}}\\)`;
+        /\b(sqrt|cbrt|nrt)\s*\[([^\]]+)\]/g,
+        (match, rootType, content) => {
+          const cleanContent = content.replace(/^\\\\\((.*)\\\\\)$/, '$1');
+          if (rootType === 'sqrt') return `\\(\\sqrt{${cleanContent}}\\)`
+          if (rootType === 'cbrt') return `\\(\\sqrt[3]{${cleanContent}}\\)`
+          // Untuk 'nrt', ini akan menghasilkan \sqrt[nrt]{...}, yang mungkin tidak standar
+          // kecuali 'nrt' adalah variabel yang didefinisikan.
+          return `\\(\\sqrt[${rootType}]{${cleanContent}}\\)`
         }
       );
 
-      // Trigonometric functions (e.g., sin(x), cos(2x))
+      // Fungsi trigonometri
       currentResponse = currentResponse.replace(
         /\b(sin|cos|tan|cot|sec|csc)\s*\(([^)]+)\)/g,
-        (match, func, arg) => `\\(${func}\\left(${arg}\\right)\\)`
-      );
-
-      // Logarithms (e.g., log(x), ln(x), log_b(x))
-      currentResponse = currentResponse.replace(
-        /\b(log|ln)\s*\(([^)]+)\)/g,
-        (match, func, arg) => `\\(${func}\\left(${arg}\\right)\\)`
-      );
-      currentResponse = currentResponse.replace(
-        /\blog_(\w+)\s*\(([^)]+)\)/g,
-        (match, base, arg) => `\\(\\log_{${base}}\\left(${arg}\\right)\\)`
-      );
-
-      // Equations (e.g., x = y, x <= y)
-      currentResponse = currentResponse.replace(
-        /\b([\w\d\s\+\-\*\/\(\)]+)\s*(=|\<=|\>=|\!=)\s*([\w\d\s\+\-\*\/\(\)]+)\b/g,
-        (match, left, op, right) => {
-          const opMap = { '=': '=', '<=': '\\leq', '>=': '\\geq', '!=': '\\neq' };
-          return `\\(${left} ${opMap[op]} ${right}\\)`;
+        (match, func, arg) => {
+            const cleanArg = arg.replace(/^\\\\\((.*)\\\\\)$/, '$1');
+            return `\\(${func}\\left(${cleanArg}\\right)\\)`
         }
       );
 
-      // Special symbols
+      // Simbol khusus
       const symbolMap = {
-        'pi': '\\pi',
-        'theta': '\\theta',
-        'alpha': '\\alpha',
-        'beta': '\\beta',
-        'gamma': '\\gamma',
-        'delta': '\\delta',
-        'infinity': '\\infty',
-        'approx': '\\approx',
-        'pm': '\\pm'
+        'pi': '\\pi', 'theta': '\\theta', 'alpha': '\\alpha',
+        'beta': '\\beta', 'gamma': '\\gamma', 'delta': '\\delta',
+        'epsilon': '\\epsilon', 'zeta': '\\zeta', 'eta': '\\eta',
+        'iota': '\\iota', 'kappa': '\\kappa', 'lambda': '\\lambda',
+        'mu': '\\mu', 'nu': '\\nu', 'xi': '\\xi',
+        'omicron': '\\omicron', 'rho': '\\rho', 'sigma': '\\sigma',
+        'tau': '\\tau', 'upsilon': '\\upsilon', 'phi': '\\phi',
+        'chi': '\\chi', 'psi': '\\psi', 'omega': '\\omega',
+        'infinity': '\\infty', '<=': '\\leq', '>=': '\\geq',
+        '!=': '\\neq', '->': '\\rightarrow', '<->': '\\leftrightarrow',
+        'sum': '\\sum', 'prod': '\\prod', 'integral': '\\int'
+        // Tambahkan simbol lain jika perlu
       };
       for (const [key, value] of Object.entries(symbolMap)) {
+        // Menggunakan lookarounds untuk memastikan tidak mengganti bagian dari kata lain atau URL
         currentResponse = currentResponse.replace(
-          new RegExp(`\\b${key}\\b`, 'g'),
+          new RegExp(`(?<![a-zA-Z0-9])(${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})(?![a-zA-Z0-9])`, 'g'),
           `\\(${value}\\)`
         );
       }
-
-      // Matrices (e.g., [a b; c d])
+      
+      // Matriks - diubah untuk menggunakan $$...$$ untuk display mode
       currentResponse = currentResponse.replace(
-        /\[\s*([^;]+)\s*;\s*([^;]+)\s*\]/g,
+        /\[\s*([^;]+)\s*;\s*([^;]+)\s*\]/g, // Ini hanya contoh untuk matriks 2xN. Perlu diperluas jika format backend berbeda.
         (match, row1, row2) => {
-          const r1 = row1.trim().split(/\s+/).join('&');
-          const r2 = row2.trim().split(/\s+/).join('&');
-          return `\\(\\begin{pmatrix}${r1}\\\\${r2}\\end{pmatrix}\\)`;
+          const r1 = row1.trim().split(/\s+/).join(' & ');
+          const r2 = row2.trim().split(/\s+/).join(' & ');
+          return `$$\\begin{pmatrix}${r1}\\\\\n${r2}\\end{pmatrix}$$`; // Menggunakan $$ untuk display
+        }
+      );
+       // Matriks dengan lebih banyak baris, misal: [r1_1 r1_2 ; r2_1 r2_2 ; r3_1 r3_2]
+      currentResponse = currentResponse.replace(
+        /\[\s*([^;\]]+(?:;[^;\]]+)*)\s*\]/g,
+        (match, content) => {
+            const rows = content.split(';')
+                .map(row => row.trim().split(/\s+/).join(' & '))
+                .join('\\\\\n');
+            if (rows.includes('&')) { // Hanya jika ada elemen kolom (mengandung &)
+                 return `$$\\begin{pmatrix}\n${rows}\n\\end{pmatrix}$$`;
+            }
+            return match; // Kembalikan seperti semula jika tidak terlihat seperti matriks yang dimaksud
         }
       );
 
-      // Display math for equations on new lines
-      currentResponse = currentResponse.replace(
-        /^\s*([\w\d\s\+\-\*\/\(\)\^\=]+)$/gm,
-        (match, equation) => `\\[ ${equation} \\]`
-      );
 
-      // 2. Markdown formatting
+      // 2. Konversi Markdown (sederhana)
       currentResponse = currentResponse.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
       currentResponse = currentResponse.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
-      // 3. Format text blocks
+      // 3. Format blok teks menjadi HTML
       function formatBlockToHtml(textBlock) {
         if (!textBlock || textBlock.trim() === "") return "";
+        // Pisahkan berdasarkan dua atau lebih newline untuk paragraf
         const paragraphs = textBlock.trim().split(/\n\s*\n+/);
         return paragraphs
           .map(para => {
             if (para.trim() === "") return "";
-            const lines = para.split('\n').map(line => line.trim()).filter(line => line).join('<br>');
+            // Ganti newline tunggal dengan <br>, kecuali jika sudah di dalam $$...$$
+            let lines = para.replace(/(?<!\$\$)\n(?!\$\$)/g, '<br>');
             return `<p>${lines}</p>`;
           })
-          .filter(p => p !== "")
           .join('');
       }
 
-      // 4. Split and format steps
+      // 4. Pisahkan langkah-langkah
       const sections = currentResponse.split(/\bStep\s+/i);
       let htmlOutput = '';
 
-      // Introduction (before steps)
+      // Pendahuluan (teks sebelum "Step 1")
       if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
         htmlOutput += formatBlockToHtml(sections[0]);
       }
 
-      // Steps
+      // Langkah-langkah
       if (sections.length > 1) {
         for (let i = 1; i < sections.length; i++) {
-          let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
+          let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim(); // Hapus "1.", "2:", dll.
           if (stepText === "") continue;
           htmlOutput += `
             <div class="solution-step mb-5">
@@ -488,7 +498,8 @@
             </div>`;
         }
       } else if (htmlOutput.trim() === "" && response.trim() !== "") {
-        htmlOutput = formatBlockToHtml(currentResponse);
+        // Jika tidak ada "Step" yang ditemukan, format seluruh respons yang sudah ditransformasi
+        htmlOutput = formatBlockToHtml(currentResponse); // Menggunakan currentResponse yang sudah diolah
       }
 
       return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
