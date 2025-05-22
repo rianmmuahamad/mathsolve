@@ -1,7 +1,811 @@
 folder api 
    auth.js 
+    const express = require('express');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const jwt = require('jsonwebtoken');
+const { sql } = require('./db'); // Import from db.js in api folder
+
+const router = express.Router();
+
+// Passport setup
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: 'https://mathsolve-five.vercel.app/api/auth/google/callback',
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        let user = await sql`SELECT * FROM users WHERE google_id = ${profile.id}`;
+        if (user.length === 0) {
+          const displayName = profile.displayName || profile.emails[0].value.split('@')[0];
+          user = await sql`
+            INSERT INTO users (google_id, email, display_name)
+            VALUES (${profile.id}, ${profile.emails[0].value}, ${displayName})
+            RETURNING *;
+          `;
+        }
+        return done(null, user[0]);
+      } catch (err) {
+        console.error('Auth error:', err);
+        return done(err);
+      }
+    }
+  )
+);
+
+// Routes
+router.get(
+  '/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+router.get(
+  '/google/callback',
+  passport.authenticate('google', { session: false, failureRedirect: '/login.html' }),
+  (req, res) => {
+    try {
+      // Validate JWT_SECRET
+      if (!process.env.JWT_SECRET) {
+        throw new Error('JWT_SECRET is not set in environment variables');
+      }
+      const token = jwt.sign(
+        { id: req.user.id, email: req.user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+      res.redirect(`https://mathsolve-five.vercel.app/dashboard.html?token=${token}`);
+    } catch (err) {
+      console.error('Callback error:', err);
+      res.redirect('/login.html?error=auth_failed');
+    }
+  }
+);
+
+router.get('/profile', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1]; // Fixed from previous error
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized: No token provided' });
+    }
+    // Validate JWT_SECRET
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not set in environment variables');
+    }
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    const userData = await sql`SELECT display_name, email FROM users WHERE id = ${user.id}`;
+    if (userData.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ name: userData[0].display_name, email: userData[0].email });
+  } catch (err) {
+    console.error('Profile fetch error:', err);
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token expired' });
+    }
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(403).json({ error: 'Invalid token' });
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/logout', (req, res) => {
+  res.redirect('https://mathsolve-five.vercel.app/login.html');
+});
+
+module.exports = router;
    db.js
+   const { neon } = require('@neondatabase/serverless');
+
+// Initialize the database connection
+const sql = neon(process.env.NEON_DATABASE_URL || '');
+
+// Initialize database tables and ensure schema
+async function initDB() {
+  try {
+    if (!process.env.NEON_DATABASE_URL) {
+      throw new Error('NEON_DATABASE_URL is not set in environment variables');
+    }
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        google_id VARCHAR(255) UNIQUE,
+        email VARCHAR(255),
+        display_name VARCHAR(255)
+      );
+    `;
+    console.log('Users table checked/created');
+
+    const columnCheck = await sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' AND column_name = 'display_name';
+    `;
+    if (columnCheck.length === 0) {
+      await sql`
+        ALTER TABLE users ADD COLUMN display_name VARCHAR(255);
+      `;
+      console.log('Added display_name column to users table');
+    } else {
+      console.log('display_name column already exists in users table');
+    }
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS uploads (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        image_path VARCHAR(255),
+        response TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+    console.log('Uploads table checked/created');
+  } catch (err) {
+    console.error('Error initializing database:', err);
+    throw err;
+  }
+}
+
+// Retry logic for database initialization
+async function initDBWithRetry(maxRetries = 3, retryDelayMs = 2000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await initDB();
+      console.log('Database initialized successfully');
+      return;
+    } catch (err) {
+      console.error(`Attempt ${attempt} failed:`, err.message);
+      if (attempt === maxRetries) {
+        console.error('Max retries reached. Database initialization failed.');
+        throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+    }
+  }
+}
+
+module.exports = {
+  sql,
+  initDB: initDBWithRetry,
+};
    index.js
+   require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const authRoutes = require('./auth'); // Path relatif di folder api
+const uploadRoutes = require('./upload'); // Path relatif di folder api
+const { initDB } = require('./db'); // Path relatif di folder api
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '../public'))); // public di root proyek
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// Serve frontend
+app.get('*', (req, res) => {
+  console.log('Serving index.html');
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Initialize database and start server
+async function startServer() {
+  try {
+    await initDB(); // Initialize database with retries
+    console.log('Database initialized successfully');
+
+    // Start server only for local development
+    if (process.env.NODE_ENV !== 'production') {
+      const PORT = process.env.PORT || 3000;
+      app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+      });
+    }
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
+}
+
+startServer();
+
+module.exports = app;
+
    upload.js
+   const express = require('express');
+const multer = require('multer');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
+const { sql } = require('./db'); // Import from db.js in api folder
+
+const router = express.Router();
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+// Multer setup for in-memory storage
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Rate limiter: 10 images per hour
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  keyGenerator: (req) => req.user.id,
+  message: 'Maaf, Anda telah mencapai batas 10 gambar per jam. Silakan tunggu hingga reset setiap jam.'
+});
+
+// Middleware to verify JWT
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+};
+
+// Fungsi untuk estimasi token
+function estimateTokens(text) {
+  return Math.ceil(text.length / 4);
+}
+
+// Fungsi untuk mendapatkan riwayat unggahan
+async function getUploadHistory(userId) {
+  const history = await sql`
+    SELECT response, created_at
+    FROM uploads
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+    LIMIT 3;
+  `;
+  return history.map(row => ({
+    role: 'assistant',
+    content: `Respons sebelumnya (pada ${row.created_at}): ${row.response}`
+  }));
+}
+
+// Fungsi untuk konversi buffer ke base64
+function fileToGenerativePart(buffer, mimeType) {
+  return {
+    inlineData: {
+      data: buffer.toString('base64'),
+      mimeType
+    },
+  };
+}
+
+// Upload and process image
+router.post('/', authenticate, uploadLimiter, upload.single('image'), async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const userName = req.user.email.split('@')[0];
+    const fileBuffer = req.file.buffer; // Use in-memory buffer
+    const mimeType = req.file.mimetype;
+    const fileName = `${Date.now()}-${req.file.originalname}`; // Generate filename for metadata
+
+    // Validate GOOGLE_API_KEY
+    if (!process.env.GOOGLE_API_KEY) {
+      throw new Error('GOOGLE_API_KEY is not set in environment variables');
+    }
+
+    const history = await getUploadHistory(userId);
+    const historyText = history
+      .map(msg => `${msg.role}: ${msg.content}`)
+      .join('\n');
+
+    const prompt = `
+Riwayat unggahan terbaru dari ${userName}:
+${historyText || 'Tidak ada riwayat unggahan sebelumnya.'}
+
+Anda adalah ahli matematika. Analisis gambar soal matematika yang diunggah. Berikan solusi langkah demi langkah menggunakan metode yang paling umum dan mudah dipahami dalam bahasa Indonesia. Sertakan penjelasan jelas untuk setiap langkah. Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak berisi soal matematika." Jangan tanggapi konten non-matematika.
+    `;
+
+    const requestTokens = estimateTokens(prompt) + 1500;
+    const imagePart = fileToGenerativePart(fileBuffer, mimeType);
+    const result = await model.generateContent([prompt, imagePart]);
+
+    const responseText = result.response.text();
+    const responseTokens = estimateTokens(responseText);
+    const totalTokens = requestTokens + responseTokens;
+
+    // Store filename (or path-like string) in database for reference
+    await sql`
+      INSERT INTO uploads (user_id, image_path, response)
+      VALUES (${userId}, ${fileName}, ${responseText});
+    `;
+
+    res.json({ response: responseText });
+
+    const usageCount = await sql`
+      SELECT COUNT(*) as count
+      FROM uploads
+      WHERE user_id = ${userId}
+      AND created_at > NOW() - INTERVAL '1 hour';
+    `;
+    const used = parseInt(usageCount[0].count);
+    const limit = 10;
+    const percentage = (used / limit) * 100;
+
+    if (percentage >= 90) {
+      res.set('X-Usage-Warning', `Peringatan: Anda telah menggunakan ${percentage}% dari kuota 10 gambar/jam. Kuota akan direset dalam ${60 - new Date().getMinutes()} menit.`);
+    }
+
+    console.log(`Processed image for ${userName}: ${responseText}`);
+    console.log(`Usage for ${userId}: ${used}/${limit} (${percentage}%)`);
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ error: 'Maaf, terjadi kesalahan saat memproses gambar. Silakan coba lagi dengan gambar beresolusi lebih rendah.' });
+  }
+});
+
+module.exports = router;
+
 folder public
    dasboard.html
+   <!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - MathSolve</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js" integrity="sha512-4i+RPfWOhgXE4XqS3jFFy7XPCkJxeYfJHL9u8Xb2vWFo1T1HDrdyQN3hR3ggrtIrhN4tTK9PI4TKkTfKUnVTn0A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc',
+              400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1',
+              800: '#075985', 900: '#0c4a6e',
+            },
+            secondary: {
+              50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1',
+              400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155',
+              800: '#1e293b', 900: '#0f172a',
+            },
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-out',
+            'slide-down': 'slideDown 0.3s ease-out',
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            slideDown: { '0%': { transform: 'translateY(-10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    .math-output { line-height: 1.8; font-size: 1.05rem; }
+    .math-output p { margin-bottom: 1rem; }
+    .math-output p:last-child { margin-bottom: 0; }
+    .drop-zone { border: 2px dashed #cbd5e1; transition: all 0.3s ease; }
+    .drop-zone.active { border-color: #0ea5e9; background-color: #f0f9ff; }
+    .solution-step { position: relative; padding-left: 2rem; }
+    .solution-step:before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: linear-gradient(to bottom, #0ea5e9, #7dd3fc);
+      border-radius: 3px;
+    }
+    .solution-content p:first-child { margin-top: 0.1rem; }
+    .profile-popup { animation: slide-down 0.3s ease-out; }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans">
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto flex justify-between items-center px-6 py-4">
+      <div class="flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+        </svg>
+        <h1 class="text-2xl font-bold text-gray-800">MathSolve</h1>
+      </div>
+      <div class="relative">
+        <div id="profile" class="flex items-center space-x-3 cursor-pointer group" onclick="toggleProfilePopup()">
+          <div class="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-lg transition-all group-hover:ring-2 group-hover:ring-primary-300">
+            <span id="profileInitial"></span>
+          </div>
+          <div class="hidden md:block">
+            <div id="profileName" class="font-medium text-gray-800"></div>
+            <div class="text-primary-600 text-xs">Premium Member</div>
+          </div>
+        </div>
+        <div id="profilePopup" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 p-4 profile-popup">
+          <div class="flex items-center space-x-3 mb-3">
+            <div class="w-12 h-12 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-lg">
+              <span id="profileInitialPopup"></span>
+            </div>
+            <div>
+              <div id="profileNamePopup" class="font-semibold text-gray-800"></div>
+              <div id="profileEmail" class="text-sm text-gray-500"></div>
+            </div>
+          </div>
+          <a href="/api/auth/logout" class="block w-full bg-primary-600 text-white text-center py-2 rounded-md hover:bg-primary-700 transition-colors">Logout</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto py-8 px-4 md:px-6">
+    <div class="grid lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h2 class="text-2xl font-semibold text-gray-800 mb-2">Unggah Soal Matematika</h2>
+          <p class="text-sm text-gray-500 mb-6">Unggah gambar atau ambil foto soal matematika Anda untuk solusi instan.</p>
+          <form id="uploadForm">
+            <div id="dropZone" class="drop-zone rounded-lg p-8 text-center mb-4 cursor-pointer hover:bg-gray-50 transition-colors">
+              <input type="file" id="image" accept="image/jpeg,image/png" class="hidden">
+              <div class="max-w-xs mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-primary-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <h3 class="font-medium text-gray-700 mb-1">Seret dan lepas gambar di sini</h3>
+                <p class="text-sm text-gray-500 mb-3">atau klik untuk memilih file</p>
+                <p class="text-xs text-gray-400">Mendukung JPG, PNG (Maks 5MB)</p>
+              </div>
+            </div>
+            <div id="previewContainer" class="mb-6 hidden">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700">Pratinjau Gambar</span>
+                <button type="button" id="clearPreview" class="text-xs text-red-500 hover:text-red-600">Hapus</button>
+              </div>
+              <img id="preview" class="w-full max-h-80 object-contain rounded-lg border border-gray-200" alt="Pratinjau Gambar">
+            </div>
+            <button type="submit" class="w-full bg-primary-600 text-white font-medium py-3 rounded-lg hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50">
+              Selesaikan Soal
+            </button>
+          </form>
+        </div>
+      </div>
+      <div>
+        <div class="bg-white rounded-xl shadow-sm p-6 h-full">
+          <h2 class="text-2xl font-semibold text-gray-800 mb-2">Solusi</h2>
+          <p class="text-sm text-gray-500 mb-6">Solusi langkah demi langkah akan muncul di sini.</p>
+          <div id="solutionContainer">
+            <div id="loadingContainer" class="hidden flex flex-col items-center justify-center py-12">
+              <div id="spinner" class="mb-5"></div>
+              <p class="text-gray-600 text-sm">Memproses soal matematika Anda...</p>
+              <p class="text-gray-400 text-xs mt-1">Ini mungkin memakan waktu beberapa detik.</p>
+            </div>
+            <div id="emptyState" class="flex flex-col items-center justify-center py-12 text-center">
+              <div class="bg-primary-50 rounded-full p-5 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </div>
+              <h3 class="font-medium text-gray-700 mb-1">Belum ada soal yang diselesaikan</h3>
+              <p class="text-sm text-gray-500 max-w-xs">Unggah gambar soal matematika untuk melihat solusi langkah demi langkah.</p>
+            </div>
+            <div id="response" class="hidden">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Detail Solusi</h3>
+                <button id="copySolution" class="text-xs bg-primary-50 text-primary-600 hover:bg-primary-100 px-3 py-1 rounded-full flex items-center transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                  Salin
+                </button>
+              </div>
+              <div id="responseText" class="math-output text-gray-700"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-white border-t border-gray-100 py-6 mt-12">
+    <div class="container mx-auto px-6">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="flex items-center space-x-2 mb-4 md:mb-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+          </svg>
+          <span class="font-medium text-gray-800">MathSolve</span>
+        </div>
+        <div class="flex flex-col items-center md:flex-row md:space-x-6 space-y-2 md:space-y-0 text-sm text-gray-500">
+          <a href="#" class="hover:text-primary-600 transition-colors">Kebijakan Privasi</a>
+          <a href="#" class="hover:text-primary-600 transition-colors">Ketentuan Layanan</a>
+          <a href="#" class="hover:text-primary-600 transition-colors">Hubungi Kami</a>
+          <span>© 2025 MathSolve AI</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const token = new URLSearchParams(window.location.search).get('token');
+    if (!token) {
+      window.location.href = '/login.html';
+    }
+
+    async function loadProfile() {
+      try {
+        const res = await fetch('/api/auth/profile', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            alert('Sesi Anda telah berakhir. Silakan login kembali.');
+            window.location.href = '/login.html';
+          }
+          throw new Error(`Failed to load profile: ${res.status}`);
+        }
+        const data = await res.json();
+        if (data.name) {
+          document.getElementById('profileName').textContent = data.name;
+          document.getElementById('profileInitial').textContent = data.name.charAt(0).toUpperCase();
+          document.getElementById('profileNamePopup').textContent = data.name;
+          document.getElementById('profileInitialPopup').textContent = data.name.charAt(0).toUpperCase();
+          document.getElementById('profileEmail').textContent = data.email;
+        }
+      } catch (err) {
+        console.error('Profile load error:', err.message);
+      }
+    }
+
+    function toggleProfilePopup() {
+      const popup = document.getElementById('profilePopup');
+      popup.classList.toggle('hidden');
+    }
+
+    // Close popup when clicking outside
+    document.addEventListener('click', (e) => {
+      const profile = document.getElementById('profile');
+      const popup = document.getElementById('profilePopup');
+      if (!profile.contains(e.target) && !popup.contains(e.target)) {
+        popup.classList.add('hidden');
+      }
+    });
+
+    const spinner = new Spinner({
+      lines: 12, length: 6, width: 2.5, radius: 10, color: '#0ea5e9',
+      speed: 1, trail: 60, shadow: false
+    });
+
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('image');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewImage = document.getElementById('preview');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, preventDefault, false));
+    function preventDefault(e) { e.preventDefault(); e.stopPropagation(); }
+    ['dragenter', 'dragover'].forEach(eName => dropZone.addEventListener(eName, highlight, false));
+    ['dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, unhighlight, false));
+    function highlight() { dropZone.classList.add('active'); }
+    function unhighlight() { dropZone.classList.remove('active'); }
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+      const files = e.dataTransfer.files;
+      if (files.length) {
+        fileInput.files = files;
+        handleFiles(files);
+      }
+    }
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) handleFiles(fileInput.files);
+    });
+
+    document.getElementById('clearPreview').addEventListener('click', () => {
+      previewContainer.classList.add('hidden');
+      previewImage.src = '';
+      fileInput.value = '';
+    });
+
+    function handleFiles(files) {
+      const file = files[0];
+      if (!file.type.match('image.*')) {
+        alert('Pilih file gambar (JPG, PNG).');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Ukuran file terlalu besar. Maksimum 5MB.');
+        fileInput.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        previewContainer.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const imageFile = fileInput.files[0];
+      if (!imageFile) {
+        alert('Pilih gambar terlebih dahulu.');
+        return;
+      }
+
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('response').classList.add('hidden');
+      document.getElementById('loadingContainer').classList.remove('hidden');
+      spinner.spin(document.getElementById('spinner'));
+
+      const formData = new FormData();
+      formData.append('image', imageFile);
+
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            alert('Sesi Anda telah berakhir. Silakan login kembali.');
+            window.location.href = '/login.html';
+          }
+          throw new Error(data.error || `Server error: ${res.status}`);
+        }
+        if (data.error) throw new Error(data.error);
+
+        document.getElementById('responseText').innerHTML = formatMathResponse(data.response);
+        document.getElementById('response').classList.remove('hidden');
+
+        if (window.MathJax) {
+          MathJax.typesetPromise([document.getElementById('responseText')]).catch(err => console.error('MathJax error:', err));
+        }
+      } catch (err) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        alert('Error: ' + err.message);
+        console.error('Upload error:', err);
+      } finally {
+        spinner.stop();
+        document.getElementById('loadingContainer').classList.add('hidden');
+      }
+    });
+
+    document.getElementById('copySolution').addEventListener('click', () => {
+      const solutionText = document.getElementById('responseText').innerText;
+      navigator.clipboard.writeText(solutionText).then(() => {
+        const copyBtn = document.getElementById('copySolution');
+        const originalHTML = copyBtn.innerHTML;
+        copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Tersalin!`;
+        setTimeout(() => { copyBtn.innerHTML = originalHTML; }, 2000);
+      }).catch(err => {
+        console.error('Gagal menyalin:', err);
+        alert('Gagal menyalin solusi.');
+      });
+    });
+
+    function formatMathResponse(response) {
+      if (!response || response.trim() === "") {
+        return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
+      }
+
+      let currentResponse = response;
+
+      // 1. Konversi ekspresi matematika ke LaTeX
+      // Pecahan (a/b)
+      currentResponse = currentResponse.replace(
+        /(?<![\$\\])(?<!\^\{)(\b\d+(?:\.\d+)?|\([^)]+\))\s*\/\s*(\d+(?:\.\d+)?|\([^)]+\))\b(?![\}\s]*\^)/g,
+        (match, num, denom) => `\\(\\frac{${num}}{${denom}}\\)`
+      );
+
+      // Eksponen (a^b)
+      currentResponse = currentResponse.replace(
+        /(\b[a-zA-Z][\w%]*\b|\b\d+(?:\.\d+)?%?\b|\([^)]+\)|\|[^|]+\|)\s*\^\s*([\w\d.\{\}\+\-\*\/]+%?)/g,
+        (match, base, exponent) => {
+          const cleanedExponent = exponent.startsWith('{') && exponent.endsWith('}') ? exponent : `{${exponent}}`;
+          return `\\(${base}^${cleanedExponent}\\)`;
+        }
+      );
+
+      // Akar (sqrt, cbrt, dll.)
+      currentResponse = currentResponse.replace(
+        /\b(sqrt|cbrt|nrt)\s*\[([^\]]+)\]/g,
+        (match, rootType, content) => {
+          if (rootType === 'sqrt') return `\\(\\sqrt{${content}}\\)`;
+          if (rootType === 'cbrt') return `\\(\\sqrt[3]{${content}}\\)`;
+          return `\\(\\sqrt[${rootType}]{${content}}\\)`;
+        }
+      );
+
+      // Fungsi trigonometri
+      currentResponse = currentResponse.replace(
+        /\b(sin|cos|tan|cot|sec|csc)\s*\(([^)]+)\)/g,
+        (match, func, arg) => `\\(${func}\\left(${arg}\\right)\\)`
+      );
+
+      // Simbol khusus
+      const symbolMap = {
+        'pi': '\\pi',
+        'theta': '\\theta',
+        'alpha': '\\alpha',
+        'beta': '\\beta',
+        'infinity': '\\infty',
+        '<=': '\\leq',
+        '>=': '\\geq',
+        '!=': '\\neq'
+      };
+      for (const [key, value] of Object.entries(symbolMap)) {
+        currentResponse = currentResponse.replace(
+          new RegExp(`\\b${key}\\b`, 'g'),
+          `\\(${value}\\)`
+        );
+      }
+
+      // Matriks
+      currentResponse = currentResponse.replace(
+        /\[\s*([^;]+)\s*;\s*([^;]+)\s*\]/g,
+        (match, row1, row2) => {
+          const r1 = row1.trim().split(/\s+/).join('&');
+          const r2 = row2.trim().split(/\s+/).join('&');
+          return `\\(\\begin{pmatrix}${r1}\\\\${r2}\\end{pmatrix}\\)`;
+        }
+      );
+
+      // 2. Konversi Markdown
+      currentResponse = currentResponse.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      currentResponse = currentResponse.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+      // 3. Format blok teks
+      function formatBlockToHtml(textBlock) {
+        if (!textBlock || textBlock.trim() === "") return "";
+        const paragraphs = textBlock.trim().split(/\n\s*\n+/);
+        return paragraphs
+          .map(para => {
+            if (para.trim() === "") return "";
+            const lines = para.split('\n').map(line => line.trim()).filter(line => line).join('<br>');
+            return `<p>${lines}</p>`;
+          })
+          .join('');
+      }
+
+      // 4. Pisahkan langkah-langkah
+      const sections = currentResponse.split(/\bStep\s+/i);
+      let htmlOutput = '';
+
+      // Pendahuluan
+      if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
+        htmlOutput += formatBlockToHtml(sections[0]);
+      }
+
+      // Langkah-langkah
+      if (sections.length > 1) {
+        for (let i = 1; i < sections.length; i++) {
+          let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
+          if (stepText === "") continue;
+          htmlOutput += `
+            <div class="solution-step mb-5">
+              <div class="flex items-start">
+                <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
+                <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
+              </div>
+            </div>`;
+        }
+      } else if (htmlOutput.trim() === "" && response.trim() !== "") {
+        htmlOutput = formatBlockToHtml(response);
+      }
+
+      return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>

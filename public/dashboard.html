@@ -463,63 +463,162 @@
       URL.revokeObjectURL(url);
     });
 
-    function formatMathResponse(response) {
+     // Fungsi formatMathResponse yang diperbaiki
+     function formatMathResponse(response) {
       if (!response || response.trim() === "") {
         return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
       }
 
-      let currentResponse = response;
+      // Preprocessing: Normalisasi format matematika
+      let processedResponse = response
+        // Normalisasi tanda kurung
+        .replace(/\[/g, '(').replace(/\]/g, ')')
+        // Normalisasi pecahan
+        .replace(/(\d+)\s*\/\s*(\d+)/g, '\\frac{$1}{$2}')
+        // Normalisasi akar
+        .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')
+        // Normalisasi pangkat
+        .replace(/([a-zA-Z0-9\)])\^([a-zA-Z0-9\(]+)/g, '{$1}^{$2}')
+        // Normalisasi simbol matematika
+        .replace(/<=/g, '\\leq')
+        .replace(/>=/g, '\\geq')
+        .replace(/!=/g, '\\neq')
+        .replace(/\bpi\b/g, '\\pi')
+        .replace(/\binfinity\b/g, '\\infty')
+        .replace(/\btheta\b/g, '\\theta')
+        .replace(/\bsin\b/g, '\\sin')
+        .replace(/\bcos\b/g, '\\cos')
+        .replace(/\btan\b/g, '\\tan')
+        // Normalisasi integral
+        .replace(/int\(([^)]+)\)/g, '\\int $1 dx')
+        // Normalisasi sigma (sum)
+        .replace(/sum\(([^)]+)\)/g, '\\sum $1')
+        // Normalisasi limit
+        .replace(/lim\(([^)]+)\)/g, '\\lim $1');
 
-      try {
-        // 1. Pecahan sederhana (a/b)
-        currentResponse = currentResponse.replace(
-          /(\d+)\s*\/\s*(\d+)/g,
-          '\\(\\frac{$1}{$2}\\)'
-        );
+      // Deteksi blok matematika yang sudah dalam format LaTeX
+      processedResponse = processedResponse.replace(/\$(.*?)\$/g, '\\($1\\)');
 
-        // 2. Pangkat sederhana (a^b)
-        currentResponse = currentResponse.replace(
-          /([a-zA-Z0-9]+)\^([0-9]+)/g,
-          '\\($1^{$2}\\)'
-        );
+      // Format bold dan italic
+      processedResponse = processedResponse
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>');
 
-        // 3. Akar kuadrat
-        currentResponse = currentResponse.replace(
-          /sqrt\(([^)]+)\)/g,
-          '\\(\\sqrt{$1}\\)'
-        );
+      // Pisahkan paragraf dan proses masing-masing
+      const paragraphs = processedResponse.split('\n\n');
+      let htmlOutput = '';
 
-        // 4. Simbol matematika dasar
-        currentResponse = currentResponse.replace(/\bpi\b/g, '\\(\\pi\\)');
-        currentResponse = currentResponse.replace(/<=/g, '\\(\\leq\\)');
-        currentResponse = currentResponse.replace(/>=/g, '\\(\\geq\\)');
-        currentResponse = currentResponse.replace(/!=/g, '\\(\\neq\\)');
-
-        // 5. Format teks bold dan italic
-        currentResponse = currentResponse.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        currentResponse = currentResponse.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-        // 6. Buat paragraf dari baris baru
-        const paragraphs = currentResponse.split('\n\n');
-        let htmlOutput = '';
-
-        for (let para of paragraphs) {
-          if (para.trim()) {
-            const lines = para.split('\n').join('<br>');
-            htmlOutput += `<p class="mb-3">${lines}</p>`;
+      for (let para of paragraphs) {
+        if (para.trim()) {
+          // Deteksi apakah paragraf ini murni matematika
+          const isMathOnly = /^[\s\\\(\)\{\}\[\]\^_\d\w\+\-\*\/=.,;:'"<>|]+$/.test(para);
+          
+          if (isMathOnly) {
+            // Jika murni matematika, bungkus dengan div math-output khusus
+            htmlOutput += `<div class="math-output mb-4">\\[${para}\\]</div>`;
+          } else {
+            // Jika mengandung teks dan matematika, proses baris per baris
+            const lines = para.split('\n');
+            let paraContent = '';
+            
+            for (let line of lines) {
+              if (line.trim()) {
+                // Deteksi persamaan dalam baris
+                const equationMatches = line.match(/(\\\(.*?\\\)|\\\[.*?\\\])/g);
+                if (equationMatches) {
+                  equationMatches.forEach(match => {
+                    line = line.replace(match, `<span class="math-inline">${match}</span>`);
+                  });
+                }
+                paraContent += line + '<br>';
+              }
+            }
+            
+            htmlOutput += `<p class="mb-3">${paraContent}</p>`;
           }
         }
+      }
 
-        return htmlOutput || `<p class="mb-3">${currentResponse}</p>`;
+      return htmlOutput || `<p class="mb-3">${processedResponse}</p>`;
+    }
 
-      } catch (error) {
-        console.error('Error formatting math:', error);
-        // Jika ada error, tampilkan teks biasa dengan line breaks
-        return response.split('\n').map(line => 
-          line.trim() ? `<p class="mb-2">${line}</p>` : ''
-        ).join('');
+    // Fungsi untuk memastikan MathJax memproses ulang konten
+    function processMathJax() {
+      if (window.MathJax) {
+        MathJax.typesetPromise()
+          .then(() => {
+            console.log('MathJax processing complete');
+          })
+          .catch((err) => {
+            console.error('MathJax processing error:', err);
+            // Coba lagi jika gagal pertama kali
+            setTimeout(() => {
+              if (window.MathJax) {
+                MathJax.typesetPromise();
+              }
+            }, 500);
+          });
+      } else {
+        console.warn('MathJax not loaded yet');
+        // Jika MathJax belum dimuat, coba lagi nanti
+        setTimeout(processMathJax, 300);
       }
     }
+
+    // Modifikasi bagian submit form untuk memastikan pemrosesan MathJax
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const imageFile = fileInput.files[0];
+      if (!imageFile) {
+        alert('Pilih gambar terlebih dahulu.');
+        return;
+      }
+
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('response').classList.add('hidden');
+      document.getElementById('loadingContainer').classList.remove('hidden');
+      spinner.spin(document.getElementById('spinner'));
+
+      const formData = new FormData();
+      formData.append('image', imageFile);
+
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            alert('Sesi Anda telah berakhir. Silakan login kembali.');
+            window.location.href = '/login.html';
+          }
+          throw new Error(data.error || `Server error: ${res.status}`);
+        }
+        if (data.error) throw new Error(data.error);
+
+        const formattedResponse = formatMathResponse(data.response);
+        document.getElementById('responseText').innerHTML = formattedResponse;
+        document.getElementById('response').classList.remove('hidden');
+
+        // Proses MathJax setelah konten dimuat
+        setTimeout(processMathJax, 100);
+        
+      } catch (err) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        alert('Error: ' + err.message);
+        console.error('Upload error:', err);
+      } finally {
+        spinner.stop();
+        document.getElementById('loadingContainer').classList.add('hidden');
+      }
+    });
+
+    // Pastikan MathJax diproses saat pertama kali load
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(processMathJax, 500);
+    });
     
     loadProfile();
   </script>
