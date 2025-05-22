@@ -144,6 +144,7 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
+    /* Updated MathJax styling to prevent overflow without scrollbar */
     .MathJax {
       display: inline-flex !important;
       flex-wrap: wrap !important;
@@ -168,6 +169,9 @@
           <h1 class="text-xl font-bold text-gray-800">MathSolve AI</h1>
         </div>
         <div class="flex items-center space-x-4">
+          <div class="hidden md:flex items-center space-x-2">
+            <span id="usageDisplay" class="text-sm text-gray-600"></span>
+          </div>
           <div class="relative">
             <button id="profileBtn" class="flex items-center space-x-2 focus:outline-none">
               <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-medium">
@@ -309,6 +313,7 @@
     const solutionResult = document.getElementById('solutionResult');
     const solutionText = document.getElementById('solutionText');
     const copySolutionBtn = document.getElementById('copySolution');
+    const usageDisplay = document.getElementById('usageDisplay');
 
     // Load user profile
     async function loadProfile() {
@@ -463,6 +468,16 @@
         solutionText.innerHTML = data.formatted_response || data.response;
         solutionResult.classList.remove('hidden');
         
+        // Update usage display
+        if (data.usage) {
+          updateUsageDisplay(data.usage.used, data.usage.limit);
+        }
+        
+        // Show warning if available
+        if (data.warning) {
+          showToast(data.warning, 'warning');
+        }
+        
         // Render MathJax
         if (window.MathJax) {
           MathJax.typesetPromise();
@@ -491,6 +506,19 @@
       });
     });
 
+    // Update usage display
+    function updateUsageDisplay(used, limit) {
+      usageDisplay.textContent = `${used}/${limit} per jam`;
+      
+      if (used >= limit * 0.8) {
+        usageDisplay.classList.add('text-red-500');
+        usageDisplay.classList.remove('text-gray-600');
+      } else {
+        usageDisplay.classList.remove('text-red-500');
+        usageDisplay.classList.add('text-gray-600');
+      }
+    }
+
     // Show toast notification
     function showToast(message, type = 'info') {
       const toastContainer = document.getElementById('toastContainer');
@@ -512,6 +540,7 @@
 
     // Initialize
     loadProfile();
+    updateUsageDisplay(0, 10);
   </script>
 </body>
 </html>
