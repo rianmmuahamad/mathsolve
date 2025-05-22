@@ -25,11 +25,12 @@
       line-height: 1.6;
       color: #374151;
       word-break: break-word;
-      overflow-wrap: break-word;
+      overflow-wrap: anywhere; /* Diubah dari break-word ke anywhere untuk handling yang lebih baik */
       white-space: normal;
       max-width: 100%;
       overflow-x: hidden;
       padding: 0.5rem;
+      box-sizing: border-box;
     }
 
     .math-solution h2 {
@@ -37,6 +38,8 @@
       font-weight: 600;
       color: #1f2937;
       margin-bottom: 1rem;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-solution h3 {
@@ -44,13 +47,16 @@
       font-weight: 600;
       color: #1f2937;
       margin: 1.5rem 0 1rem;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-solution p {
       margin-bottom: 1rem;
       word-break: break-word;
-      overflow-wrap: break-word;
+      overflow-wrap: anywhere;
       max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-solution strong {
@@ -67,8 +73,9 @@
       padding-left: 2rem;
       margin-bottom: 1.5rem;
       word-break: break-word;
-      overflow-wrap: break-word;
+      overflow-wrap: anywhere;
       max-width: 100%;
+      overflow-x: hidden;
     }
 
     .solution-step .step-number {
@@ -83,12 +90,16 @@
       margin-bottom: 1.5rem;
       padding-left: 1.5rem;
       border-left: 3px solid #6366f1;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-step-header {
       font-weight: 600;
       color: #6366f1;
       margin-bottom: 0.5rem;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-expression {
@@ -99,13 +110,15 @@
       border-radius: 0.375rem;
       font-family: 'Times New Roman', serif;
       word-break: break-word;
-      overflow-wrap: break-word;
+      overflow-wrap: anywhere;
       max-width: 100%;
-      overflow-x: hidden;
+      overflow-x: auto; /* Diubah dari hidden ke auto untuk memungkinkan scroll jika diperlukan */
     }
 
     .math-section {
       margin-bottom: 2rem;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-section-title {
@@ -114,47 +127,8 @@
       margin-bottom: 0.75rem;
       padding-bottom: 0.25rem;
       border-bottom: 1px solid #e5e7eb;
-    }
-
-    .drop-zone {
-      border: 2px dashed #d1d5db;
-      transition: all 0.3s ease;
       max-width: 100%;
-    }
-    
-    .drop-zone.active {
-      border-color: var(--primary);
-      background-color: rgba(79, 70, 229, 0.05);
-    }
-    
-    .toast {
-      animation: toast-in 0.3s ease-out;
-      max-width: 90vw;
-    }
-    
-    @keyframes toast-in {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    
-    .spinner {
-      animation: spin 1s linear infinite;
-    }
-    
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    
-    .card {
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      max-width: 100%;
-    }
-    
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow-x: hidden;
     }
 
     /* Enhanced MathJax and Solution Text Styling */
@@ -163,25 +137,27 @@
       flex-wrap: wrap !important;
       max-width: 100% !important;
       white-space: normal !important;
-      overflow-wrap: break-word !important;
-      word-break: break-all !important; /* More aggressive breaking for long equations */
-      overflow-x: hidden !important;
-      box-sizing: border-box;
-      padding: 0.2rem;
+      overflow-wrap: anywhere !important;
+      word-break: break-word !important;
+      overflow-x: auto !important; /* Diubah untuk memungkinkan scroll jika diperlukan */
+      box-sizing: border-box !important;
+      padding: 0.2rem !important;
     }
 
     .solution-text-container {
       max-width: 100%;
       overflow-x: hidden;
       word-break: break-word;
-      overflow-wrap: break-word;
+      overflow-wrap: anywhere;
       padding: 0.5rem;
+      box-sizing: border-box;
     }
 
     /* Responsive Adjustments */
     @media (max-width: 768px) {
       .MathJax, .MathJax_Display {
-        font-size: 0.85em !important; /* Smaller font for equations */
+        font-size: 0.85em !important;
+        overflow-x: auto !important; /* Pastikan bisa discroll di mobile */
       }
       .math-solution {
         font-size: 0.9em;
@@ -193,30 +169,6 @@
       .solution-step {
         padding-left: 1.5rem;
       }
-      .card {
-        padding: 1rem;
-      }
-      .drop-zone {
-        padding: 1rem;
-      }
-      .profile-dropdown {
-        width: 80vw;
-        max-width: 200px;
-        right: -1rem;
-      }
-      .container {
-        padding-left: 1rem;
-        padding-right: 1rem;
-      }
-      .grid {
-        grid-template-columns: 1fr; /* Stack columns on mobile */
-      }
-      .lg\:col-span-2, .lg\:col-span-1 {
-        grid-column: span 1 / span 1;
-      }
-      #solutionContent {
-        min-height: auto;
-      }
     }
 
     @media (max-width: 480px) {
@@ -225,19 +177,6 @@
       }
       .math-solution {
         font-size: 0.85em;
-      }
-      .math-solution h2 {
-        font-size: 1.25rem;
-      }
-      .math-solution h3 {
-        font-size: 1.1rem;
-      }
-      .drop-zone {
-        padding: 0.75rem;
-      }
-      .toast {
-        max-width: 95vw;
-        font-size: 0.9em;
       }
     }
   </style>
