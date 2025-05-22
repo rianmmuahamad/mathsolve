@@ -64,6 +64,32 @@ async function getUploadHistory(userId) {
   }
 }
 
+async function getUserPoints(userId) {
+  try {
+    const result = await sql`
+      SELECT points
+      FROM users
+      WHERE id = ${userId};
+    `;
+    return result[0]?.points || 0;
+  } catch (err) {
+    console.error('Error fetching user points:', err);
+    return 0;
+  }
+}
+
+async function updateUserPoints(userId, pointsToAdd) {
+  try {
+    await sql`
+      UPDATE users
+      SET points = points + ${pointsToAdd}
+      WHERE id = ${userId};
+    `;
+  } catch (err) {
+    console.error('Error updating user points:', err);
+  }
+}
+
 function fileToGenerativePart(buffer, mimeType) {
   return {
     inlineData: {
@@ -78,22 +104,16 @@ function formatMathNotation(text) {
   if (!text || typeof text !== 'string') return text;
   
   try {
-    // 1. Format mathematical expressions
     let formatted = text
-      // Format limits
       .replace(/lim_\{([^}]+)\}/g, '\\lim_{$1}')
-      // Format absolute values
       .replace(/\|([^|]+)\|/g, '\\|$1\\|')
-      // Format fractions
       .replace(/(\d+)\/(\d+)/g, '\\frac{$1}{$2}')
-      // Format exponents
       .replace(/(\w)\^(\d+)/g, '$1^{$2}')
-      // Format square roots
       .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')
-      // Format trigonometric functions
-      .replace(/(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g, '\\$1($2)');
+      .replace(/(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g, '\\$1($2)')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Ensure bold text is converted
+      .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Ensure italic text is converted
 
-    // 2. Format Greek letters
     const greekSymbols = {
       'alpha': '\\alpha', 'beta': '\\beta', 'gamma': '\\gamma',
       'delta': '\\delta', 'epsilon': '\\epsilon', 'theta': '\\theta',
@@ -104,7 +124,6 @@ function formatMathNotation(text) {
       formatted = formatted.replace(new RegExp(key, 'g'), val);
     }
 
-    // 3. Format inequalities
     formatted = formatted
       .replace(/<=/g, '\\leq')
       .replace(/>=/g, '\\geq')
@@ -122,20 +141,16 @@ function formatResponseToHTML(response) {
   if (!response) return '';
 
   try {
-    // First format math notation
     let formatted = formatMathNotation(response);
 
-    // Create HTML structure
     const $ = cheerio.load('<div class="math-solution"></div>');
     const container = $('.math-solution');
 
-    // Split into sections
     const sections = formatted.split(/(?:\n\s*){2,}/);
 
     sections.forEach((section, index) => {
       if (!section.trim()) return;
 
-      // Check if this is a step
       const isStep = section.match(/^(Langkah|Step)\s*\d+/i) || 
                     section.match(/^\d+\./) ||
                     section.length > 150;
@@ -143,7 +158,6 @@ function formatResponseToHTML(response) {
       if (isStep) {
         const stepDiv = $('<div class="solution-step"></div>');
         
-        // Extract step number if exists
         const stepMatch = section.match(/^(Langkah|Step)\s*(\d+):?/i) || 
                          section.match(/^(\d+)\./);
         
@@ -151,29 +165,21 @@ function formatResponseToHTML(response) {
         
         stepDiv.append(`<div class="step-number">${stepNumber}.</div>`);
         
-        // Process the content
         let content = section
           .replace(/^(Langkah|Step)\s*\d+:?\s*/i, '')
           .replace(/^\d+\.\s*/, '');
         
-        // Split into paragraphs if needed
         const paragraphs = content.split('\n');
         
         paragraphs.forEach(para => {
           if (para.trim()) {
-            // Format bold and italic text
-            para = para
-              .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-              .replace(/\*(.*?)\*/g, '<em>$1</em>');
-            
-            stepDiv.append(`<p>${para.trim()}</p>`);
+            stepDiv.append(`<p class="break-words">${para.trim()}</p>`); // Added break-words class
           }
         });
         
         container.append(stepDiv);
       } else {
-        // Regular paragraph
-        container.append(`<p>${section}</p>`);
+        container.append(`<p class="break-words">${section}</p>`); // Added break-words class
       }
     });
 
@@ -187,7 +193,6 @@ function formatResponseToHTML(response) {
 // Main upload endpoint
 router.post('/', authenticate, uploadLimiter, upload.single('image'), async (req, res) => {
   try {
-    // Validate request
     if (!req.file) {
       return res.status(400).json({ error: 'No image file provided' });
     }
@@ -197,16 +202,13 @@ router.post('/', authenticate, uploadLimiter, upload.single('image'), async (req
     const mimeType = req.file.mimetype;
     const fileName = `${Date.now()}-${req.file.originalname}`;
 
-    // Validate API key
     if (!process.env.GOOGLE_API_KEY) {
       throw new Error('GOOGLE_API_KEY is not configured');
     }
 
-    // Get user's upload history
     const history = await getUploadHistory(userId);
     const historyText = history.map(msg => `${msg.role}: ${msg.content}`).join('\n');
 
-    // Construct the prompt
     const prompt = `
 Riwayat unggahan terbaru dari ${email.split('@')[0]}:
 ${historyText || 'Tidak ada riwayat unggahan sebelumnya.'}
@@ -224,13 +226,15 @@ FORMAT RESPONS:
 Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak berisi soal matematika."
     `;
 
-    // Process the image with Gemini
     const imagePart = fileToGenerativePart(fileBuffer, mimeType);
     const result = await model.generateContent([prompt, imagePart]);
     const responseText = result.response.text();
 
-    // Format the response
     const formattedResponse = formatResponseToHTML(responseText);
+
+    // Calculate points (e.g., 10 points per successful upload)
+    const pointsToAdd = responseText.includes("Gambar ini tidak berisi soal matematika") ? 0 : 10;
+    await updateUserPoints(userId, pointsToAdd);
 
     // Store in database
     await sql`
@@ -248,15 +252,17 @@ Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak beri
     const used = parseInt(usageCount[0].count);
     const limit = 10;
 
-    // Prepare response
+    // Get user points
+    const points = await getUserPoints(userId);
+
     const response = {
       response: responseText,
       formatted_response: formattedResponse,
       usage: { used, limit },
+      points: points,
       timestamp: new Date().toISOString()
     };
 
-    // Add warning if approaching limit
     if (used >= limit * 0.9) {
       response.warning = `Anda telah menggunakan ${used}/${limit} kuota. Reset dalam ${60 - new Date().getMinutes()} menit.`;
     }
