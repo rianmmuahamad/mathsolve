@@ -25,12 +25,11 @@
       line-height: 1.6;
       color: #374151;
       word-break: break-word;
-      overflow-wrap: anywhere; /* Diubah dari break-word ke anywhere untuk handling yang lebih baik */
+      overflow-wrap: break-word;
       white-space: normal;
       max-width: 100%;
       overflow-x: hidden;
       padding: 0.5rem;
-      box-sizing: border-box;
     }
 
     .math-solution h2 {
@@ -38,8 +37,6 @@
       font-weight: 600;
       color: #1f2937;
       margin-bottom: 1rem;
-      max-width: 100%;
-      overflow-x: hidden;
     }
 
     .math-solution h3 {
@@ -47,16 +44,13 @@
       font-weight: 600;
       color: #1f2937;
       margin: 1.5rem 0 1rem;
-      max-width: 100%;
-      overflow-x: hidden;
     }
 
     .math-solution p {
       margin-bottom: 1rem;
       word-break: break-word;
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
       max-width: 100%;
-      overflow-x: hidden;
     }
 
     .math-solution strong {
@@ -73,9 +67,8 @@
       padding-left: 2rem;
       margin-bottom: 1.5rem;
       word-break: break-word;
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
       max-width: 100%;
-      overflow-x: hidden;
     }
 
     .solution-step .step-number {
@@ -90,16 +83,12 @@
       margin-bottom: 1.5rem;
       padding-left: 1.5rem;
       border-left: 3px solid #6366f1;
-      max-width: 100%;
-      overflow-x: hidden;
     }
 
     .math-step-header {
       font-weight: 600;
       color: #6366f1;
       margin-bottom: 0.5rem;
-      max-width: 100%;
-      overflow-x: hidden;
     }
 
     .math-expression {
@@ -110,15 +99,13 @@
       border-radius: 0.375rem;
       font-family: 'Times New Roman', serif;
       word-break: break-word;
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
       max-width: 100%;
-      overflow-x: auto; /* Diubah dari hidden ke auto untuk memungkinkan scroll jika diperlukan */
+      overflow-x: hidden;
     }
 
     .math-section {
       margin-bottom: 2rem;
-      max-width: 100%;
-      overflow-x: hidden;
     }
 
     .math-section-title {
@@ -127,8 +114,47 @@
       margin-bottom: 0.75rem;
       padding-bottom: 0.25rem;
       border-bottom: 1px solid #e5e7eb;
+    }
+
+    .drop-zone {
+      border: 2px dashed #d1d5db;
+      transition: all 0.3s ease;
       max-width: 100%;
-      overflow-x: hidden;
+    }
+    
+    .drop-zone.active {
+      border-color: var(--primary);
+      background-color: rgba(79, 70, 229, 0.05);
+    }
+    
+    .toast {
+      animation: toast-in 0.3s ease-out;
+      max-width: 90vw;
+    }
+    
+    @keyframes toast-in {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .spinner {
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    .card {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      max-width: 100%;
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     /* Enhanced MathJax and Solution Text Styling */
@@ -137,27 +163,51 @@
       flex-wrap: wrap !important;
       max-width: 100% !important;
       white-space: normal !important;
-      overflow-wrap: anywhere !important;
-      word-break: break-word !important;
-      overflow-x: auto !important; /* Diubah untuk memungkinkan scroll jika diperlukan */
-      box-sizing: border-box !important;
-      padding: 0.2rem !important;
+      overflow-wrap: break-word !important;
+      word-break: break-all !important;
+      overflow-x: auto !important; /* Changed from hidden to auto for better control */
+      box-sizing: border-box;
+      padding: 0.2rem;
+      /* Ensure equations scale down if too wide */
+      transform: scale(0.9); /* Slightly scale down large equations */
+      transform-origin: left;
     }
 
     .solution-text-container {
       max-width: 100%;
-      overflow-x: hidden;
+      overflow-x: auto; /* Changed from hidden to auto to allow scrolling if needed */
       word-break: break-word;
-      overflow-wrap: anywhere;
+      overflow-wrap: break-word;
       padding: 0.5rem;
-      box-sizing: border-box;
+      /* Add horizontal scrollbar styling for better UX */
+      scrollbar-width: thin;
+      scrollbar-color: var(--primary-light) #e5e7eb;
+    }
+
+    /* Custom scrollbar for WebKit browsers */
+    .solution-text-container::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .solution-text-container::-webkit-scrollbar-track {
+      background: #e5e7eb;
+      border-radius: 4px;
+    }
+
+    .solution-text-container::-webkit-scrollbar-thumb {
+      background: var(--primary-light);
+      border-radius: 4px;
+    }
+
+    .solution-text-container::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-dark);
     }
 
     /* Responsive Adjustments */
     @media (max-width: 768px) {
       .MathJax, .MathJax_Display {
         font-size: 0.85em !important;
-        overflow-x: auto !important; /* Pastikan bisa discroll di mobile */
+        transform: scale(0.85); /* Further scale down for smaller screens */
       }
       .math-solution {
         font-size: 0.9em;
@@ -169,14 +219,52 @@
       .solution-step {
         padding-left: 1.5rem;
       }
+      .card {
+        padding: 1rem;
+      }
+      .drop-zone {
+        padding: 1rem;
+      }
+      .profile-dropdown {
+        width: 80vw;
+        max-width: 200px;
+        right: -1rem;
+      }
+      .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .lg\:col-span-2, .lg\:col-span-1 {
+        grid-column: span 1 / span 1;
+      }
+      #solutionContent {
+        min-height: auto;
+      }
     }
 
     @media (max-width: 480px) {
       .MathJax, .MathJax_Display {
         font-size: 0.8em !important;
+        transform: scale(0.8); /* Further scale down for very small screens */
       }
       .math-solution {
         font-size: 0.85em;
+      }
+      .math-solution h2 {
+        font-size: 1.25rem;
+      }
+      .math-solution h3 {
+        font-size: 1.1rem;
+      }
+      .drop-zone {
+        padding: 0.75rem;
+      }
+      .toast {
+        max-width: 95vw;
+        font-size: 0.9em;
       }
     }
   </style>
@@ -253,7 +341,7 @@
                   Hapus
                 </button>
               </div>
-              <img id="previewImage" class="w-full max-h-48 sm:max-h-64 object-contain rounded border border-gray-200" alt="Pratinjau Gambar">
+              <img id="previewImage" class="w-full max-h-48 sm:max-h-64 object-cont somebody-contain rounded border border-gray-200" alt="Pratinjau Gambar">
             </div>
             
             <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 sm:py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors flex items-center justify-center">
