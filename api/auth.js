@@ -91,7 +91,7 @@ router.get('/profile', async (req, res) => {
 });
 
 router.get('/logout', (req, res) => {
-  res.redirect('https://www.mathsolve.my.idlogin.html');
+  res.redirect('https://www.mathsolve.my.id/login.html');
 });
 
 module.exports = router;
