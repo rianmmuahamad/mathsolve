@@ -3,83 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MathSolve AI | Solusi Matematika Instan</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>MathSolve AI | Solusi Matematika</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mathjs@11.7.0/lib/browser/math.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #6366f1;
-      --primary-light: #818cf8;
-      --primary-dark: #4f46e5;
+      --primary: #4f46e5;
+      --primary-light: #6366f1;
+      --primary-dark: #4338ca;
     }
     
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #f8fafc;
-    }
-    
-    .gradient-bg {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+      background-color: #f9fafb;
     }
     
     .drop-zone {
-      border: 2px dashed #e2e8f0;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px dashed #d1d5db;
+      transition: all 0.3s ease;
     }
     
     .drop-zone.active {
       border-color: var(--primary);
-      background-color: rgba(99, 102, 241, 0.05);
+      background-color: rgba(79, 70, 229, 0.05);
     }
     
     .solution-step {
       position: relative;
-      padding-left: 1.5rem;
+      padding-left: 2rem;
       margin-bottom: 1.5rem;
     }
     
-    .solution-step:before {
-      content: '';
+    .solution-step .step-number {
       position: absolute;
       left: 0;
       top: 0;
-      bottom: 0;
-      width: 3px;
-      background: linear-gradient(to bottom, var(--primary), var(--primary-light));
-      border-radius: 3px;
+      color: var(--primary);
+      font-weight: 600;
     }
     
-    .math-expression {
-      display: inline-block;
-      padding: 0.2rem 0.4rem;
-      background-color: #f1f5f9;
-      border-radius: 4px;
-      font-family: 'Times New Roman', serif;
+    .toast {
+      animation: toast-in 0.3s ease-out;
     }
     
-    .floating-btn {
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .floating-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    }
-    
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    @keyframes toast-in {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
     
     .spinner {
@@ -90,77 +60,82 @@
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
+    
+    .card {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
   </style>
 </head>
-<body class="bg-gray-50">
+<body class="min-h-screen bg-gray-50">
   <!-- Header -->
-  <header class="gradient-bg text-white shadow-lg sticky top-0 z-50">
+  <header class="bg-white shadow-sm sticky top-0 z-50">
     <div class="container mx-auto px-6 py-4">
       <div class="flex justify-between items-center">
         <div class="flex items-center space-x-3">
-          <div class="bg-white p-2 rounded-lg">
+          <div class="bg-indigo-100 p-2 rounded-lg">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
             </svg>
           </div>
-          <h1 class="text-2xl font-bold font-['Space_Grotesk']">MathSolve AI</h1>
+          <h1 class="text-xl font-bold text-gray-800">MathSolve AI</h1>
         </div>
-        <div class="relative">
-          <button id="profileBtn" class="flex items-center space-x-2 focus:outline-none">
-            <div class="w-9 h-9 rounded-full bg-white text-indigo-600 flex items-center justify-center font-semibold">
-              <span id="profileInitial">U</span>
+        <div class="flex items-center space-x-4">
+          <div class="hidden md:flex items-center space-x-2">
+            <span id="usageDisplay" class="text-sm text-gray-600"></span>
+          </div>
+          <div class="relative">
+            <button id="profileBtn" class="flex items-center space-x-2 focus:outline-none">
+              <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-medium">
+                <span id="profileInitial">U</span>
+              </div>
+            </button>
+            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+              <div class="px-4 py-2 border-b">
+                <p class="text-sm font-medium text-gray-800" id="profileName"></p>
+                <p class="text-xs text-gray-500 truncate" id="profileEmail"></p>
+              </div>
+              <a href="/api/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
             </div>
-            <span class="hidden md:inline-block font-medium" id="profileName">User</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden md:inline-block" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </button>
-          <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-50 animate__animated animate__fadeIn">
-            <div class="px-4 py-3 border-b">
-              <p class="text-sm font-medium text-gray-900" id="profileNameDropdown">User Name</p>
-              <p class="text-xs text-gray-500 truncate" id="profileEmail">user@example.com</p>
-            </div>
-            <a href="/api/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
           </div>
         </div>
       </div>
     </div>
   </header>
 
+  <!-- Main Content -->
   <main class="container mx-auto px-4 py-8">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <!-- Upload Section -->
       <div class="lg:col-span-2">
-        <div class="card p-6 h-full">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-xl font-bold text-gray-800">Unggah Soal Matematika</h2>
-              <p class="text-sm text-gray-500">Dapatkan solusi langkah demi langkah dalam hitungan detik</p>
-            </div>
-            <div class="flex items-center space-x-2">
-              <div class="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-xs font-medium">
-                <span id="usageCount">0/10</span> per jam
-              </div>
-            </div>
+        <div class="card bg-white rounded-lg p-6">
+          <div class="mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-1">Unggah Soal Matematika</h2>
+            <p class="text-sm text-gray-600">Dapatkan solusi langkah demi langkah dengan AI</p>
           </div>
           
           <form id="uploadForm">
-            <div id="dropZone" class="drop-zone rounded-xl p-8 text-center mb-6 cursor-pointer hover:border-indigo-300 transition-colors">
-              <input type="file" id="imageInput" accept="image/*" class="hidden">
+            <div id="dropZone" class="drop-zone rounded-lg p-8 text-center mb-4 cursor-pointer">
+              <input type="file" id="fileInput" accept="image/*" class="hidden">
               <div class="max-w-md mx-auto">
-                <div class="bg-indigo-50 w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="bg-indigo-50 w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                 </div>
-                <h3 class="font-medium text-gray-700 mb-1">Seret dan lepas gambar di sini</h3>
-                <p class="text-sm text-gray-500 mb-3">atau klik untuk memilih file</p>
+                <h3 class="font-medium text-gray-700 mb-1">Seret dan lepas gambar</h3>
+                <p class="text-sm text-gray-500 mb-2">atau klik untuk memilih file</p>
                 <p class="text-xs text-gray-400">Format: JPG, PNG (Maks 5MB)</p>
               </div>
             </div>
             
-            <div id="previewContainer" class="hidden mb-6">
-              <div class="flex justify-between items-center mb-3">
+            <div id="previewContainer" class="hidden mb-4">
+              <div class="flex justify-between items-center mb-2">
                 <span class="text-sm font-medium text-gray-700">Pratinjau Gambar</span>
                 <button type="button" id="clearPreview" class="text-xs text-red-500 hover:text-red-600 flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -169,10 +144,10 @@
                   Hapus
                 </button>
               </div>
-              <img id="previewImage" class="w-full max-h-80 object-contain rounded-lg border border-gray-200" alt="Pratinjau Gambar">
+              <img id="previewImage" class="w-full max-h-64 object-contain rounded border border-gray-200" alt="Pratinjau Gambar">
             </div>
             
-            <button type="submit" id="submitBtn" class="w-full gradient-bg text-white font-medium py-3 rounded-lg hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 flex items-center justify-center">
+            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors flex items-center justify-center">
               <span id="submitText">Selesaikan Soal</span>
               <svg id="submitSpinner" class="hidden animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -185,39 +160,42 @@
       
       <!-- Solution Section -->
       <div class="lg:col-span-1">
-        <div class="card p-6 h-full">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-xl font-bold text-gray-800">Solusi Matematika</h2>
-              <p class="text-sm text-gray-500">Langkah demi langkah dengan penjelasan rinci</p>
-            </div>
-            <button id="copySolution" class="hidden bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-xs font-medium flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-              </svg>
-              Salin
-            </button>
+        <div class="card bg-white rounded-lg p-6 h-full">
+          <div class="mb-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-1">Solusi Matematika</h2>
+            <p class="text-sm text-gray-600">Hasil analisis akan muncul di sini</p>
           </div>
           
           <div id="solutionContent">
+            <!-- Empty State -->
             <div id="emptyState" class="flex flex-col items-center justify-center py-12 text-center">
-              <div class="bg-indigo-50 rounded-full p-5 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div class="bg-indigo-50 rounded-full p-4 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
-              <h3 class="font-medium text-gray-700 mb-1">Belum ada soal yang diselesaikan</h3>
-              <p class="text-sm text-gray-500 max-w-xs">Unggah gambar soal matematika untuk melihat solusi langkah demi langkah.</p>
+              <h3 class="font-medium text-gray-700 mb-1">Belum ada soal yang diunggah</h3>
+              <p class="text-sm text-gray-500 max-w-xs">Unggah gambar soal matematika untuk melihat solusi</p>
             </div>
             
+            <!-- Loading State -->
             <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12">
-              <div class="spinner rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-              <p class="text-gray-600 text-sm">Menganalisis soal matematika...</p>
-              <p class="text-gray-400 text-xs mt-1">Biasanya memakan waktu 5-15 detik</p>
+              <div class="spinner rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+              <p class="text-sm text-gray-600">Menganalisis soal...</p>
             </div>
             
+            <!-- Solution Result -->
             <div id="solutionResult" class="hidden">
-              <div id="solutionText" class="prose max-w-none text-gray-700"></div>
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-medium text-gray-800">Detail Solusi</h3>
+                <button id="copySolution" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                  Salin
+                </button>
+              </div>
+              <div id="solutionText" class="prose max-w-none"></div>
             </div>
           </div>
         </div>
@@ -225,29 +203,8 @@
     </div>
   </main>
 
-  <footer class="bg-white border-t border-gray-200 py-8 mt-12">
-    <div class="container mx-auto px-6">
-      <div class="flex flex-col md:flex-row justify-between items-center">
-        <div class="flex items-center space-x-3 mb-6 md:mb-0">
-          <div class="bg-indigo-600 p-2 rounded-lg">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-            </svg>
-          </div>
-          <span class="font-bold text-gray-800">MathSolve AI</span>
-        </div>
-        <div class="flex flex-col items-center md:flex-row md:space-x-8 space-y-4 md:space-y-0 text-sm text-gray-500">
-          <a href="#" class="hover:text-indigo-600 transition-colors">Tentang Kami</a>
-          <a href="#" class="hover:text-indigo-600 transition-colors">Kebijakan Privasi</a>
-          <a href="#" class="hover:text-indigo-600 transition-colors">Ketentuan Layanan</a>
-          <a href="#" class="hover:text-indigo-600 transition-colors">Hubungi Kami</a>
-        </div>
-      </div>
-      <div class="mt-8 pt-8 border-t border-gray-100 text-center text-sm text-gray-500">
-        © 2023 MathSolve AI. All rights reserved.
-      </div>
-    </div>
-  </footer>
+  <!-- Toast Notification -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
 
   <script>
     // Check authentication
@@ -255,6 +212,25 @@
     if (!token) {
       window.location.href = '/login.html';
     }
+
+    // DOM Elements
+    const profileBtn = document.getElementById('profileBtn');
+    const profileDropdown = document.getElementById('profileDropdown');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewImage = document.getElementById('previewImage');
+    const uploadForm = document.getElementById('uploadForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const submitSpinner = document.getElementById('submitSpinner');
+    const solutionContent = document.getElementById('solutionContent');
+    const emptyState = document.getElementById('emptyState');
+    const loadingState = document.getElementById('loadingState');
+    const solutionResult = document.getElementById('solutionResult');
+    const solutionText = document.getElementById('solutionText');
+    const copySolutionBtn = document.getElementById('copySolution');
+    const usageDisplay = document.getElementById('usageDisplay');
 
     // Load user profile
     async function loadProfile() {
@@ -272,36 +248,31 @@
         
         const data = await res.json();
         if (data.name && data.email) {
-          document.getElementById('profileName').textContent = data.name;
           document.getElementById('profileInitial').textContent = data.name.charAt(0).toUpperCase();
-          document.getElementById('profileNameDropdown').textContent = data.name;
+          document.getElementById('profileName').textContent = data.name;
           document.getElementById('profileEmail').textContent = data.email;
         }
       } catch (err) {
         console.error('Profile load error:', err);
+        showToast('Gagal memuat profil', 'error');
       }
     }
 
     // Toggle profile dropdown
-    document.getElementById('profileBtn').addEventListener('click', (e) => {
+    profileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const dropdown = document.getElementById('profileDropdown');
-      dropdown.classList.toggle('hidden');
+      profileDropdown.classList.toggle('hidden');
     });
 
     // Close dropdown when clicking outside
     document.addEventListener('click', () => {
-      document.getElementById('profileDropdown').classList.add('hidden');
+      profileDropdown.classList.add('hidden');
     });
 
     // File upload handling
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('imageInput');
-    const previewContainer = document.getElementById('previewContainer');
-    const previewImage = document.getElementById('previewImage');
-
     dropZone.addEventListener('click', () => fileInput.click());
     
+    // Drag and drop events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
       dropZone.addEventListener(eventName, preventDefaults, false);
     });
@@ -371,7 +342,7 @@
     }
 
     // Form submission
-    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const imageFile = fileInput.files[0];
@@ -381,15 +352,14 @@
       }
 
       // Show loading state
-      document.getElementById('emptyState').classList.add('hidden');
-      document.getElementById('solutionResult').classList.add('hidden');
-      document.getElementById('loadingState').classList.remove('hidden');
+      emptyState.classList.add('hidden');
+      solutionResult.classList.add('hidden');
+      loadingState.classList.remove('hidden');
       
       // Disable submit button
-      const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
-      document.getElementById('submitText').textContent = 'Memproses...';
-      document.getElementById('submitSpinner').classList.remove('hidden');
+      submitText.textContent = 'Memproses...';
+      submitSpinner.classList.remove('hidden');
 
       const formData = new FormData();
       formData.append('image', imageFile);
@@ -411,37 +381,41 @@
         }
 
         // Show solution
-        document.getElementById('loadingState').classList.add('hidden');
-        document.getElementById('solutionText').innerHTML = formatSolution(data.response);
-        document.getElementById('solutionResult').classList.remove('hidden');
-        document.getElementById('copySolution').classList.remove('hidden');
+        loadingState.classList.add('hidden');
+        solutionText.innerHTML = data.formatted_response || data.response;
+        solutionResult.classList.remove('hidden');
         
-        // Update usage count if available
-        if (res.headers.get('X-Usage-Warning')) {
-          showToast(res.headers.get('X-Usage-Warning'), 'warning');
+        // Update usage display
+        if (data.usage) {
+          updateUsageDisplay(data.usage.used, data.usage.limit);
         }
         
-        // Update MathJax rendering
+        // Show warning if available
+        if (data.warning) {
+          showToast(data.warning, 'warning');
+        }
+        
+        // Render MathJax
         if (window.MathJax) {
           MathJax.typesetPromise();
         }
       } catch (err) {
         console.error('Upload error:', err);
         showToast(err.message || 'Gagal memproses gambar', 'error');
-        document.getElementById('loadingState').classList.add('hidden');
-        document.getElementById('emptyState').classList.remove('hidden');
+        loadingState.classList.add('hidden');
+        emptyState.classList.remove('hidden');
       } finally {
         // Reset submit button
         submitBtn.disabled = false;
-        document.getElementById('submitText').textContent = 'Selesaikan Soal';
-        document.getElementById('submitSpinner').classList.add('hidden');
+        submitText.textContent = 'Selesaikan Soal';
+        submitSpinner.classList.add('hidden');
       }
     });
 
     // Copy solution
-    document.getElementById('copySolution').addEventListener('click', () => {
-      const solutionText = document.getElementById('solutionText').textContent;
-      navigator.clipboard.writeText(solutionText).then(() => {
+    copySolutionBtn.addEventListener('click', () => {
+      const solution = solutionText.textContent;
+      navigator.clipboard.writeText(solution).then(() => {
         showToast('Solusi berhasil disalin', 'success');
       }).catch(err => {
         console.error('Copy failed:', err);
@@ -449,88 +423,42 @@
       });
     });
 
-    // Format solution response
-    function formatSolution(response) {
-      if (!response) return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan</p>';
+    // Update usage display
+    function updateUsageDisplay(used, limit) {
+      usageDisplay.textContent = `${used}/${limit} per jam`;
       
-      // Split into steps if available
-      const steps = response.split(/(?=\n\s*(Langkah|Step)\s+\d+)/i);
-      
-      if (steps.length > 1) {
-        return steps.map((step, index) => {
-          if (index === 0 && step.trim() === '') return '';
-          return `
-            <div class="solution-step">
-              <div class="flex items-start">
-                <div class="flex-shrink-0 mt-1 mr-3 text-indigo-600 font-medium">${index}.</div>
-                <div class="solution-content flex-grow">${formatMathExpressions(step)}</div>
-              </div>
-            </div>
-          `;
-        }).join('');
+      // Add warning style if approaching limit
+      if (used >= limit * 0.8) {
+        usageDisplay.classList.add('text-red-500');
+        usageDisplay.classList.remove('text-gray-600');
+      } else {
+        usageDisplay.classList.remove('text-red-500');
+        usageDisplay.classList.add('text-gray-600');
       }
-      
-      // If no steps, just format the whole response
-      return formatMathExpressions(response);
-    }
-
-    // Format math expressions
-    function formatMathExpressions(text) {
-      // Replace LaTeX expressions with MathJax
-      text = text.replace(/\$\$(.*?)\$\$/g, '\\[$1\\]');
-      text = text.replace(/\$(.*?)\$/g, '\\($1\\)');
-      
-      // Replace simple math expressions
-      text = text.replace(/(\d+)\s*\/\s*(\d+)/g, '<span class="math-expression">$1/$2</span>');
-      text = text.replace(/(\w+)\^(\d+)/g, '<span class="math-expression">$1<sup>$2</sup></span>');
-      
-      // Replace fractions
-      text = text.replace(/frac\{(.*?)\}\{(.*?)\}/g, '<span class="math-expression">$1/$2</span>');
-      
-      // Replace square roots
-      text = text.replace(/sqrt\{(.*?)\}/g, '<span class="math-expression">√($1)</span>');
-      
-      // Replace trigonometric functions
-      text = text.replace(/(sin|cos|tan|cot|csc|sec)\((.*?)\)/g, '<span class="math-expression">$1($2)</span>');
-      
-      // Replace Greek letters
-      const greekLetters = {
-        'alpha': 'α', 'beta': 'β', 'gamma': 'γ', 'delta': 'δ',
-        'epsilon': 'ε', 'zeta': 'ζ', 'eta': 'η', 'theta': 'θ',
-        'iota': 'ι', 'kappa': 'κ', 'lambda': 'λ', 'mu': 'μ',
-        'nu': 'ν', 'xi': 'ξ', 'pi': 'π', 'rho': 'ρ',
-        'sigma': 'σ', 'tau': 'τ', 'phi': 'φ', 'chi': 'χ',
-        'psi': 'ψ', 'omega': 'ω'
-      };
-      
-      for (const [key, value] of Object.entries(greekLetters)) {
-        text = text.replace(new RegExp(`\\\\${key}`, 'g'), value);
-      }
-      
-      // Convert newlines to paragraphs
-      return text.split('\n').filter(para => para.trim() !== '').map(para => `<p>${para}</p>`).join('');
     }
 
     // Show toast notification
     function showToast(message, type = 'info') {
+      const toastContainer = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-md shadow-lg text-white ${
+      
+      toast.className = `toast px-4 py-2 rounded-md shadow-lg text-white ${
         type === 'error' ? 'bg-red-500' : 
         type === 'success' ? 'bg-green-500' : 
         type === 'warning' ? 'bg-yellow-500' : 'bg-indigo-500'
-      } animate__animated animate__fadeInUp`;
+      }`;
+      
       toast.textContent = message;
-      document.body.appendChild(toast);
+      toastContainer.appendChild(toast);
       
       setTimeout(() => {
-        toast.classList.remove('animate__fadeInUp');
-        toast.classList.add('animate__fadeOutDown');
-        setTimeout(() => toast.remove(), 500);
+        toast.remove();
       }, 3000);
     }
 
-    // Load user profile on page load
+    // Initialize
     loadProfile();
+    updateUsageDisplay(0, 10); // Initial usage display
   </script>
 </body>
 </html>

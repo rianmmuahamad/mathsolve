@@ -3,15 +3,18 @@ const multer = require('multer');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
-const math = require('mathjs');
 const { sql } = require('./db');
+const math = require('mathjs');
+const cheerio = require('cheerio'); // For HTML parsing
 
 const router = express.Router();
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
+// Multer setup for in-memory storage
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Rate limiter configuration
 const uploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
   max: 10,
@@ -19,6 +22,7 @@ const uploadLimiter = rateLimit({
   message: 'Maaf, Anda telah mencapai batas 10 gambar per jam. Silakan tunggu hingga reset setiap jam.'
 });
 
+// Authentication middleware
 const authenticate = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
@@ -29,6 +33,7 @@ const authenticate = (req, res, next) => {
   });
 };
 
+// Utility functions
 function estimateTokens(text) {
   return Math.ceil(text.length / 4);
 }
@@ -56,83 +61,149 @@ function fileToGenerativePart(buffer, mimeType) {
   };
 }
 
-function formatMathResponse(response) {
+// Enhanced math notation formatter
+function formatMathNotation(text) {
+  if (!text || typeof text !== 'string') return text;
+  
   try {
-    // Convert simple math expressions to proper format
-    response = response.replace(
-      /(\d+)\s*\/\s*(\d+)/g,
-      (match, num, denom) => math.parse(`${num}/${denom}`).toString()
+    // 1. Format fractions
+    text = text.replace(
+      /(\d+)\s*\/\s*(\d+)/g, 
+      (_, num, den) => `\\frac{${num}}{${den}}`
     );
 
-    // Convert exponents
-    response = response.replace(
-      /(\d+)\s*\^\s*(\d+)/g,
-      (match, base, exp) => math.parse(`${base}^${exp}`).toString()
+    // 2. Format exponents
+    text = text.replace(
+      /(\w+)\s*\^\s*(\d+)/g,
+      (_, base, exp) => `${base}^{${exp}}`
     );
 
-    // Convert square roots
-    response = response.replace(
+    // 3. Format square roots
+    text = text.replace(
       /sqrt\(([^)]+)\)/g,
-      (match, expr) => math.parse(`sqrt(${expr})`).toString()
+      (_, expr) => `\\sqrt{${expr}}`
     );
 
-    // Convert fractions
-    response = response.replace(
-      /frac\{([^}]+)\}\{([^}]+)\}/g,
-      (match, num, denom) => math.parse(`${num}/${denom}`).toString()
-    );
-
-    // Convert trigonometric functions
-    response = response.replace(
+    // 4. Format trigonometric functions
+    text = text.replace(
       /(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g,
-      (match, fn, expr) => math.parse(`${fn}(${expr})`).toString()
+      (_, fn, arg) => `\\${fn}(${arg})`
     );
 
-    return response;
-  } catch (err) {
-    console.error('Math formatting error:', err);
-    return response;
+    // 5. Format Greek letters
+    const greekSymbols = {
+      'alpha': '\\alpha', 'beta': '\\beta', 'gamma': '\\gamma',
+      'delta': '\\delta', 'epsilon': '\\epsilon', 'theta': '\\theta',
+      'pi': '\\pi', 'sigma': '\\sigma', 'omega': '\\omega'
+    };
+    
+    for (const [key, val] of Object.entries(greekSymbols)) {
+      text = text.replace(new RegExp(key, 'g'), val);
+    }
+
+    // 6. Format inequalities
+    text = text.replace(/<=/g, '\\leq').replace(/>=/g, '\\geq').replace(/!=/g, '\\neq');
+
+    return text;
+  } catch (error) {
+    console.error('Math notation formatting error:', error);
+    return text;
   }
 }
 
+// Enhanced response formatter with HTML structure
+function formatResponseToHTML(response) {
+  if (!response) return '';
+
+  // First format math notation
+  let formattedResponse = formatMathNotation(response);
+
+  // Convert to HTML with proper structure
+  const $ = cheerio.load('<div class="math-solution"></div>');
+  const container = $('.math-solution');
+
+  // Split into steps or paragraphs
+  const sections = formattedResponse.split(/(?:\n\s*){2,}/);
+
+  sections.forEach((section, index) => {
+    if (!section.trim()) return;
+
+    // Check if this looks like a step
+    const isStep = section.match(/^(Langkah|Step)\s*\d+/i) || 
+                  section.match(/^\d+\./) ||
+                  section.length > 150;
+
+    if (isStep) {
+      const stepDiv = $('<div class="solution-step"></div>');
+      stepDiv.append(`<div class="step-number">${index + 1}.</div>`);
+      
+      // Process the content
+      let content = section.replace(/^(Langkah|Step)\s*\d+:?\s*/i, '')
+                          .replace(/^\d+\.\s*/, '');
+      
+      // Split into paragraphs if needed
+      const paragraphs = content.split('\n');
+      
+      paragraphs.forEach(para => {
+        if (para.trim()) {
+          stepDiv.append(`<p>${para.trim()}</p>`);
+        }
+      });
+      
+      container.append(stepDiv);
+    } else {
+      // Regular paragraph
+      container.append(`<p>${section}</p>`);
+    }
+  });
+
+  return $.html();
+}
+
+// Main upload endpoint
 router.post('/', authenticate, uploadLimiter, upload.single('image'), async (req, res) => {
   try {
-    const userId = req.user.id;
-    const userName = req.user.email.split('@')[0];
+    const { id: userId, email } = req.user;
     const fileBuffer = req.file.buffer;
     const mimeType = req.file.mimetype;
     const fileName = `${Date.now()}-${req.file.originalname}`;
 
     if (!process.env.GOOGLE_API_KEY) {
-      throw new Error('GOOGLE_API_KEY is not set in environment variables');
+      throw new Error('GOOGLE_API_KEY is not set');
     }
 
     const history = await getUploadHistory(userId);
-    const historyText = history
-      .map(msg => `${msg.role}: ${msg.content}`)
-      .join('\n');
+    const historyText = history.map(msg => `${msg.role}: ${msg.content}`).join('\n');
 
     const prompt = `
-Riwayat unggahan terbaru dari ${userName}:
+Riwayat unggahan terbaru dari ${email.split('@')[0]}:
 ${historyText || 'Tidak ada riwayat unggahan sebelumnya.'}
 
-Anda adalah ahli matematika. Analisis gambar soal matematika yang diunggah. Berikan solusi langkah demi langkah menggunakan metode yang paling umum dan mudah dipahami dalam bahasa Indonesia. Sertakan penjelasan jelas untuk setiap langkah. Format semua ekspresi matematika dalam format LaTeX (contoh: \\(\\frac{1}{2}\\), \\(x^2\\), \\(\\sqrt{4}\\)). Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak berisi soal matematika." Jangan tanggapi konten non-matematika.
+Anda adalah ahli matematika. Analisis gambar soal matematika yang diunggah. Berikan solusi langkah demi langkah menggunakan metode yang paling umum dan mudah dipahami dalam bahasa Indonesia.
+
+FORMAT RESPONS:
+1. Gunakan notasi matematika yang tepat (contoh: \\(\\frac{1}{2}\\), \\(x^2\\), \\(\\sqrt{4}\\))
+2. Pisahkan setiap langkah dengan jelas
+3. Berikan penjelasan untuk setiap langkah
+4. Gunakan format yang mudah dibaca
+
+Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak berisi soal matematika."
     `;
 
-    const requestTokens = estimateTokens(prompt) + 1500;
     const imagePart = fileToGenerativePart(fileBuffer, mimeType);
     const result = await model.generateContent([prompt, imagePart]);
+    const responseText = result.response.text();
 
-    let responseText = result.response.text();
-    responseText = formatMathResponse(responseText);
+    // Format the response
+    const formattedResponse = formatResponseToHTML(responseText);
 
+    // Store in database
     await sql`
       INSERT INTO uploads (user_id, image_path, response)
       VALUES (${userId}, ${fileName}, ${responseText});
     `;
 
-    res.json({ response: responseText });
-
+    // Get usage stats
     const usageCount = await sql`
       SELECT COUNT(*) as count
       FROM uploads
@@ -141,17 +212,27 @@ Anda adalah ahli matematika. Analisis gambar soal matematika yang diunggah. Beri
     `;
     const used = parseInt(usageCount[0].count);
     const limit = 10;
-    const percentage = (used / limit) * 100;
 
-    if (percentage >= 90) {
-      res.set('X-Usage-Warning', `Peringatan: Anda telah menggunakan ${percentage}% dari kuota 10 gambar/jam. Kuota akan direset dalam ${60 - new Date().getMinutes()} menit.`);
+    // Prepare response
+    const response = {
+      response: responseText,
+      formatted_response: formattedResponse,
+      usage: { used, limit }
+    };
+
+    // Add warning if approaching limit
+    if (used >= limit * 0.9) {
+      response.warning = `Anda telah menggunakan ${used}/${limit} kuota. Reset dalam ${60 - new Date().getMinutes()} menit.`;
     }
 
-    console.log(`Processed image for ${userName}: ${responseText}`);
-    console.log(`Usage for ${userId}: ${used}/${limit} (${percentage}%)`);
+    res.json(response);
+
   } catch (err) {
     console.error('Upload error:', err);
-    res.status(500).json({ error: 'Maaf, terjadi kesalahan saat memproses gambar. Silakan coba lagi dengan gambar beresolusi lebih rendah.' });
+    res.status(500).json({ 
+      error: 'Maaf, terjadi kesalahan saat memproses gambar.',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
