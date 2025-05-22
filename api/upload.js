@@ -29,53 +29,8 @@ const authenticate = (req, res, next) => {
   });
 };
 
-function formatMathExpressions(text) {
-  // Format fractions
-  text = text.replace(/(\d+)\/(\d+)/g, (match, num, denom) => {
-    try {
-      return math.format(math.fraction(parseInt(num), parseInt(denom)), { fraction: 'ratio' });
-    } catch {
-      return match;
-    }
-  });
-
-  // Format exponents
-  text = text.replace(/(\d+)\^(\d+)/g, (match, base, exp) => {
-    try {
-      return math.format(math.pow(parseInt(base), parseInt(exp)));
-    } catch {
-      return match;
-    }
-  });
-
-  // Format square roots
-  text = text.replace(/sqrt\(([^)]+)\)/g, (match, expr) => {
-    try {
-      return `√${math.format(math.evaluate(expr))}`;
-    } catch {
-      return match;
-    }
-  });
-
-  // Format other math expressions
-  const mathPatterns = [
-    { regex: /(\d+(?:\.\d+)?)\s*\+\s*(\d+(?:\.\d+)?)/g, fn: (a, b) => math.add(parseFloat(a), parseFloat(b)) },
-    { regex: /(\d+(?:\.\d+)?)\s*\-\s*(\d+(?:\.\d+)?)/g, fn: (a, b) => math.subtract(parseFloat(a), parseFloat(b)) },
-    { regex: /(\d+(?:\.\d+)?)\s*\*\s*(\d+(?:\.\d+)?)/g, fn: (a, b) => math.multiply(parseFloat(a), parseFloat(b)) },
-    { regex: /(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)/g, fn: (a, b) => math.divide(parseFloat(a), parseFloat(b)) }
-  ];
-
-  mathPatterns.forEach(pattern => {
-    text = text.replace(pattern.regex, (match, a, b) => {
-      try {
-        return math.format(pattern.fn(a, b));
-      } catch {
-        return match;
-      }
-    });
-  });
-
-  return text;
+function estimateTokens(text) {
+  return Math.ceil(text.length / 4);
 }
 
 async function getUploadHistory(userId) {
@@ -101,6 +56,45 @@ function fileToGenerativePart(buffer, mimeType) {
   };
 }
 
+function formatMathResponse(response) {
+  try {
+    // Convert simple math expressions to proper format
+    response = response.replace(
+      /(\d+)\s*\/\s*(\d+)/g,
+      (match, num, denom) => math.parse(`${num}/${denom}`).toString()
+    );
+
+    // Convert exponents
+    response = response.replace(
+      /(\d+)\s*\^\s*(\d+)/g,
+      (match, base, exp) => math.parse(`${base}^${exp}`).toString()
+    );
+
+    // Convert square roots
+    response = response.replace(
+      /sqrt\(([^)]+)\)/g,
+      (match, expr) => math.parse(`sqrt(${expr})`).toString()
+    );
+
+    // Convert fractions
+    response = response.replace(
+      /frac\{([^}]+)\}\{([^}]+)\}/g,
+      (match, num, denom) => math.parse(`${num}/${denom}`).toString()
+    );
+
+    // Convert trigonometric functions
+    response = response.replace(
+      /(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g,
+      (match, fn, expr) => math.parse(`${fn}(${expr})`).toString()
+    );
+
+    return response;
+  } catch (err) {
+    console.error('Math formatting error:', err);
+    return response;
+  }
+}
+
 router.post('/', authenticate, uploadLimiter, upload.single('image'), async (req, res) => {
   try {
     const userId = req.user.id;
@@ -122,23 +116,15 @@ router.post('/', authenticate, uploadLimiter, upload.single('image'), async (req
 Riwayat unggahan terbaru dari ${userName}:
 ${historyText || 'Tidak ada riwayat unggahan sebelumnya.'}
 
-Anda adalah ahli matematika. Analisis gambar soal matematika yang diunggah. Berikan solusi langkah demi langkah menggunakan metode yang paling umum dan mudah dipahami dalam bahasa Indonesia. Sertakan penjelasan jelas untuk setiap langkah. Format output dengan:
-
-1. Gunakan format berikut untuk ekspresi matematika:
-   - Pecahan: (a/b)
-   - Eksponen: a^b
-   - Akar: sqrt(ekspresi)
-   - Operasi dasar: a + b, a - b, a * b, a / b
-
-2. Jangan gunakan LaTeX atau format markup lainnya
-3. Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak berisi soal matematika." Jangan tanggapi konten non-matematika.
+Anda adalah ahli matematika. Analisis gambar soal matematika yang diunggah. Berikan solusi langkah demi langkah menggunakan metode yang paling umum dan mudah dipahami dalam bahasa Indonesia. Sertakan penjelasan jelas untuk setiap langkah. Format semua ekspresi matematika dalam format LaTeX (contoh: \\(\\frac{1}{2}\\), \\(x^2\\), \\(\\sqrt{4}\\)). Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak berisi soal matematika." Jangan tanggapi konten non-matematika.
     `;
 
+    const requestTokens = estimateTokens(prompt) + 1500;
     const imagePart = fileToGenerativePart(fileBuffer, mimeType);
     const result = await model.generateContent([prompt, imagePart]);
 
     let responseText = result.response.text();
-    responseText = formatMathExpressions(responseText);
+    responseText = formatMathResponse(responseText);
 
     await sql`
       INSERT INTO uploads (user_id, image_path, response)
