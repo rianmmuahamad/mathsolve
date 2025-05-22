@@ -25,6 +25,13 @@
       options: {
         skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
         ignoreHtmlClass: 'tex2jax_ignore',
+      },
+      startup: {
+        ready: () => {
+          MathJax.startup.defaultReady();
+          // Ensure MathJax is fully loaded before any rendering
+          window.MathJaxReady = true;
+        }
       }
     };
 
@@ -331,8 +338,18 @@
         document.getElementById('responseText').innerHTML = formatMathResponse(data.response);
         document.getElementById('response').classList.remove('hidden');
 
-        if (window.MathJax) {
-          MathJax.typesetPromise([document.getElementById('responseText')]).catch(err => console.error('MathJax error:', err));
+        // Use MathJax.typeset() instead of typesetPromise
+        if (window.MathJax && window.MathJaxReady) {
+          MathJax.typeset([document.getElementById('responseText')]);
+        } else {
+          console.warn('MathJax not ready yet. Retrying in 100ms...');
+          setTimeout(() => {
+            if (window.MathJax && window.MathJaxReady) {
+              MathJax.typeset([document.getElementById('responseText')]);
+            } else {
+              console.error('MathJax failed to initialize.');
+            }
+          }, 100);
         }
       } catch (err) {
         document.getElementById('emptyState').classList.remove('hidden');
@@ -385,14 +402,20 @@
 
       let currentResponse = response;
 
-      // 1. Konversi ekspresi matematika ke LaTeX
-      // Pecahan (a/b, termasuk variabel dan ekspresi kompleks)
+      // 1. Preprocess existing LaTeX fractions (e.g., \[\frac{18}{28}\])
+      currentResponse = currentResponse.replace(
+        /\\\[\\frac\{(\d+)\}\{(\d+)\}\\\]/g,
+        (match, num, denom) => {
+          const { num: simplifiedNum, den: simplifiedDen } = simplifyFraction(parseInt(num), parseInt(denom));
+          return `\\(\\frac{${simplifiedNum}}{${simplifiedDen}}\\)`;
+        }
+      );
+
+      // 2. Convert fractions not already in LaTeX (e.g., 18/28)
       currentResponse = currentResponse.replace(
         /(?<![\$\\])(?<!\^\{)([\w\d\(\)\+\-\*\/\.]+)\s*\/\s*([\w\d\(\)\+\-\*\/\.]+)\b(?![\}\s]*\^)/g,
         (match, num, denom) => {
-          // Pastikan bukan bagian dari URL atau ekspresi lain
-          if (num.match(/http/) || denom.match(/http/)) return match;
-          // Coba parse dan sederhanakan jika numerik
+          if (num.match(/http/) || denom.match(/http/)) return match; // Skip URLs
           const numVal = parseFloat(num);
           const denomVal = parseFloat(denom);
           if (!isNaN(numVal) && !isNaN(denomVal) && denomVal !== 0) {
@@ -403,7 +426,7 @@
         }
       );
 
-      // Eksponen (a^b, termasuk basis dan eksponen kompleks)
+      // 3. Convert exponents (e.g., a^b)
       currentResponse = currentResponse.replace(
         /([\w\d\(\)\|\+\-\*\/\.]+)\s*\^\s*([\w\d\(\)\{\}\+\-\*\/\.]+)/g,
         (match, base, exponent) => {
@@ -413,7 +436,7 @@
         }
       );
 
-      // Akar (sqrt, cbrt, root(n)[x])
+      // 4. Convert roots (e.g., sqrt[x], cbrt[x])
       currentResponse = currentResponse.replace(
         /\b(sqrt|cbrt|root\s*\(\s*(\d+)\s*\))\s*\[([^\]]+)\]/g,
         (match, rootType, n, content) => {
@@ -423,7 +446,7 @@
         }
       );
 
-      // Fungsi matematika (trigonometri, logaritma, dll.)
+      // 5. Convert mathematical functions (e.g., sin(x), log(x))
       const mathFunctions = [
         'sin', 'cos', 'tan', 'cot', 'sec', 'csc',
         'arcsin', 'arccos', 'arctan', 'arccot', 'arcsec', 'arccsc',
@@ -435,7 +458,7 @@
         (match, func, arg) => `\\(\\${func}\\left(${arg.trim()}\\right)\\)`
       );
 
-      // Simbol khusus
+      // 6. Convert special symbols
       const symbolMap = {
         'pi': '\\pi',
         'theta': '\\theta',
@@ -460,7 +483,7 @@
         );
       }
 
-      // Matriks (umum, mendukung lebih dari 2 baris)
+      // 7. Convert matrices
       currentResponse = currentResponse.replace(
         /\[\s*([^\]]*?)\s*\]/g,
         (match, content) => {
@@ -474,7 +497,7 @@
         }
       );
 
-      // Persamaan multi-baris dengan align
+      // 8. Convert multi-line equations with align
       currentResponse = currentResponse.replace(
         /([^=]+)\s*=\s*([^=\n]+(?:\s*=\s*[^=\n]+)*)/g,
         (match, left, right) => {
@@ -489,11 +512,11 @@
         }
       );
 
-      // 2. Konversi Markdown
+      // 9. Convert Markdown
       currentResponse = currentResponse.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
       currentResponse = currentResponse.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
-      // 3. Format blok teks
+      // 10. Format text blocks
       function formatBlockToHtml(textBlock) {
         if (!textBlock || textBlock.trim() === "") return "";
         const paragraphs = textBlock.trim().split(/\n\s*\n+/);
@@ -507,37 +530,38 @@
           .join('');
       }
 
-      // 4. Pisahkan langkah-langkah
-      const sections = currentResponse.split(/\b(Langkah\s+\d+[:.]?)\s*/i);
+      // 11. Split into steps (e.g., Langkah 1:)
+      const sections = currentResponse.split(/(Langkah\s+\d+[:.]?)\s*/i);
       let htmlOutput = '';
 
-      // Pendahuluan (sebelum langkah-langkah)
-      if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
+      // Handle introduction (before steps)
+      if (sections.length > 0 && sections[0].trim() !== "") {
         htmlOutput += formatBlockToHtml(sections[0]);
       }
 
-      // Langkah-langkah
-      if (sections.length > 1) {
-        for (let i = 1; i < sections.length; i += 2) {
-          const stepLabel = sections[i]; // e.g., "Langkah 1:"
-          let stepText = sections[i + 1] ? sections[i + 1].trim() : '';
-          if (stepText === "") continue;
-          const stepNumber = stepLabel.match(/\d+/) ? stepLabel.match(/\d+/)[0] : i;
-          htmlOutput += `
-            <div class="solution-step mb-5">
-              <div class="flex items-start">
-                <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${stepNumber}.</div>
-                <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
-              </div>
-            </div>`;
-        }
-      } else if (htmlOutput.trim() === "" && response.trim() !== "") {
+      // Handle steps
+      for (let i = 1; i < sections.length; i += 2) {
+        const stepLabel = sections[i]; // e.g., "Langkah 1:"
+        let stepText = sections[i + 1] ? sections[i + 1].trim() : '';
+        if (stepText === "") continue;
+        const stepNumber = stepLabel.match(/\d+/) ? stepLabel.match(/\d+/)[0] : (i + 1) / 2;
+        htmlOutput += `
+          <div class="solution-step mb-5">
+            <div class="flex items-start">
+              <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${stepNumber}.</div>
+              <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
+            </div>
+          </div>`;
+      }
+
+      // Fallback if no steps are found
+      if (!htmlOutput || htmlOutput.trim() === "") {
         htmlOutput = formatBlockToHtml(currentResponse);
       }
 
-      // 5. Fallback untuk LaTeX yang gagal
+      // Final fallback for failed LaTeX
       if (!htmlOutput || htmlOutput.trim() === "") {
-        htmlOutput = `<p class="text-gray-500">${response.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+        htmlOutput = `<p class="text-gray-500">${response.replace(/</g, '<').replace(/>/g, '>')}</p>`;
       }
 
       return htmlOutput;
