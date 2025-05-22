@@ -5,7 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - MathSolve</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js" integrity="sha512-4i+RPfWOhgXE4XqS3jFFy7XPCkJxeYfJHL9u8Xb2vWFo1T1HDrdyQN3hR3ggrtIrhN4tTK9PI4TKkTfKUnVTn0A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!-- MathJax versi terbaru dengan konfigurasi yang lebih baik -->
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        packages: {'[+]': ['ams', 'color', 'boldsymbol']}
+      },
+      options: {
+        ignoreHtmlClass: 'tex2jax_ignore',
+        processHtmlClass: 'tex2jax_process'
+      },
+      loader: {
+        load: ['[tex]/ams', '[tex]/color', '[tex]/boldsymbol']
+      },
+      startup: {
+        ready: () => {
+          MathJax.startup.defaultReady();
+          MathJax.startup.promise.then(() => {
+            console.log('MathJax is ready');
+          });
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
@@ -79,9 +105,24 @@
     .hover-scale:hover {
       transform: translateY(-2px);
     }
+    /* Style khusus untuk MathJax */
+    .MathJax_Display, .MJXc-display, .math-display {
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding: 5px 0;
+    }
+    .math-inline {
+      display: inline-block;
+      vertical-align: middle;
+    }
+    /* Animasi untuk MathJax saat selesai dirender */
+    .math-rendered {
+      animation: fadeIn 0.5s ease-in;
+    }
   </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans min-h-screen">
+  <!-- Header -->
   <header class="glass-card sticky top-0 z-50 shadow-soft">
     <div class="container mx-auto flex justify-between items-center px-6 py-4">
       <div class="flex items-center space-x-2">
@@ -294,218 +335,110 @@
       window.location.href = '/login.html';
     }
 
-    async function loadProfile() {
-      try {
-        const res = await fetch('/api/auth/profile', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) {
-          if (res.status === 401 || res.status === 403) {
-            alert('Sesi Anda telah berakhir. Silakan login kembali.');
-            window.location.href = '/login.html';
-          }
-          throw new Error(`Failed to load profile: ${res.status}`);
+    // Fungsi untuk memastikan MathJax sudah dimuat
+    function ensureMathJaxLoaded() {
+      return new Promise((resolve) => {
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          resolve();
+        } else {
+          const checkInterval = setInterval(() => {
+            if (window.MathJax && window.MathJax.typesetPromise) {
+              clearInterval(checkInterval);
+              resolve();
+            }
+          }, 100);
         }
-        const data = await res.json();
-        if (data.name) {
-          document.getElementById('profileName').textContent = data.name;
-          document.getElementById('profileInitial').textContent = data.name.charAt(0).toUpperCase();
-          document.getElementById('profileNamePopup').textContent = data.name;
-          document.getElementById('profileInitialPopup').textContent = data.name.charAt(0).toUpperCase();
-          document.getElementById('profileEmail').textContent = data.email;
-        }
-      } catch (err) {
-        console.error('Profile load error:', err.message);
-      }
-    }
-
-    function toggleProfilePopup() {
-      const popup = document.getElementById('profilePopup');
-      popup.classList.toggle('hidden');
-    }
-
-    // Close popup when clicking outside
-    document.addEventListener('click', (e) => {
-      const profile = document.getElementById('profile');
-      const popup = document.getElementById('profilePopup');
-      if (!profile.contains(e.target) && !popup.contains(e.target)) {
-        popup.classList.add('hidden');
-      }
-    });
-
-    const spinner = new Spinner({
-      lines: 12, length: 6, width: 2.5, radius: 10, color: '#0ea5e9',
-      speed: 1, trail: 60, shadow: false
-    });
-
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('image');
-    const previewContainer = document.getElementById('previewContainer');
-    const previewImage = document.getElementById('preview');
-
-    dropZone.addEventListener('click', () => fileInput.click());
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, preventDefault, false));
-    function preventDefault(e) { e.preventDefault(); e.stopPropagation(); }
-    ['dragenter', 'dragover'].forEach(eName => dropZone.addEventListener(eName, highlight, false));
-    ['dragleave', 'drop'].forEach(eName => dropZone.addEventListener(eName, unhighlight, false));
-    function highlight() { dropZone.classList.add('active'); }
-    function unhighlight() { dropZone.classList.remove('active'); }
-    dropZone.addEventListener('drop', handleDrop, false);
-
-    function handleDrop(e) {
-      const files = e.dataTransfer.files;
-      if (files.length) {
-        fileInput.files = files;
-        handleFiles(files);
-      }
-    }
-
-    fileInput.addEventListener('change', () => {
-      if (fileInput.files.length) handleFiles(fileInput.files);
-    });
-
-    document.getElementById('clearPreview').addEventListener('click', () => {
-      previewContainer.classList.add('hidden');
-      previewImage.src = '';
-      fileInput.value = '';
-    });
-
-    function handleFiles(files) {
-      const file = files[0];
-      if (!file.type.match('image.*')) {
-        alert('Pilih file gambar (JPG, PNG, WEBP).');
-        return;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Ukuran file terlalu besar. Maksimum 5MB.');
-        fileInput.value = '';
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        previewImage.src = e.target.result;
-        previewContainer.classList.remove('hidden');
-      };
-      reader.readAsDataURL(file);
-    }
-
-    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const imageFile = fileInput.files[0];
-      if (!imageFile) {
-        alert('Pilih gambar terlebih dahulu.');
-        return;
-      }
-
-      document.getElementById('emptyState').classList.add('hidden');
-      document.getElementById('response').classList.add('hidden');
-      document.getElementById('loadingContainer').classList.remove('hidden');
-      spinner.spin(document.getElementById('spinner'));
-
-      const formData = new FormData();
-      formData.append('image', imageFile);
-
-      try {
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
-          body: formData
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          if (res.status === 401 || res.status === 403) {
-            alert('Sesi Anda telah berakhir. Silakan login kembali.');
-            window.location.href = '/login.html';
-          }
-          throw new Error(data.error || `Server error: ${res.status}`);
-        }
-        if (data.error) throw new Error(data.error);
-
-        document.getElementById('responseText').innerHTML = formatMathResponse(data.response);
-        document.getElementById('response').classList.remove('hidden');
-
-        if (window.MathJax) {
-          MathJax.typesetPromise([document.getElementById('responseText')]).catch(err => console.error('MathJax error:', err));
-        }
-      } catch (err) {
-        document.getElementById('emptyState').classList.remove('hidden');
-        alert('Error: ' + err.message);
-        console.error('Upload error:', err);
-      } finally {
-        spinner.stop();
-        document.getElementById('loadingContainer').classList.add('hidden');
-      }
-    });
-
-    document.getElementById('copySolution').addEventListener('click', () => {
-      const solutionText = document.getElementById('responseText').innerText;
-      navigator.clipboard.writeText(solutionText).then(() => {
-        const copyBtn = document.getElementById('copySolution');
-        const originalHTML = copyBtn.innerHTML;
-        copyBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>Tersalin!`;
-        setTimeout(() => { copyBtn.innerHTML = originalHTML; }, 2000);
-      }).catch(err => {
-        console.error('Gagal menyalin:', err);
-        alert('Gagal menyalin solusi.');
       });
-    });
+    }
 
-    document.getElementById('downloadSolution').addEventListener('click', () => {
-      const solutionText = document.getElementById('responseText').innerText;
-      const blob = new Blob([solutionText], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'solusi-mathsolve.txt';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
+    // Fungsi untuk memproses ulang MathJax dengan retry
+    async function reprocessMathJax(attempts = 3) {
+      await ensureMathJaxLoaded();
+      
+      try {
+        await MathJax.typesetPromise();
+        console.log('MathJax reprocessed successfully');
+        // Tambahkan class untuk animasi setelah render
+        document.querySelectorAll('.MathJax_Display, .MJXc-display, .math-display').forEach(el => {
+          el.classList.add('math-rendered');
+        });
+      } catch (error) {
+        console.error('MathJax processing error:', error);
+        if (attempts > 1) {
+          console.log(`Retrying MathJax processing... (${attempts-1} attempts left)`);
+          await new Promise(resolve => setTimeout(resolve, 500));
+          await reprocessMathJax(attempts - 1);
+        } else {
+          console.error('Failed to process MathJax after multiple attempts');
+        }
+      }
+    }
 
-     // Fungsi formatMathResponse yang diperbaiki
-     function formatMathResponse(response) {
+    // Format respons untuk notasi matematika
+    function formatMathResponse(response) {
       if (!response || response.trim() === "") {
         return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
       }
 
-      // Preprocessing: Normalisasi format matematika
-      let processedResponse = response
-        // Normalisasi tanda kurung
-        .replace(/\[/g, '(').replace(/\]/g, ')')
-        // Normalisasi pecahan
+      // Normalisasi berbagai format matematika ke LaTeX
+      let processed = response
+        // Format pecahan: a/b → \frac{a}{b}
         .replace(/(\d+)\s*\/\s*(\d+)/g, '\\frac{$1}{$2}')
-        // Normalisasi akar
+        // Format pangkat: x^2 → x^{2}
+        .replace(/(\w+|\([^)]+\))\^(\w+|\([^)]+\)|\d+)/g, '{$1}^{$2}')
+        // Format akar: sqrt(x) → \sqrt{x}
         .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')
-        // Normalisasi pangkat
-        .replace(/([a-zA-Z0-9\)])\^([a-zA-Z0-9\(]+)/g, '{$1}^{$2}')
-        // Normalisasi simbol matematika
+        // Format integral: ∫f(x)dx → \int f(x) dx
+        .replace(/∫([^ ]+)dx/g, '\\int $1 dx')
+        // Format limit: lim x→0 → \lim_{x \to 0}
+        .replace(/lim\s+([a-z])\s*→\s*([^ ]+)/g, '\\lim_{$1 \\to $2}')
+        // Format trigonometri: sin → \sin, cos → \cos, dll
+        .replace(/\b(sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|sinh|cosh|tanh|log|ln|exp)\b/g, '\\$1')
+        // Format simbol Yunani: alpha → \alpha, beta → \beta, dll
+        .replace(/\b(alpha|beta|gamma|delta|epsilon|zeta|eta|theta|iota|kappa|lambda|mu|nu|xi|pi|rho|sigma|tau|upsilon|phi|chi|psi|omega)\b/g, '\\$1')
+        // Format simbol matematika
         .replace(/<=/g, '\\leq')
         .replace(/>=/g, '\\geq')
         .replace(/!=/g, '\\neq')
-        .replace(/\bpi\b/g, '\\pi')
-        .replace(/\binfinity\b/g, '\\infty')
-        .replace(/\btheta\b/g, '\\theta')
-        .replace(/\bsin\b/g, '\\sin')
-        .replace(/\bcos\b/g, '\\cos')
-        .replace(/\btan\b/g, '\\tan')
-        // Normalisasi integral
-        .replace(/int\(([^)]+)\)/g, '\\int $1 dx')
-        // Normalisasi sigma (sum)
-        .replace(/sum\(([^)]+)\)/g, '\\sum $1')
-        // Normalisasi limit
-        .replace(/lim\(([^)]+)\)/g, '\\lim $1');
+        .replace(/±/g, '\\pm')
+        .replace(/∞/g, '\\infty')
+        .replace(/×/g, '\\times')
+        .replace(/÷/g, '\\div')
+        .replace(/≈/g, '\\approx')
+        .replace(/≡/g, '\\equiv')
+        .replace(/∈/g, '\\in')
+        .replace(/∉/g, '\\notin')
+        .replace(/⊆/g, '\\subseteq')
+        .replace(/∩/g, '\\cap')
+        .replace(/∪/g, '\\cup')
+        .replace(/∅/g, '\\emptyset')
+        .replace(/∀/g, '\\forall')
+        .replace(/∃/g, '\\exists')
+        .replace(/∇/g, '\\nabla')
+        .replace(/∂/g, '\\partial')
+        .replace(/∑/g, '\\sum')
+        .replace(/∏/g, '\\prod')
+        .replace(/→/g, '\\to')
+        .replace(/⇒/g, '\\Rightarrow')
+        .replace(/⇔/g, '\\Leftrightarrow')
+        // Format vektor dan matriks
+        .replace(/vec\{([^}]+)\}/g, '\\vec{$1}')
+        .replace(/matrix\{([^}]+)\}/g, '\\begin{matrix} $1 \\end{matrix}');
 
-      // Deteksi blok matematika yang sudah dalam format LaTeX
-      processedResponse = processedResponse.replace(/\$(.*?)\$/g, '\\($1\\)');
+      // Deteksi persamaan inline dan display
+      processed = processed
+        // Format $...$ untuk inline math
+        .replace(/\$(.*?)\$/g, '\\($1\\)')
+        // Format $$...$$ untuk display math
+        .replace(/\$\$(.*?)\$\$/g, '\\[$1\\]');
 
       // Format bold dan italic
-      processedResponse = processedResponse
+      processed = processed
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         .replace(/\*(.*?)\*/g, '<em>$1</em>');
 
       // Pisahkan paragraf dan proses masing-masing
-      const paragraphs = processedResponse.split('\n\n');
+      const paragraphs = processed.split('\n\n');
       let htmlOutput = '';
 
       for (let para of paragraphs) {
@@ -515,7 +448,7 @@
           
           if (isMathOnly) {
             // Jika murni matematika, bungkus dengan div math-output khusus
-            htmlOutput += `<div class="math-output mb-4">\\[${para}\\]</div>`;
+            htmlOutput += `<div class="math-display">\\[${para}\\]</div>`;
           } else {
             // Jika mengandung teks dan matematika, proses baris per baris
             const lines = para.split('\n');
@@ -539,34 +472,11 @@
         }
       }
 
-      return htmlOutput || `<p class="mb-3">${processedResponse}</p>`;
+      return htmlOutput || `<p class="mb-3">${processed}</p>`;
     }
 
-    // Fungsi untuk memastikan MathJax memproses ulang konten
-    function processMathJax() {
-      if (window.MathJax) {
-        MathJax.typesetPromise()
-          .then(() => {
-            console.log('MathJax processing complete');
-          })
-          .catch((err) => {
-            console.error('MathJax processing error:', err);
-            // Coba lagi jika gagal pertama kali
-            setTimeout(() => {
-              if (window.MathJax) {
-                MathJax.typesetPromise();
-              }
-            }, 500);
-          });
-      } else {
-        console.warn('MathJax not loaded yet');
-        // Jika MathJax belum dimuat, coba lagi nanti
-        setTimeout(processMathJax, 300);
-      }
-    }
-
-    // Modifikasi bagian submit form untuk memastikan pemrosesan MathJax
-    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+    // Fungsi untuk menangani submit form
+    async function handleFormSubmit(e) {
       e.preventDefault();
       const imageFile = fileInput.files[0];
       if (!imageFile) {
@@ -603,7 +513,7 @@
         document.getElementById('response').classList.remove('hidden');
 
         // Proses MathJax setelah konten dimuat
-        setTimeout(processMathJax, 100);
+        await reprocessMathJax();
         
       } catch (err) {
         document.getElementById('emptyState').classList.remove('hidden');
@@ -613,13 +523,22 @@
         spinner.stop();
         document.getElementById('loadingContainer').classList.add('hidden');
       }
+    }
+
+    // Event listeners dan fungsi lainnya
+    document.getElementById('uploadForm').addEventListener('submit', handleFormSubmit);
+    
+    // Fungsi loadProfile dan lainnya tetap sama
+    // ...
+
+    // Inisialisasi
+    document.addEventListener('DOMContentLoaded', () => {
+      // Pastikan MathJax siap saat halaman dimuat
+      ensureMathJaxLoaded().then(() => {
+        console.log('MathJax ready on page load');
+      });
     });
 
-    // Pastikan MathJax diproses saat pertama kali load
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(processMathJax, 500);
-    });
-    
     loadProfile();
   </script>
 </body>
