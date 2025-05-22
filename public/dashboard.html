@@ -347,162 +347,53 @@
   let currentResponse = response;
 
   try {
-    // Pre-process: Protect existing LaTeX expressions
-    const protectedBlocks = [];
-    currentResponse = currentResponse.replace(/\\\((.*?)\\\)/g, (match) => {
-      protectedBlocks.push(match);
-      return `__PROTECTED_BLOCK_${protectedBlocks.length - 1}__`;
-    });
-
-    // Convert explicit mathematical expressions
-    // Look for patterns like "matematika: x^2 + 3x - 5 = 0" and wrap them in LaTeX
+    // 1. Pecahan sederhana (a/b)
     currentResponse = currentResponse.replace(
-      /(persamaan|rumus|formula|ekspresi|matematika):\s*([^.!?\n]+)/gi,
-      (match, prefix, expr) => `${prefix}: \\(${expr.trim()}\\)`
+      /(\d+)\s*\/\s*(\d+)/g,
+      '\\(\\frac{$1}{$2}\\)'
     );
 
-    // Process mathematical expressions
-
-    // 1. Fractions (a/b) - safe pattern
+    // 2. Pangkat sederhana (a^b)
     currentResponse = currentResponse.replace(
-      /(\d+(?:\.\d+)?|\([^)]+\))\s*\/\s*(\d+(?:\.\d+)?|\([^)]+\))/g,
-      (match, num, denom) => `\\(\\frac{${num}}{${denom}}\\)`
+      /([a-zA-Z0-9]+)\^([0-9]+)/g,
+      '\\($1^{$2}\\)'
     );
 
-    // 2. Exponents (a^b) - safe pattern
+    // 3. Akar kuadrat
     currentResponse = currentResponse.replace(
-      /([a-zA-Z\d]+|\([^)]+\))\s*\^\s*(\d+|\{[^}]+\}|\([^)]+\))/g,
-      (match, base, exp) => {
-        // If exponent is already in braces, keep it as is, otherwise add them
-        const exponent = exp.startsWith('{') ? exp : `{${exp}}`;
-        return `\\(${base}^${exponent}\\)`;
-      }
+      /sqrt\(([^)]+)\)/g,
+      '\\(\\sqrt{$1}\\)'
     );
 
-    // 3. Square roots
-    currentResponse = currentResponse.replace(
-      /(?:akar|sqrt)\s*\(([^)]+)\)/gi,
-      (match, content) => `\\(\\sqrt{${content}}\\)`
-    );
-    
-    currentResponse = currentResponse.replace(
-      /akar\s+(\d+)\s+dari\s+([^.!?\n,]+)/gi,
-      (match, n, expr) => `\\(\\sqrt[${n}]{${expr.trim()}}\\)`
-    );
+    // 4. Simbol matematika dasar
+    currentResponse = currentResponse.replace(/\bpi\b/g, '\\(\\pi\\)');
+    currentResponse = currentResponse.replace(/<=/g, '\\(\\leq\\)');
+    currentResponse = currentResponse.replace(/>=/g, '\\(\\geq\\)');
+    currentResponse = currentResponse.replace(/!=/g, '\\(\\neq\\)');
 
-    // 4. Common mathematical functions
-    const mathFuncs = ['sin', 'cos', 'tan', 'cot', 'sec', 'csc', 'log', 'ln'];
-    
-    for (const func of mathFuncs) {
-      const funcRegex = new RegExp(`\\b${func}\\s*\\(([^)]+)\\)`, 'g');
-      currentResponse = currentResponse.replace(
-        funcRegex,
-        (match, arg) => `\\(\\text{${func}}\\left(${arg}\\right)\\)`
-      );
-    }
-
-    // 5. Mathematical symbols - safe replacements
-    const symbolReplacements = [
-      { pattern: /\bpi\b/gi, replacement: '\\(\\pi\\)' },
-      { pattern: /\btheta\b/gi, replacement: '\\(\\theta\\)' },
-      { pattern: /\balpha\b/gi, replacement: '\\(\\alpha\\)' },
-      { pattern: /\bbeta\b/gi, replacement: '\\(\\beta\\)' },
-      { pattern: /\binfinity\b/gi, replacement: '\\(\\infty\\)' },
-      { pattern: /<=/g, replacement: '\\(\\leq\\)' },
-      { pattern: />=/g, replacement: '\\(\\geq\\)' },
-      { pattern: /!=/g, replacement: '\\(\\neq\\)' }
-    ];
-
-    for (const { pattern, replacement } of symbolReplacements) {
-      currentResponse = currentResponse.replace(pattern, replacement);
-    }
-
-    // 6. Simple matrices
-    currentResponse = currentResponse.replace(
-      /\[\s*([^;\]]+)\s*;\s*([^;\]]+)\s*\]/g,
-      (match, row1, row2) => {
-        const r1 = row1.trim().split(/\s*,\s*|\s+/).join('&');
-        const r2 = row2.trim().split(/\s*,\s*|\s+/).join('&');
-        return `\\(\\begin{pmatrix}${r1}\\\\${r2}\\end{pmatrix}\\)`;
-      }
-    );
-
-    // 7. Integrals
-    currentResponse = currentResponse.replace(
-      /integral\s+dari\s+([^.!?\n]+?)\s+(?:terhadap|d)([xyz])/gi,
-      (match, expr, variable) => `\\(\\int ${expr.trim()}\\,d${variable}\\)`
-    );
-
-    // 8. Derivatives
-    currentResponse = currentResponse.replace(
-      /turunan\s+dari\s+([^.!?\n]+?)\s+(?:terhadap|d)([xyz])/gi,
-      (match, expr, variable) => `\\(\\frac{d}{d${variable}}\\left[${expr.trim()}\\right]\\)`
-    );
-
-    // Restore protected blocks
-    protectedBlocks.forEach((block, index) => {
-      currentResponse = currentResponse.replace(`__PROTECTED_BLOCK_${index}__`, block);
-    });
-
-    // Format text styling (bold, italic)
+    // 5. Format teks bold dan italic
     currentResponse = currentResponse.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     currentResponse = currentResponse.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
-    // Format paragraphs
-    function formatBlockToHtml(textBlock) {
-      if (!textBlock || textBlock.trim() === "") return "";
-      
-      // Split text into paragraphs by blank lines
-      const paragraphs = textBlock.trim().split(/\n\s*\n+/);
-      
-      return paragraphs
-        .map(para => {
-          if (para.trim() === "") return "";
-          
-          // Process lines in each paragraph
-          const lines = para.split('\n')
-            .map(line => line.trim())
-            .filter(line => line)
-            .join('<br>');
-          
-          return `<p>${lines}</p>`;
-        })
-        .join('');
-    }
-
-    // Look for step-by-step solution format - safe pattern
-    const sections = currentResponse.split(/(?:Step|Langkah)\s+/i);
+    // 6. Buat paragraf dari baris baru
+    const paragraphs = currentResponse.split('\n\n');
     let htmlOutput = '';
 
-    // Process introduction if exists
-    if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
-      htmlOutput += formatBlockToHtml(sections[0]);
-    }
-
-    // Process steps
-    if (sections.length > 1) {
-      for (let i = 1; i < sections.length; i++) {
-        let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
-        if (stepText === "") continue;
-        htmlOutput += `
-          <div class="solution-step mb-5">
-            <div class="flex items-start">
-              <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
-              <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
-            </div>
-          </div>`;
+    for (let para of paragraphs) {
+      if (para.trim()) {
+        const lines = para.split('\n').join('<br>');
+        htmlOutput += `<p class="mb-3">${lines}</p>`;
       }
-    } else if (htmlOutput.trim() === "" && response.trim() !== "") {
-      // If no steps found, format as regular content
-      htmlOutput = formatBlockToHtml(response);
     }
 
-    return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
+    return htmlOutput || `<p class="mb-3">${currentResponse}</p>`;
 
   } catch (error) {
-    console.error('Error in formatMathResponse:', error);
-    // Fallback: return simple formatted text
-    return `<p>${response.replace(/\n/g, '<br>')}</p>`;
+    console.error('Error formatting math:', error);
+    // Jika ada error, tampilkan teks biasa dengan line breaks
+    return response.split('\n').map(line => 
+      line.trim() ? `<p class="mb-2">${line}</p>` : ''
+    ).join('');
   }
 }
     loadProfile();
