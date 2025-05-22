@@ -7,23 +7,38 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
   <style>
     :root {
-      --primary: #4f46e5;
-      --primary-light: #6366f1;
-      --primary-dark: #4338ca;
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --primary-dark: #4f46e5;
+      --secondary: #f59e0b;
+      --dark: #1e293b;
+      --light: #f8fafc;
+      --gray: #94a3b8;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
     }
     
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #f9fafb;
+      background-color: #f1f5f9;
+      color: var(--dark);
       overflow-x: hidden;
     }
 
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
     .math-solution {
-      font-family: 'Inter', sans-serif;
-      line-height: 1.6;
-      color: #374151;
+      line-height: 1.8;
+      color: var(--dark);
       word-break: break-word;
       overflow-wrap: break-word;
       white-space: normal;
@@ -34,38 +49,55 @@
 
     .math-solution h2 {
       font-size: 1.5rem;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 1rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 1.5rem;
+      position: relative;
+      padding-bottom: 0.5rem;
+    }
+
+    .math-solution h2:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 50px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 3px;
     }
 
     .math-solution h3 {
       font-size: 1.25rem;
       font-weight: 600;
-      color: #1f2937;
-      margin: 1.5rem 0 1rem;
+      color: var(--dark);
+      margin: 2rem 0 1rem;
+      position: relative;
+      padding-left: 1rem;
+    }
+
+    .math-solution h3:before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.35em;
+      height: 0.8em;
+      width: 4px;
+      background: var(--primary);
+      border-radius: 4px;
     }
 
     .math-solution p {
-      margin-bottom: 1rem;
+      margin-bottom: 1.25rem;
       word-break: break-word;
       overflow-wrap: break-word;
       max-width: 100%;
     }
 
-    .math-solution strong {
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    .math-solution em {
-      font-style: italic;
-    }
-
     .solution-step {
       position: relative;
-      padding-left: 2rem;
-      margin-bottom: 1.5rem;
+      padding-left: 2.5rem;
+      margin-bottom: 2rem;
       word-break: break-word;
       overflow-wrap: break-word;
       max-width: 100%;
@@ -75,66 +107,81 @@
       position: absolute;
       left: 0;
       top: 0;
-      color: var(--primary);
-      font-weight: 600;
+      width: 2rem;
+      height: 2rem;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
     }
 
     .math-step {
-      margin-bottom: 1.5rem;
-      padding-left: 1.5rem;
-      border-left: 3px solid #6366f1;
+      margin-bottom: 1.75rem;
+      padding-left: 1.75rem;
+      border-left: 3px solid var(--primary);
+      transition: all 0.3s ease;
+    }
+
+    .math-step:hover {
+      border-left-color: var(--secondary);
     }
 
     .math-step-header {
       font-weight: 600;
-      color: #6366f1;
-      margin-bottom: 0.5rem;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .math-step-header svg {
+      margin-right: 0.5rem;
     }
 
     .math-expression {
       display: inline-block;
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      background-color: #f3f4f6;
-      border-radius: 0.375rem;
+      margin: 0.75rem 0;
+      padding: 0.75rem;
+      background-color: #f8fafc;
+      border-radius: 0.5rem;
+      border: 1px solid #e2e8f0;
       font-family: 'Times New Roman', serif;
       word-break: break-word;
       overflow-wrap: break-word;
       max-width: 100%;
       overflow-x: hidden;
-    }
-
-    .math-section {
-      margin-bottom: 2rem;
-    }
-
-    .math-section-title {
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 0.75rem;
-      padding-bottom: 0.25rem;
-      border-bottom: 1px solid #e5e7eb;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .drop-zone {
-      border: 2px dashed #d1d5db;
+      border: 2px dashed #cbd5e1;
       transition: all 0.3s ease;
       max-width: 100%;
+      border-radius: 1rem;
+      background-color: #f8fafc;
     }
     
     .drop-zone.active {
       border-color: var(--primary);
-      background-color: rgba(79, 70, 229, 0.05);
+      background-color: rgba(99, 102, 241, 0.05);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
     
     .toast {
-      animation: toast-in 0.3s ease-out;
+      animation: toast-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       max-width: 90vw;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      border-radius: 0.75rem;
+      overflow: hidden;
     }
     
     @keyframes toast-in {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+      from { transform: translateY(20px) scale(0.95); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
     }
     
     .spinner {
@@ -147,14 +194,17 @@
     }
     
     .card {
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      background: white;
+      border-radius: 1rem;
+      transition: all 0.3s ease;
       max-width: 100%;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+      border: 1px solid rgba(226, 232, 240, 0.7);
     }
     
     .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
     /* Enhanced MathJax and Solution Text Styling */
@@ -164,7 +214,7 @@
       max-width: 100% !important;
       white-space: normal !important;
       overflow-wrap: break-word !important;
-      word-break: break-all !important; /* More aggressive breaking for long equations */
+      word-break: break-all !important;
       overflow-x: hidden !important;
       box-sizing: border-box;
       padding: 0.2rem;
@@ -178,44 +228,63 @@
       padding: 0.5rem;
     }
 
+    /* Button Styles */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.75rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.3), 0 2px 4px -1px rgba(99, 102, 241, 0.1);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3), 0 4px 6px -2px rgba(99, 102, 241, 0.1);
+      background: linear-gradient(135deg, var(--primary-light), var(--primary));
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--primary);
+      font-weight: 600;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.75rem;
+      transition: all 0.3s ease;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-secondary:hover {
+      background: #f8fafc;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+    }
+
     /* Responsive Adjustments */
     @media (max-width: 768px) {
       .MathJax, .MathJax_Display {
-        font-size: 0.85em !important; /* Smaller font for equations */
+        font-size: 0.85em !important;
       }
       .math-solution {
         font-size: 0.9em;
         padding: 0.5rem;
       }
-      .math-solution p {
-        font-size: 0.9em;
+      .math-solution h2 {
+        font-size: 1.3rem;
+      }
+      .math-solution h3 {
+        font-size: 1.1rem;
       }
       .solution-step {
-        padding-left: 1.5rem;
+        padding-left: 2rem;
       }
       .card {
-        padding: 1rem;
+        padding: 1.25rem;
       }
       .drop-zone {
-        padding: 1rem;
-      }
-      .profile-dropdown {
-        width: 80vw;
-        max-width: 200px;
-        right: -1rem;
-      }
-      .container {
-        padding-left: 1rem;
-        padding-right: 1rem;
-      }
-      .grid {
-        grid-template-columns: 1fr; /* Stack columns on mobile */
-      }
-      .lg\:col-span-2, .lg\:col-span-1 {
-        grid-column: span 1 / span 1;
-      }
-      #solutionContent {
-        min-height: auto;
+        padding: 1.5rem;
       }
     }
 
@@ -227,50 +296,148 @@
         font-size: 0.85em;
       }
       .math-solution h2 {
-        font-size: 1.25rem;
+        font-size: 1.2rem;
       }
       .math-solution h3 {
-        font-size: 1.1rem;
+        font-size: 1rem;
       }
       .drop-zone {
-        padding: 0.75rem;
+        padding: 1.25rem;
       }
-      .toast {
-        max-width: 95vw;
-        font-size: 0.9em;
+      .btn-primary, .btn-secondary {
+        padding: 0.6rem 1.25rem;
+        font-size: 0.9rem;
       }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Floating Action Button */
+    .fab {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3), 0 4px 6px -2px rgba(99, 102, 241, 0.1);
+      transition: all 0.3s ease;
+      z-index: 40;
+    }
+
+    .fab:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.3), 0 10px 10px -5px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Pulse Animation */
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+
+    /* Tooltip */
+    .tooltip {
+      position: relative;
+    }
+
+    .tooltip .tooltip-text {
+      visibility: hidden;
+      width: 120px;
+      background-color: var(--dark);
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 5px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 0.75rem;
+    }
+
+    .tooltip .tooltip-text::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: var(--dark) transparent transparent transparent;
+    }
+
+    .tooltip:hover .tooltip-text {
+      visibility: visible;
+      opacity: 1;
     }
   </style>
 </head>
-<body class="min-h-screen bg-gray-50">
+<body class="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
   <!-- Header -->
-  <header class="bg-white shadow-sm sticky top-0 z-50">
+  <header class="glass-effect shadow-sm sticky top-0 z-50">
     <div class="container mx-auto px-4 sm:px-6 py-4">
       <div class="flex justify-between items-center">
         <div class="flex items-center space-x-3">
-          <div class="bg-indigo-100 p-2 rounded-lg">
+          <div class="bg-indigo-100 p-2 rounded-lg flex items-center justify-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
             </svg>
           </div>
-          <h1 class="text-lg sm:text-xl font-bold text-gray-800">MathSolve AI</h1>
+          <h1 class="text-xl font-bold text-gray-800 bg-gradient-to-r from-indigo-600 to-indigo-400 bg-clip-text text-transparent">MathSolve AI</h1>
         </div>
         <div class="flex items-center space-x-2 sm:space-x-4">
-          <div class="hidden sm:flex items-center space-x-2">
-            <span id="usageDisplay" class="text-xs sm:text-sm text-gray-600"></span>
+          <div class="hidden sm:flex items-center space-x-2 bg-indigo-50 px-3 py-1 rounded-full">
+            <span id="usageDisplay" class="text-xs sm:text-sm font-medium text-indigo-700"></span>
           </div>
           <div class="relative">
-            <button id="profileBtn" class="flex items-center space-x-2 focus:outline-none">
-              <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-medium">
+            <button id="profileBtn" class="flex items-center space-x-2 focus:outline-none group">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center font-medium shadow-md group-hover:from-indigo-600 group-hover:to-indigo-700 transition-all">
                 <span id="profileInitial">U</span>
               </div>
             </button>
-            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 profile-dropdown">
-              <div class="px-4 py-2 border-b">
-                <p class="text-sm font-medium text-gray-800" id="profileName"></p>
-                <p class="text-xs text-gray-500 truncate" id="profileEmail"></p>
+            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl py-1 z-50 profile-dropdown overflow-hidden border border-gray-100">
+              <div class="px-4 py-3 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-indigo-100">
+                <p class="text-sm font-semibold text-gray-800 truncate" id="profileName"></p>
+                <p class="text-xs text-indigo-600 truncate" id="profileEmail"></p>
               </div>
-              <a href="/api/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+              <a href="/api/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </a>
             </div>
           </div>
         </div>
@@ -280,46 +447,55 @@
 
   <!-- Main Content -->
   <main class="container mx-auto px-4 sm:px-6 py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Upload Section -->
       <div class="lg:col-span-2">
-        <div class="card bg-white rounded-lg p-4 sm:p-6">
+        <div class="card rounded-xl p-6">
           <div class="mb-6">
-            <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-1">Unggah Soal Matematika</h2>
-            <p class="text-xs sm:text-sm text-gray-600">Dapatkan solusi langkah demi langkah dengan AI</p>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Unggah Soal Matematika</h2>
+            <p class="text-sm text-gray-600">Dapatkan solusi langkah demi langkah dengan AI canggih kami</p>
           </div>
           
           <form id="uploadForm">
-            <div id="dropZone" class="drop-zone rounded-lg p-6 sm:p-8 text-center mb-4 cursor-pointer">
+            <div id="dropZone" class="drop-zone rounded-xl p-8 text-center mb-6 cursor-pointer transition-all hover:border-indigo-300">
               <input type="file" id="fileInput" accept="image/*" class="hidden">
               <div class="max-w-md mx-auto">
-                <div class="bg-indigo-50 w-12 sm:w-14 h-12 sm:h-14 mx-auto rounded-full flex items-center justify-center mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 sm:h-6 w-5 sm:w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="bg-gradient-to-br from-indigo-100 to-indigo-50 w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-4 shadow-inner">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                 </div>
-                <h3 class="font-medium text-gray-700 text-sm sm:text-base mb-1">Seret dan lepas gambar</h3>
-                <p class="text-xs sm:text-sm text-gray-500 mb-2">atau klik untuk memilih file</p>
-                <p class="text-xs text-gray-400">Format: JPG, PNG (Maks 5MB)</p>
+                <h3 class="font-semibold text-gray-700 text-base mb-1">Seret dan lepas gambar</h3>
+                <p class="text-sm text-gray-500 mb-3">atau klik untuk memilih file</p>
+                <p class="text-xs text-gray-400 bg-gray-50 inline-block px-2 py-1 rounded-full">Format: JPG, PNG (Maks 5MB)</p>
               </div>
             </div>
             
-            <div id="previewContainer" class="hidden mb-4">
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-sm font-medium text-gray-700">Pratinjau Gambar</span>
-                <button type="button" id="clearPreview" class="text-xs text-red-500 hover:text-red-600 flex items-center">
+            <div id="previewContainer" class="hidden mb-6">
+              <div class="flex justify-between items-center mb-3">
+                <span class="text-sm font-semibold text-gray-700">Pratinjau Gambar</span>
+                <button type="button" id="clearPreview" class="text-xs text-red-500 hover:text-red-600 flex items-center transition-colors">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                   Hapus
                 </button>
               </div>
-              <img id="previewImage" class="w-full max-h-48 sm:max-h-64 object-contain rounded border border-gray-200" alt="Pratinjau Gambar">
+              <div class="relative">
+                <img id="previewImage" class="w-full max-h-64 object-contain rounded-lg border-2 border-dashed border-gray-200" alt="Pratinjau Gambar">
+                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-10 transition-all rounded-lg">
+                  <button type="button" id="zoomPreview" class="opacity-0 hover:opacity-100 bg-white p-2 rounded-full shadow-md transition-opacity">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
             
-            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 sm:py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors flex items-center justify-center">
+            <button type="submit" id="submitBtn" class="w-full btn-primary mt-2 py-3 px-4 rounded-xl flex items-center justify-center">
               <span id="submitText">Selesaikan Soal</span>
-              <svg id="submitSpinner" class="hidden animate-spin ml-2 h-4 sm:h-5 w-4 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg id="submitSpinner" class="hidden animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -330,42 +506,49 @@
       
       <!-- Solution Section -->
       <div class="lg:col-span-1">
-        <div class="card bg-white rounded-lg p-4 sm:p-6 h-full">
+        <div class="card rounded-xl p-6 h-full flex flex-col">
           <div class="mb-6">
-            <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-1">Solusi Matematika</h2>
-            <p class="text-xs sm:text-sm text-gray-600">Hasil analisis akan muncul di sini</p>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Solusi Matematika</h2>
+            <p class="text-sm text-gray-600">Hasil analisis akan muncul di sini</p>
           </div>
           
-          <div id="solutionContent" class="min-h-[200px] sm:min-h-[300px]">
+          <div id="solutionContent" class="flex-grow">
             <!-- Empty State -->
-            <div id="emptyState" class="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
-              <div class="bg-indigo-50 rounded-full p-3 sm:p-4 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 sm:h-8 w-6 sm:w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div id="emptyState" class="flex flex-col items-center justify-center py-8 text-center h-full">
+              <div class="bg-gradient-to-br from-indigo-100 to-indigo-50 rounded-full p-4 mb-5 shadow-inner">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
-              <h3 class="font-medium text-gray-700 text-sm sm:text-base mb-1">Belum ada soal yang diunggah</h3>
-              <p class="text-xs sm:text-sm text-gray-500 max-w-xs">Unggah gambar soal matematika untuk melihat solusi</p>
+              <h3 class="font-semibold text-gray-700 text-base mb-2">Belum ada soal yang diunggah</h3>
+              <p class="text-sm text-gray-500 max-w-xs">Unggah gambar soal matematika untuk melihat solusi langkah demi langkah</p>
             </div>
             
             <!-- Loading State -->
-            <div id="loadingState" class="hidden flex flex-col items-center justify-center py-8 sm:py-12">
-              <div class="spinner rounded-full h-8 sm:h-10 w-8 sm:w-10 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-              <p class="text-xs sm:text-sm text-gray-600">Menganalisis soal...</p>
+            <div id="loadingState" class="hidden flex flex-col items-center justify-center py-8 h-full">
+              <div class="relative mb-5">
+                <div class="w-12 h-12 rounded-full border-4 border-indigo-100"></div>
+                <div class="spinner absolute top-0 left-0 w-12 h-12 rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+              </div>
+              <p class="text-sm text-gray-600">Menganalisis soal...</p>
+              <p class="text-xs text-gray-400 mt-1">Ini mungkin memakan waktu beberapa detik</p>
             </div>
             
             <!-- Solution Result -->
-            <div id="solutionResult" class="hidden">
+            <div id="solutionResult" class="hidden h-full flex flex-col">
               <div class="flex justify-between items-center mb-4">
-                <h3 class="font-medium text-gray-800 text-sm sm:text-base">Detail Solusi</h3>
-                <button id="copySolution" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2 sm:px-3 py-1 rounded-full flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                  </svg>
-                  Salin
-                </button>
+                <h3 class="font-semibold text-gray-800 text-base">Detail Solusi</h3>
+                <div class="flex space-x-2">
+                  <button id="copySolution" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center transition-colors tooltip">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    </svg>
+                    Salin
+                    <span class="tooltip-text">Salin solusi ke clipboard</span>
+                  </button>
+                </div>
               </div>
-              <div id="solutionText" class="prose max-w-none solution-text-container"></div>
+              <div id="solutionText" class="prose max-w-none solution-text-container flex-grow overflow-y-auto pr-2"></div>
             </div>
           </div>
         </div>
@@ -373,8 +556,27 @@
     </div>
   </main>
 
+  <!-- Floating Action Button -->
+  <div class="fab pulse hidden" id="scrollToTopBtn">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+    </svg>
+  </div>
+
   <!-- Toast Notification -->
-  <div id="toastContainer" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+  <div id="toastContainer" class="fixed bottom-4 right-4 space-y-3 z-50"></div>
+
+  <!-- Image Modal -->
+  <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4 hidden">
+    <div class="relative max-w-4xl w-full">
+      <button id="closeModal" class="absolute -top-10 right-0 text-white hover:text-gray-300 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <img id="modalImage" class="w-full max-h-[90vh] object-contain rounded-lg" alt="Gambar soal">
+    </div>
+  </div>
 
   <script>
     // Check authentication
@@ -401,6 +603,11 @@
     const solutionText = document.getElementById('solutionText');
     const copySolutionBtn = document.getElementById('copySolution');
     const usageDisplay = document.getElementById('usageDisplay');
+    const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+    const zoomPreview = document.getElementById('zoomPreview');
+    const imageModal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const closeModal = document.getElementById('closeModal');
 
     // Load user profile
     async function loadProfile() {
@@ -421,6 +628,11 @@
           document.getElementById('profileInitial').textContent = data.name.charAt(0).toUpperCase();
           document.getElementById('profileName').textContent = data.name;
           document.getElementById('profileEmail').textContent = data.email;
+          
+          // Update usage display if available
+          if (data.usage) {
+            updateUsageDisplay(data.usage.used, data.usage.limit);
+          }
         }
       } catch (err) {
         console.error('Profile load error:', err);
@@ -506,6 +718,7 @@
       const reader = new FileReader();
       reader.onload = (e) => {
         previewImage.src = e.target.result;
+        modalImage.src = e.target.result;
         previewContainer.classList.remove('hidden');
       };
       reader.readAsDataURL(file);
@@ -567,7 +780,12 @@
         
         // Render MathJax
         if (window.MathJax) {
-          MathJax.typesetPromise();
+          MathJax.typesetPromise().then(() => {
+            // Check if solution is long enough to need scroll-to-top button
+            if (solutionText.scrollHeight > solutionText.clientHeight) {
+              scrollToTopBtn.classList.remove('hidden');
+            }
+          });
         }
       } catch (err) {
         console.error('Upload error:', err);
@@ -595,14 +813,18 @@
 
     // Update usage display
     function updateUsageDisplay(used, limit) {
+      const percentage = (used / limit) * 100;
       usageDisplay.textContent = `${used}/${limit} per jam`;
       
-      if (used >= limit * 0.8) {
+      if (percentage >= 90) {
         usageDisplay.classList.add('text-red-500');
-        usageDisplay.classList.remove('text-gray-600');
+        usageDisplay.classList.remove('text-indigo-700');
+      } else if (percentage >= 75) {
+        usageDisplay.classList.add('text-yellow-500');
+        usageDisplay.classList.remove('text-indigo-700');
       } else {
-        usageDisplay.classList.remove('text-red-500');
-        usageDisplay.classList.add('text-gray-600');
+        usageDisplay.classList.remove('text-red-500', 'text-yellow-500');
+        usageDisplay.classList.add('text-indigo-700');
       }
     }
 
@@ -611,23 +833,98 @@
       const toastContainer = document.getElementById('toastContainer');
       const toast = document.createElement('div');
       
-      toast.className = `toast px-4 py-2 rounded-md shadow-lg text-white ${
-        type === 'error' ? 'bg-red-500' : 
-        type === 'success' ? 'bg-green-500' : 
-        type === 'warning' ? 'bg-yellow-500' : 'bg-indigo-500'
+      // Create icon based on type
+      let icon;
+      switch(type) {
+        case 'error':
+          icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>`;
+          break;
+        case 'success':
+          icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                 </svg>`;
+          break;
+        case 'warning':
+          icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                 </svg>`;
+          break;
+        default:
+          icon = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>`;
+      }
+      
+      toast.className = `toast px-4 py-3 flex items-start space-x-2 ${
+        type === 'error' ? 'bg-red-500 text-white' : 
+        type === 'success' ? 'bg-green-500 text-white' : 
+        type === 'warning' ? 'bg-yellow-500 text-white' : 'bg-white text-gray-800 border border-gray-200'
       }`;
       
-      toast.textContent = message;
+      toast.innerHTML = `
+        <div class="flex-shrink-0">${icon}</div>
+        <div class="flex-grow text-sm">${message}</div>
+        <button class="flex-shrink-0 ml-2 text-white opacity-70 hover:opacity-100" onclick="this.parentElement.remove()">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      `;
+      
       toastContainer.appendChild(toast);
       
       setTimeout(() => {
-        toast.remove();
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        setTimeout(() => toast.remove(), 300);
       }, 3000);
     }
+
+    // Scroll to top button
+    scrollToTopBtn?.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
+
+    // Show scroll to top button when scrolling
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300) {
+        scrollToTopBtn?.classList.remove('hidden');
+      } else {
+        scrollToTopBtn?.classList.add('hidden');
+      }
+    });
+
+    // Image zoom functionality
+    zoomPreview?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      imageModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    });
+
+    closeModal?.addEventListener('click', () => {
+      imageModal.classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    });
+
+    // Close modal when clicking outside image
+    imageModal?.addEventListener('click', (e) => {
+      if (e.target === imageModal) {
+        imageModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+      }
+    });
 
     // Initialize
     loadProfile();
     updateUsageDisplay(0, 10);
+
+    // Make showToast available globally
+    window.showToast = showToast;
   </script>
 </body>
 </html>
