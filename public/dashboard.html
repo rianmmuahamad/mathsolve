@@ -53,43 +53,6 @@
     }
     .solution-content p:first-child { margin-top: 0.1rem; }
     .profile-popup { animation: slide-down 0.3s ease-out; }
-    .math-frac {
-  display: inline-block;
-  text-align: center;
-  vertical-align: middle;
-  margin: 0 0.2em;
-}
-.math-frac:before {
-  content: '';
-  border-top: 1px solid;
-  display: block;
-  margin-bottom: 0.1em;
-}
-.math-exp sup {
-  font-size: 0.8em;
-  vertical-align: super;
-  line-height: 1;
-}
-.math-sqrt {
-  position: relative;
-  padding-left: 0.3em;
-}
-.math-sqrt:before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  width: 0.8em;
-  height: 0.1em;
-  border-top: 1px solid;
-  border-left: 1px solid;
-  border-radius: 0.2em 0 0 0;
-  transform: translateY(-50%);
-}
-.math-sqrt-content {
-  border-top: 1px solid;
-  padding-left: 0.2em;
-}
   </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -391,51 +354,104 @@
       });
     });
 
-    function formatMathResponse(response) {
-  if (!response || response.trim() === "") {
-    return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
+
+  // ... (keep all existing code until the formatMathResponse function)
+
+  function formatBlockToHtml(textBlock) {
+    if (!textBlock || textBlock.trim() === "") return "";
+    const paragraphs = textBlock.trim().split(/\n\s*\n+/);
+    return paragraphs
+      .map(para => {
+        if (para.trim() === "") return "";
+        const lines = para.split('\n').map(line => line.trim()).filter(line => line).join('<br>');
+        return `<p>${lines}</p>`;
+      })
+      .join('');
   }
 
-  // Simple formatting for steps
-  const sections = response.split(/\bStep\s+/i);
-  let htmlOutput = '';
-
-  // Introduction
-  if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
-    htmlOutput += formatBlockToHtml(sections[0]);
-  }
-
-  // Steps
-  if (sections.length > 1) {
-    for (let i = 1; i < sections.length; i++) {
-      let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
-      if (stepText === "") continue;
-      
-      // Format basic math expressions
-      stepText = stepText
-        .replace(/(\d+)\/(\d+)/g, '<span class="math-frac">$1/$2</span>')
-        .replace(/(\d+)\^(\d+)/g, '<span class="math-exp">$1<sup>$2</sup></span>')
-        .replace(/sqrt\(([^)]+)\)/g, '<span class="math-sqrt">√<span class="math-sqrt-content">$1</span></span>');
-
-      htmlOutput += `
-        <div class="solution-step mb-5">
-          <div class="flex items-start">
-            <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
-            <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
-          </div>
-        </div>`;
+  function formatMathResponse(response) {
+    if (!response || response.trim() === "") {
+      return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
     }
-  } else if (htmlOutput.trim() === "" && response.trim() !== "") {
-    htmlOutput = formatBlockToHtml(response);
+
+    // Simple formatting for steps
+    const sections = response.split(/\bStep\s+/i);
+    let htmlOutput = '';
+
+    // Introduction
+    if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
+      htmlOutput += formatBlockToHtml(sections[0]);
+    }
+
+    // Steps
+    if (sections.length > 1) {
+      for (let i = 1; i < sections.length; i++) {
+        let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
+        if (stepText === "") continue;
+        
+        // Format basic math expressions
+        stepText = stepText
+          .replace(/(\d+)\/(\d+)/g, '<span class="math-frac">$1/$2</span>')
+          .replace(/(\d+)\^(\d+)/g, '<span class="math-exp">$1<sup>$2</sup></span>')
+          .replace(/sqrt\(([^)]+)\)/g, '<span class="math-sqrt">√<span class="math-sqrt-content">$1</span></span>');
+
+        htmlOutput += `
+          <div class="solution-step mb-5">
+            <div class="flex items-start">
+              <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
+              <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
+            </div>
+          </div>`;
+      }
+    } else if (htmlOutput.trim() === "" && response.trim() !== "") {
+      htmlOutput = formatBlockToHtml(response);
+    }
+
+    return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
   }
 
-  return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
-}
+  // Add these styles to your existing style section
+  /*
+  .math-frac {
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+    margin: 0 0.2em;
+  }
+  .math-frac:before {
+    content: '';
+    border-top: 1px solid;
+    display: block;
+    margin-bottom: 0.1em;
+  }
+  .math-exp sup {
+    font-size: 0.8em;
+    vertical-align: super;
+    line-height: 1;
+  }
+  .math-sqrt {
+    position: relative;
+    padding-left: 0.3em;
+  }
+  .math-sqrt:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 0.8em;
+    height: 0.1em;
+    border-top: 1px solid;
+    border-left: 1px solid;
+    border-radius: 0.2em 0 0 0;
+    transform: translateY(-50%);
+  }
+  .math-sqrt-content {
+    border-top: 1px solid;
+    padding-left: 0.2em;
+  }
+  */
 
-// Add these styles to your CSS
-/*
-
-*/
+  // ... (keep the rest of your existing JavaScript code)
 
     loadProfile();
   </script>
