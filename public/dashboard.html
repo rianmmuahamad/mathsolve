@@ -29,6 +29,7 @@
       white-space: normal;
       max-width: 100%;
       overflow-x: hidden;
+      padding: 0.5rem;
     }
 
     .math-solution h2 {
@@ -49,6 +50,7 @@
       margin-bottom: 1rem;
       word-break: break-word;
       overflow-wrap: break-word;
+      max-width: 100%;
     }
 
     .math-solution strong {
@@ -66,6 +68,7 @@
       margin-bottom: 1.5rem;
       word-break: break-word;
       overflow-wrap: break-word;
+      max-width: 100%;
     }
 
     .solution-step .step-number {
@@ -98,6 +101,7 @@
       word-break: break-word;
       overflow-wrap: break-word;
       max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-section {
@@ -115,6 +119,7 @@
     .drop-zone {
       border: 2px dashed #d1d5db;
       transition: all 0.3s ease;
+      max-width: 100%;
     }
     
     .drop-zone.active {
@@ -124,6 +129,7 @@
     
     .toast {
       animation: toast-in 0.3s ease-out;
+      max-width: 90vw;
     }
     
     @keyframes toast-in {
@@ -143,6 +149,7 @@
     .card {
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
       transition: transform 0.2s ease, box-shadow 0.2s ease;
+      max-width: 100%;
     }
     
     .card:hover {
@@ -157,9 +164,10 @@
       max-width: 100% !important;
       white-space: normal !important;
       overflow-wrap: break-word !important;
-      word-break: break-word !important;
+      word-break: break-all !important; /* More aggressive breaking for long equations */
       overflow-x: hidden !important;
       box-sizing: border-box;
+      padding: 0.2rem;
     }
 
     .solution-text-container {
@@ -167,15 +175,69 @@
       overflow-x: hidden;
       word-break: break-word;
       overflow-wrap: break-word;
+      padding: 0.5rem;
     }
 
-    /* Ensure MathJax equations wrap in narrow containers */
+    /* Responsive Adjustments */
     @media (max-width: 768px) {
       .MathJax, .MathJax_Display {
-        font-size: 0.9em !important;
+        font-size: 0.85em !important; /* Smaller font for equations */
+      }
+      .math-solution {
+        font-size: 0.9em;
+        padding: 0.5rem;
       }
       .math-solution p {
-        font-size: 0.95em;
+        font-size: 0.9em;
+      }
+      .solution-step {
+        padding-left: 1.5rem;
+      }
+      .card {
+        padding: 1rem;
+      }
+      .drop-zone {
+        padding: 1rem;
+      }
+      .profile-dropdown {
+        width: 80vw;
+        max-width: 200px;
+        right: -1rem;
+      }
+      .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+      .grid {
+        grid-template-columns: 1fr; /* Stack columns on mobile */
+      }
+      .lg\:col-span-2, .lg\:col-span-1 {
+        grid-column: span 1 / span 1;
+      }
+      #solutionContent {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .MathJax, .MathJax_Display {
+        font-size: 0.8em !important;
+      }
+      .math-solution {
+        font-size: 0.85em;
+      }
+      .math-solution h2 {
+        font-size: 1.25rem;
+      }
+      .math-solution h3 {
+        font-size: 1.1rem;
+      }
+      .drop-zone {
+        padding: 0.75rem;
+      }
+      .toast {
+        max-width: 95vw;
+        font-size: 0.9em;
       }
     }
   </style>
@@ -183,7 +245,7 @@
 <body class="min-h-screen bg-gray-50">
   <!-- Header -->
   <header class="bg-white shadow-sm sticky top-0 z-50">
-    <div class="container mx-auto px-6 py-4">
+    <div class="container mx-auto px-4 sm:px-6 py-4">
       <div class="flex justify-between items-center">
         <div class="flex items-center space-x-3">
           <div class="bg-indigo-100 p-2 rounded-lg">
@@ -191,11 +253,11 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
             </svg>
           </div>
-          <h1 class="text-xl font-bold text-gray-800">MathSolve AI</h1>
+          <h1 class="text-lg sm:text-xl font-bold text-gray-800">MathSolve AI</h1>
         </div>
-        <div class="flex items-center space-x-4">
-          <div class="hidden md:flex items-center space-x-2">
-            <span id="usageDisplay" class="text-sm text-gray-600"></span>
+        <div class="flex items-center space-x-2 sm:space-x-4">
+          <div class="hidden sm:flex items-center space-x-2">
+            <span id="usageDisplay" class="text-xs sm:text-sm text-gray-600"></span>
           </div>
           <div class="relative">
             <button id="profileBtn" class="flex items-center space-x-2 focus:outline-none">
@@ -203,7 +265,7 @@
                 <span id="profileInitial">U</span>
               </div>
             </button>
-            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 profile-dropdown">
               <div class="px-4 py-2 border-b">
                 <p class="text-sm font-medium text-gray-800" id="profileName"></p>
                 <p class="text-xs text-gray-500 truncate" id="profileEmail"></p>
@@ -217,27 +279,27 @@
   </header>
 
   <!-- Main Content -->
-  <main class="container mx-auto px-4 py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <main class="container mx-auto px-4 sm:px-6 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
       <!-- Upload Section -->
       <div class="lg:col-span-2">
-        <div class="card bg-white rounded-lg p-6">
+        <div class="card bg-white rounded-lg p-4 sm:p-6">
           <div class="mb-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-1">Unggah Soal Matematika</h2>
-            <p class="text-sm text-gray-600">Dapatkan solusi langkah demi langkah dengan AI</p>
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-1">Unggah Soal Matematika</h2>
+            <p class="text-xs sm:text-sm text-gray-600">Dapatkan solusi langkah demi langkah dengan AI</p>
           </div>
           
           <form id="uploadForm">
-            <div id="dropZone" class="drop-zone rounded-lg p-8 text-center mb-4 cursor-pointer">
+            <div id="dropZone" class="drop-zone rounded-lg p-6 sm:p-8 text-center mb-4 cursor-pointer">
               <input type="file" id="fileInput" accept="image/*" class="hidden">
               <div class="max-w-md mx-auto">
-                <div class="bg-indigo-50 w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-3">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="bg-indigo-50 w-12 sm:w-14 h-12 sm:h-14 mx-auto rounded-full flex items-center justify-center mb-3">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 sm:h-6 w-5 sm:w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                   </svg>
                 </div>
-                <h3 class="font-medium text-gray-700 mb-1">Seret dan lepas gambar</h3>
-                <p class="text-sm text-gray-500 mb-2">atau klik untuk memilih file</p>
+                <h3 class="font-medium text-gray-700 text-sm sm:text-base mb-1">Seret dan lepas gambar</h3>
+                <p class="text-xs sm:text-sm text-gray-500 mb-2">atau klik untuk memilih file</p>
                 <p class="text-xs text-gray-400">Format: JPG, PNG (Maks 5MB)</p>
               </div>
             </div>
@@ -252,12 +314,12 @@
                   Hapus
                 </button>
               </div>
-              <img id="previewImage" class="w-full max-h-64 object-contain rounded border border-gray-200" alt="Pratinjau Gambar">
+              <img id="previewImage" class="w-full max-h-48 sm:max-h-64 object-contain rounded border border-gray-200" alt="Pratinjau Gambar">
             </div>
             
-            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors flex items-center justify-center">
+            <button type="submit" id="submitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 sm:py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors flex items-center justify-center">
               <span id="submitText">Selesaikan Soal</span>
-              <svg id="submitSpinner" class="hidden animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg id="submitSpinner" class="hidden animate-spin ml-2 h-4 sm:h-5 w-4 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -268,37 +330,37 @@
       
       <!-- Solution Section -->
       <div class="lg:col-span-1">
-        <div class="card bg-white rounded-lg p-6 h-full">
+        <div class="card bg-white rounded-lg p-4 sm:p-6 h-full">
           <div class="mb-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-1">Solusi Matematika</h2>
-            <p class="text-sm text-gray-600">Hasil analisis akan muncul di sini</p>
+            <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-1">Solusi Matematika</h2>
+            <p class="text-xs sm:text-sm text-gray-600">Hasil analisis akan muncul di sini</p>
           </div>
           
-          <div id="solutionContent">
+          <div id="solutionContent" class="min-h-[200px] sm:min-h-[300px]">
             <!-- Empty State -->
-            <div id="emptyState" class="flex flex-col items-center justify-center py-12 text-center">
-              <div class="bg-indigo-50 rounded-full p-4 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div id="emptyState" class="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
+              <div class="bg-indigo-50 rounded-full p-3 sm:p-4 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 sm:h-8 w-6 sm:w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
-              <h3 class="font-medium text-gray-700 mb-1">Belum ada soal yang diunggah</h3>
-              <p class="text-sm text-gray-500 max-w-xs">Unggah gambar soal matematika untuk melihat solusi</p>
+              <h3 class="font-medium text-gray-700 text-sm sm:text-base mb-1">Belum ada soal yang diunggah</h3>
+              <p class="text-xs sm:text-sm text-gray-500 max-w-xs">Unggah gambar soal matematika untuk melihat solusi</p>
             </div>
             
             <!-- Loading State -->
-            <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12">
-              <div class="spinner rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-              <p class="text-sm text-gray-600">Menganalisis soal...</p>
+            <div id="loadingState" class="hidden flex flex-col items-center justify-center py-8 sm:py-12">
+              <div class="spinner rounded-full h-8 sm:h-10 w-8 sm:w-10 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
+              <p class="text-xs sm:text-sm text-gray-600">Menganalisis soal...</p>
             </div>
             
             <!-- Solution Result -->
             <div id="solutionResult" class="hidden">
               <div class="flex justify-between items-center mb-4">
-                <h3 class="font-medium text-gray-800">Detail Solusi</h3>
-                <button id="copySolution" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center">
+                <h3 class="font-medium text-gray-800 text-sm sm:text-base">Detail Solusi</h3>
+                <button id="copySolution" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2 sm:px-3 py-1 rounded-full flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 a 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                   </svg>
                   Salin
                 </button>
