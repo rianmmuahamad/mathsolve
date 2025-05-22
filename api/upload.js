@@ -78,15 +78,22 @@ function formatMathNotation(text) {
   if (!text || typeof text !== 'string') return text;
   
   try {
-    let formatted = text
+    let formatted = text;
+
+    // First, handle bold text (**text**) to avoid conflict with italic (*text*)
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Then, handle italic text (*text*), ensuring it doesn't conflict with bold
+    formatted = formatted.replace(/(?<!\*)\*([^\*]+)\*(?!\*)/g, '<em>$1</em>');
+
+    // Handle math notations
+    formatted = formatted
       .replace(/lim_\{([^}]+)\}/g, '\\lim_{$1}')
       .replace(/\|([^|]+)\|/g, '\\|$1\\|')
       .replace(/(\d+)\/(\d+)/g, '\\frac{$1}{$2}')
       .replace(/(\w)\^(\d+)/g, '$1^{$2}')
       .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')
-      .replace(/(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g, '\\$1($2)')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>');
+      .replace(/(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g, '\\$1($2)');
 
     const greekSymbols = {
       'alpha': '\\alpha', 'beta': '\\beta', 'gamma': '\\gamma',
@@ -153,7 +160,7 @@ function formatResponseToHTML(response) {
         
         container.append(stepDiv);
       } else {
-        // Remove any standalone numbers followed by a period (e.g., "6.", "10.") at the start of a section
+        // Remove any standalone numbers followed by a period (e.g., "6.", "10.")
         section = section.replace(/^\d+\.\s*/, '');
         if (section.trim()) {
           container.append(`<p class="break-words">${section}</p>`);

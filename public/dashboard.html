@@ -144,10 +144,14 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
+    /* Updated MathJax styling to prevent overflow without scrollbar */
     .MathJax {
+      display: inline-flex !important;
+      flex-wrap: wrap !important;
       max-width: 100% !important;
-      overflow-x: auto !important;
-      display: inline-block !important;
+      white-space: normal !important;
+      overflow-wrap: break-word !important;
+      word-break: break-word !important;
     }
   </style>
 </head>
