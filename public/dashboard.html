@@ -357,6 +357,27 @@
       });
     });
 
+    // Helper function to calculate GCD for fraction simplification
+    function gcd(a, b) {
+      a = Math.abs(a);
+      b = Math.abs(b);
+      while (b) {
+        let temp = b;
+        b = a % b;
+        a = temp;
+      }
+      return a;
+    }
+
+    // Helper function to simplify fractions
+    function simplifyFraction(numerator, denominator) {
+      const divisor = gcd(numerator, denominator);
+      return {
+        num: numerator / divisor,
+        den: denominator / divisor
+      };
+    }
+
     function formatMathResponse(response) {
       if (!response || response.trim() === "") {
         return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
@@ -371,6 +392,13 @@
         (match, num, denom) => {
           // Pastikan bukan bagian dari URL atau ekspresi lain
           if (num.match(/http/) || denom.match(/http/)) return match;
+          // Coba parse dan sederhanakan jika numerik
+          const numVal = parseFloat(num);
+          const denomVal = parseFloat(denom);
+          if (!isNaN(numVal) && !isNaN(denomVal) && denomVal !== 0) {
+            const { num: simplifiedNum, den: simplifiedDen } = simplifyFraction(numVal, denomVal);
+            return `\\(\\frac{${simplifiedNum}}{${simplifiedDen}}\\)`;
+          }
           return `\\(\\frac{${num.trim()}}{${denom.trim()}}\\)`;
         }
       );
@@ -480,23 +508,25 @@
       }
 
       // 4. Pisahkan langkah-langkah
-      const sections = currentResponse.split(/\bStep\s+/i);
+      const sections = currentResponse.split(/\b(Langkah\s+\d+[:.]?)\s*/i);
       let htmlOutput = '';
 
-      // Pendahuluan
+      // Pendahuluan (sebelum langkah-langkah)
       if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
         htmlOutput += formatBlockToHtml(sections[0]);
       }
 
       // Langkah-langkah
       if (sections.length > 1) {
-        for (let i = 1; i < sections.length; i++) {
-          let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
+        for (let i = 1; i < sections.length; i += 2) {
+          const stepLabel = sections[i]; // e.g., "Langkah 1:"
+          let stepText = sections[i + 1] ? sections[i + 1].trim() : '';
           if (stepText === "") continue;
+          const stepNumber = stepLabel.match(/\d+/) ? stepLabel.match(/\d+/)[0] : i;
           htmlOutput += `
             <div class="solution-step mb-5">
               <div class="flex items-start">
-                <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
+                <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${stepNumber}.</div>
                 <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
               </div>
             </div>`;
