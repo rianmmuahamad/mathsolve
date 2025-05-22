@@ -3,32 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MathSolve AI | Solusi Matematika</title>
+  <title>MathSolve AI | Solusi Matematika Cerdas</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #5B21B6;
-      --primary-light: #7C3AED;
-      --primary-dark: #4C1D95;
-      --accent: #FBBF24;
-      --background: #F8FAFC;
-      --card-bg: #FFFFFF;
-      --text-primary: #1E293B;
-      --text-secondary: #64748B;
+      --primary: #6C63FF;
+      --primary-light: #8B85FF;
+      --primary-dark: #534BC7;
+      --secondary: #FF6584;
+      --dark: #1A1A2E;
+      --light: #F8F9FF;
+      --gray: #E2E8F0;
+      --dark-gray: #94A3B8;
     }
-
+    
     body {
-      font-family: 'Poppins', sans-serif;
-      background-color: var(--background);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--light);
+      color: var(--dark);
       overflow-x: hidden;
-      color: var(--text-primary);
     }
 
-    /* Math Solution Styling (Unchanged) */
+    /* Glassmorphism effect */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+    }
+
+    /* Modern scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 10px;
+    }
+
+    /* Updated Math solution styling */
     .math-solution {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Inter', sans-serif;
       line-height: 1.6;
       color: #374151;
       word-break: break-word;
@@ -68,48 +94,6 @@
       font-size: 1.05rem;
     }
 
-    .math-solution strong {
-      font-weight: 600;
-      color: #1f2937;
-    }
-
-    .math-solution em {
-      font-style: italic;
-    }
-
-    /* Responsive Adjustments for Math (Unchanged) */
-    @media (max-width: 768px) {
-      .MathJax, .MathJax_Display {
-        font-size: 0.95em !important;
-        overflow-x: auto !important;
-      }
-      .math-solution {
-        font-size: 1rem;
-        padding: 0.5rem;
-      }
-      .math-solution p {
-        font-size: 1rem;
-      }
-      .solution-step {
-        padding-left: 1.5rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .MathJax, .MathJax_Display {
-        font-size: 0.9em !important;
-      }
-      .math-solution {
-        font-size: 0.95rem;
-      }
-      .math-solution h2 {
-        font-size: 1.5rem;
-      }
-      .math-solution h3 {
-        font-size: 1.3rem;
-      }
-    }
-
     .solution-step {
       position: relative;
       padding-left: 2rem;
@@ -131,14 +115,14 @@
     .math-step {
       margin-bottom: 1.5rem;
       padding-left: 1.5rem;
-      border-left: 3px solid var(--primary-light);
+      border-left: 3px solid var(--primary);
       max-width: 100%;
       overflow-x: hidden;
     }
 
     .math-step-header {
       font-weight: 600;
-      color: var(--primary-light);
+      color: var(--primary);
       margin-bottom: 0.5rem;
       max-width: 100%;
       overflow-x: hidden;
@@ -155,6 +139,8 @@
       overflow-wrap: anywhere;
       max-width: 100%;
       overflow-x: auto;
+      white-space: nowrap;
+      box-sizing: border-box;
     }
 
     .math-section {
@@ -173,17 +159,16 @@
       overflow-x: hidden;
     }
 
-    /* Enhanced MathJax Styling (Unchanged) */
     .MathJax, .MathJax_Display {
-      display: inline-flex !important;
-      flex-wrap: wrap !important;
+      display: inline-block !important;
       max-width: 100% !important;
       white-space: normal !important;
-      overflow-wrap: anywhere !important;
-      word-break: break-word !important;
+      overflow-wrap: break-word !important;
+      word-break: break-all !important;
       overflow-x: auto !important;
       box-sizing: border-box !important;
       padding: 0.2rem !important;
+      font-size: 1em !important;
     }
 
     .solution-text-container {
@@ -195,155 +180,208 @@
       box-sizing: border-box;
     }
 
-    /* Custom UI Styling */
-    header {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-      color: white;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 1rem;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
-    }
-
-    .drop-zone {
-      border: 2px dashed var(--primary-light);
-      background: #F8FAFC;
-      transition: all 0.3s ease;
-    }
-
-    .drop-zone:hover, .drop-zone.active {
-      background: #EDF2FF;
-      border-color: var(--primary);
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-      border-radius: 0.5rem;
-      transition: background 0.3s ease, transform 0.2s ease;
-    }
-
-    .btn-primary:hover {
-      background: var(--primary-dark);
-      transform: translateY(-2px);
-    }
-
-    .toast {
-      animation: slideIn 0.3s ease, slideOut 0.3s ease 2.7s;
-    }
-
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    @keyframes slideOut {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(100%); opacity: 0; }
-    }
-
-    /* Responsive Adjustments */
+    /* Responsive adjustments */
     @media (max-width: 768px) {
-      .card {
-        padding: 1rem;
+      .MathJax, .MathJax_Display {
+        font-size: 0.9em !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        display: inline-block !important;
       }
-      .drop-zone {
-        padding: 1.5rem;
+      .math-solution {
+        font-size: 0.95rem;
+        padding: 0.5rem;
+      }
+      .math-solution p {
+        font-size: 0.95rem;
+      }
+      .solution-step {
+        padding-left: 1.5rem;
+      }
+      .math-expression {
+        font-size: 0.9rem;
+        white-space: normal;
+        overflow-x: auto;
       }
     }
 
     @media (max-width: 480px) {
-      .card {
-        padding: 0.75rem;
+      .MathJax, .MathJax_Display {
+        font-size: 0.85em !important;
       }
-      .drop-zone {
-        padding: 1rem;
+      .math-solution {
+        font-size: 0.9rem;
       }
+      .math-solution h2 {
+        font-size: 1.5rem;
+      }
+      .math-solution h3 {
+        font-size: 1.3rem;
+      }
+      .math-expression {
+        font-size: 0.85rem;
+      }
+    }
+
+    /* New modern elements */
+    .gradient-bg {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    }
+
+    .floating-btn {
+      box-shadow: 0 10px 25px -5px rgba(108, 99, 255, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .floating-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 30px -5px rgba(108, 99, 255, 0.5);
+    }
+
+    .drop-zone-active {
+      border-color: var(--primary) !important;
+      background-color: rgba(108, 99, 255, 0.05) !important;
+    }
+
+    .pulse-animation {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(108, 99, 255, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(108, 99, 255, 0);
+      }
+    }
+
+    .slide-in {
+      animation: slideIn 0.5s forwards;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
   </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
   <!-- Header -->
-  <header class="sticky top-0 z-50 py-4">
-    <div class="container mx-auto px-4 sm:px-6 flex justify-between items-center">
-      <div class="flex items-center space-x-3">
-        <div class="bg-white bg-opacity-20 p-2 rounded-full">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-          </svg>
+  <header class="sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-3">
+      <nav class="flex items-center justify-between glass-card px-6 py-3">
+        <div class="flex items-center space-x-3">
+          <div class="gradient-bg p-2 rounded-xl text-white">
+            <i class="fas fa-square-root-alt text-xl"></i>
+          </div>
+          <h1 class="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">MathSolve AI</h1>
         </div>
-        <h1 class="text-xl sm:text-2xl font-bold">MathSolve AI</h1>
-      </div>
-      <div class="flex items-center space-x-4">
-        <span id="usageDisplay" class="text-sm text-white opacity-80 hidden sm:block"></span>
-        <div class="relative">
-          <button id="profileBtn" class="flex items-center space-x-2 focus:outline-none">
-            <div class="w-10 h-10 rounded-full bg-white bg-opacity-20 text-white flex items-center justify-center font-medium">
-              <span id="profileInitial">U</span>
+        
+        <div class="flex items-center space-x-4">
+          <div id="desktopUsageDisplay" class="hidden md:flex items-center space-x-2 bg-indigo-50 px-3 py-1 rounded-full">
+            <span id="usageDisplay" class="text-xs font-medium text-indigo-700"></span>
+            <div class="w-2 h-2 rounded-full bg-indigo-500 pulse-animation"></div>
+          </div>
+          
+          <div class="relative">
+            <button id="profileBtn" class="flex items-center focus:outline-none">
+              <div class="w-9 h-9 rounded-full gradient-bg text-white flex items-center justify-center font-medium shadow-md">
+                <span id="profileInitial">U</span>
+              </div>
+            </button>
+            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100">
+              <div class="px-4 py-3 border-b border-gray-100">
+                <p class="text-sm font-semibold text-gray-800" id="profileName"></p>
+                <p class="text-xs text-gray-500 truncate" id="profileEmail"></p>
+                <div id="mobileUsageDisplay" class="flex items-center space-x-2 mt-2 md:hidden">
+                  <span id="mobileUsageText" class="text-xs font-medium text-indigo-700"></span>
+                  <div class="w-2 h-2 rounded-full bg-indigo-500 pulse-animation"></div>
+                </div>
+              </div>
+              <a href="/api/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
+                Logout
+              </a>
             </div>
-          </button>
-          <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl py-2 z-50">
-            <div class="px-4 py-2 border-b">
-              <p class="text-sm font-medium text-gray-800" id="profileName"></p>
-              <p class="text-xs text-gray-500 truncate" id="profileEmail"></p>
-            </div>
-            <a href="/api/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
           </div>
         </div>
-      </div>
+      </nav>
     </div>
   </header>
 
   <!-- Main Content -->
-  <main class="container mx-auto px-4 sm:px-6 py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <main class="container mx-auto px-4 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <!-- Upload Section -->
-      <div class="lg:col-span-2">
-        <div class="card p-6">
+      <div class="lg:col-span-8">
+        <div class="glass-card p-6 slide-in">
           <div class="mb-6">
-            <h2 class="text-xl sm:text-2xl font-semibold mb-2">Unggah Soal Matematika</h2>
-            <p class="text-sm text-gray-500">Dapatkan solusi langkah demi langkah dengan AI</p>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Pemecah Masalah Matematika</h2>
+            <p class="text-gray-600">Unggah soal matematika dan dapatkan solusi langkah demi langkah dengan AI canggih</p>
           </div>
           
           <form id="uploadForm">
-            <div id="dropZone" class="drop-zone rounded-lg p-8 text-center">
+            <div id="dropZone" class="drop-zone border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center mb-6 cursor-pointer transition-all duration-300 hover:border-indigo-400">
               <input type="file" id="fileInput" accept="image/*" class="hidden">
               <div class="max-w-md mx-auto">
-                <div class="bg-indigo-50 w-14 h-14 mx-auto rounded-full flex items-center justify-center mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
+                <div class="gradient-bg w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
+                  <i class="fas fa-cloud-upload-alt text-2xl"></i>
                 </div>
-                <h3 class="font-medium text-gray-700 text-base mb-2">Seret dan lepas gambar</h3>
-                <p class="text-sm text-gray-500 mb-2">atau klik untuk memilih file</p>
-                <p class="text-xs text-gray-400">Format: JPG, PNG (Maks 5MB)</p>
+                <h3 class="font-semibold text-gray-700 text-lg mb-1">Seret gambar ke sini</h3>
+                <p class="text-gray-500 mb-3">atau klik untuk memilih file</p>
+                <div class="inline-flex items-center px-4 py-2 bg-gray-100 rounded-full">
+                  <i class="fas fa-camera mr-2 text-indigo-500"></i>
+                  <span class="text-xs text-gray-600">Format: JPG, PNG (Maks 5MB)</span>
+                </div>
               </div>
             </div>
             
-            <div id="previewContainer" class="hidden mt-4">
+            <div id="previewContainer" class="hidden mb-6">
               <div class="flex justify-between items-center mb-3">
-                <span class="text-sm font-medium text-gray-700">Pratinjau Gambar</span>
-                <button type="button" id="clearPreview" class="text-sm text-red-500 hover:text-red-600 flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                <span class="text-sm font-semibold text-gray-700 flex items-center">
+                  <i class="fas fa-image mr-2 text-indigo-500"></i>
+                  Pratinjau Gambar
+                </span>
+                <button type="button" id="clearPreview" class="text-xs text-red-500 hover:text-red-600 flex items-center">
+                  <i class="fas fa-trash-alt mr-1"></i>
                   Hapus
                 </button>
               </div>
-              <img id="previewImage" class="w-full max-h-64 object-contain rounded-lg border border-gray-200" alt="Pratinjau Gambar">
+              <div class="relative">
+                <img id="previewImage" class="w-full max-h-72 object-contain rounded-xl border-2 border-gray-200" alt="Pratinjau Gambar">
+                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-xl hidden" id="processingOverlay">
+                  <div class="text-white text-center">
+                    <div class="spinner rounded-full h-8 w-8 border-t-2 border-b-2 border-white mb-2 mx-auto animate-spin"></div>
+                    <p class="text-sm">Memproses...</p>
+                  </div>
+                </div>
+              </div>
             </div>
             
-            <button type="submit" id="submitBtn" class="w-full btn-primary font-medium py-3 px-4 mt-4 flex items-center justify-center">
-              <span id="submitText">Selesaikan Soal</span>
+            <button type="submit" id="submitBtn" class="w-full gradient-bg hover:opacity-90 text-white font-semibold py-3 px-4 rounded-xl focus:outline-none transition-all duration-300 floating-btn flex items-center justify-center">
+              <span id="submitText">
+                <i class="fas fa-robot mr-2"></i>
+                Selesaikan Soal
+              </span>
               <svg id="submitSpinner" class="hidden animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -351,46 +389,116 @@
             </button>
           </form>
         </div>
+        
+        <!-- Features Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <div class="glass-card p-4 rounded-xl flex items-start">
+            <div class="bg-indigo-100 p-2 rounded-lg mr-3 text-indigo-600">
+              <i class="fas fa-bolt"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-800">Cepat</h3>
+              <p class="text-xs text-gray-600">Solusi instan dalam hitungan detik</p>
+            </div>
+          </div>
+          <div class="glass-card p-4 rounded-xl flex items-start">
+            <div class="bg-purple-100 p-2 rounded-lg mr-3 text-purple-600">
+              <i class="fas fa-list-ol"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-800">Langkah Demi Langkah</h3>
+              <p class="text-xs text-gray-600">Penjelasan detail setiap langkah</p>
+            </div>
+          </div>
+          <div class="glass-card p-4 rounded-xl flex items-start">
+            <div class="bg-pink-100 p-2 rounded-lg mr-3 text-pink-600">
+              <i class="fas fa-infinity"></i>
+            </div>
+            <div>
+              <h3 class="font-semibold text-gray-800">Multi Topik</h3>
+              <p class="text-xs text-gray-600">Aljabar, Geometri, Kalkulus, dll</p>
+            </div>
+          </div>
+        </div>
       </div>
       
       <!-- Solution Section -->
-      <div class="lg:col-span-1">
-        <div class="card p-6 h-full">
-          <div class="mb-6">
-            <h2 class="text-xl sm:text-2xl font-semibold mb-2">Solusi Matematika</h2>
-            <p class="text-sm text-gray-500">Hasil analisis akan muncul di sini</p>
+      <div class="lg:col-span-4">
+        <div class="glass-card p-6 h-full">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h2 class="text-xl font-bold text-gray-800">Solusi Matematika</h2>
+              <p class="text-sm text-gray-600">Hasil analisis akan muncul di sini</p>
+            </div>
+            <div class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-medium">
+              <i class="fas fa-circle text-xs mr-1"></i>
+              AI Aktif
+            </div>
           </div>
           
           <div id="solutionContent" class="min-h-[300px]">
             <!-- Empty State -->
             <div id="emptyState" class="flex flex-col items-center justify-center py-12 text-center">
-              <div class="bg-indigo-50 rounded-full p-4 mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
+              <div class="gradient-bg rounded-2xl p-4 mb-5 text-white shadow-lg">
+                <i class="fas fa-lightbulb text-3xl"></i>
               </div>
-              <h3 class="font-medium text-gray-700 text-base mb-2">Belum ada soal yang diunggah</h3>
-              <p class="text-sm text-gray-500 max-w-xs">Unggah gambar soal matematika untuk melihat solusi</p>
+              <h3 class="font-semibold text-gray-700 text-lg mb-2">Belum ada soal yang diunggah</h3>
+              <p class="text-gray-500 max-w-xs text-sm">Unggah gambar soal matematika untuk melihat solusi cerdas</p>
+              <div class="mt-4 flex space-x-2">
+                <div class="w-3 h-3 rounded-full bg-indigo-200 animate-bounce" style="animation-delay: 0s"></div>
+                <div class="w-3 h-3 rounded-full bg-indigo-300 animate-bounce" style="animation-delay: 0.2s"></div>
+                <div class="w-3 h-3 rounded-full bg-indigo-400 animate-bounce" style="animation-delay: 0.4s"></div>
+              </div>
             </div>
             
             <!-- Loading State -->
             <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12">
-              <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600 mb-4"></div>
-              <p class="text-sm text-gray-600">Menganalisis soal...</p>
+              <div class="relative w-16 h-16 mb-5">
+                <div class="absolute inset-0 rounded-full border-4 border-t-indigo-500 border-r-indigo-500 border-b-transparent border-l-transparent animate-spin"></div>
+                <div class="absolute inset-2 rounded-full border-4 border-t-indigo-400 border-r-indigo-400 border-b-transparent border-l-transparent animate-spin" style="animation-direction: reverse"></div>
+              </div>
+              <p class="text-gray-600 font-medium">Menganalisis soal...</p>
+              <p class="text-xs text-gray-500 mt-1">Tunggu sebentar, AI sedang bekerja</p>
             </div>
             
             <!-- Solution Result -->
-            <div id="solutionResult" class="hidden">
+            <div id="solutionResult" class="hidden h-full">
               <div class="flex justify-between items-center mb-4">
-                <h3 class="font-medium text-gray-800 text-base">Detail Solusi</h3>
-                <button id="copySolution" class="text-sm bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                  </svg>
-                  Salin
-                </button>
+                <h3 class="font-semibold text-gray-800 flex items-center">
+                  <i class="fas fa-clipboard-list mr-2 text-indigo-500"></i>
+                  Detail Solusi
+                </h3>
+                <div class="flex space-x-2">
+                  <button id="copySolution" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center transition-colors">
+                    <i class="fas fa-copy mr-1"></i>
+                    Salin
+                  </button>
+                  <button id="downloadSolution" class="text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 px-3 py-1 rounded-full flex items-center transition-colors">
+                    <i class="fas fa-download mr-1"></i>
+                    PDF
+                  </button>
+                </div>
               </div>
-              <div id="solutionText" class="prose max-w-none solution-text-container"></div>
+              <div id="solutionText" class="prose max-w-none solution-text-container bg-gray-50 rounded-xl p-4 max-h-[500px] overflow-y-auto"></div>
+              
+              <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center">
+                    <div class="w-8 h-8 rounded-full gradient-bg text-white flex items-center justify-center mr-2">
+                      <i class="fas fa-thumbs-up text-sm"></i>
+                    </div>
+                    <span class="text-sm text-gray-600">Apakah solusi ini membantu?</span>
+                  </div>
+                  <div class="flex space-x-2">
+                    <button class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                      <i class="fas fa-thumbs-up"></i>
+                    </button>
+                    <button class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                      <i class="fas fa-thumbs-down"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -398,11 +506,15 @@
     </div>
   </main>
 
-  <!-- Toast Notification -->
-  <div id="toastContainer" class="fixed bottom-4 right-4 space-y-2 z-50"></div>
+  <!-- Floating Help Button -->
+  <button class="fixed bottom-6 right-6 w-14 h-14 rounded-full gradient-bg text-white shadow-xl flex items-center justify-center floating-btn z-40">
+    <i class="fas fa-question text-xl"></i>
+  </button>
+
+  <!-- Modern Toast Notification -->
+  <div id="toastContainer" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 space-y-2 z-50 w-full max-w-xs sm:max-w-md px-4"></div>
 
   <script>
-    // Backend interaction code (Unchanged)
     // Check authentication
     const token = new URLSearchParams(window.location.search).get('token');
     if (!token) {
@@ -426,7 +538,11 @@
     const solutionResult = document.getElementById('solutionResult');
     const solutionText = document.getElementById('solutionText');
     const copySolutionBtn = document.getElementById('copySolution');
+    const desktopUsageDisplay = document.getElementById('desktopUsageDisplay');
+    const mobileUsageDisplay = document.getElementById('mobileUsageDisplay');
     const usageDisplay = document.getElementById('usageDisplay');
+    const mobileUsageText = document.getElementById('mobileUsageText');
+    const processingOverlay = document.getElementById('processingOverlay');
 
     // Load user profile
     async function loadProfile() {
@@ -479,20 +595,18 @@
     }
 
     ['dragenter', 'dragover'].forEach(eventName => {
-      dropZone.addEventListener(eventName, highlight, false);
+      dropZone.addEventListener(eventName, () => {
+        dropZone.classList.add('drop-zone-active');
+        dropZone.classList.add('border-indigo-400');
+      }, false);
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
-      dropZone.addEventListener(eventName, unhighlight, false);
+      dropZone.addEventListener(eventName, () => {
+        dropZone.classList.remove('drop-zone-active');
+        dropZone.classList.remove('border-indigo-400');
+      }, false);
     });
-
-    function highlight() {
-      dropZone.classList.add('active');
-    }
-
-    function unhighlight() {
-      dropZone.classList.remove('active');
-    }
 
     dropZone.addEventListener('drop', handleDrop, false);
 
@@ -529,10 +643,18 @@
         return;
       }
       
+      // Show processing overlay briefly
+      processingOverlay.classList.remove('hidden');
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         previewImage.src = e.target.result;
         previewContainer.classList.remove('hidden');
+        
+        // Hide processing overlay after a short delay
+        setTimeout(() => {
+          processingOverlay.classList.add('hidden');
+        }, 500);
       };
       reader.readAsDataURL(file);
     }
@@ -554,7 +676,7 @@
       
       // Disable submit button
       submitBtn.disabled = true;
-      submitText.textContent = 'Memproses...';
+      submitText.innerHTML = '<i class="fas fa-cog animate-spin mr-2"></i> Memproses...';
       submitSpinner.classList.remove('hidden');
 
       const formData = new FormData();
@@ -581,6 +703,9 @@
         solutionText.innerHTML = data.formatted_response || data.response;
         solutionResult.classList.remove('hidden');
         
+        // Add fade-in effect
+        solutionResult.classList.add('fade-in');
+        
         // Update usage display
         if (data.usage) {
           updateUsageDisplay(data.usage.used, data.usage.limit);
@@ -603,7 +728,7 @@
       } finally {
         // Reset submit button
         submitBtn.disabled = false;
-        submitText.textContent = 'Selesaikan Soal';
+        submitText.innerHTML = '<i class="fas fa-robot mr-2"></i> Selesaikan Soal';
         submitSpinner.classList.add('hidden');
       }
     });
@@ -619,35 +744,107 @@
       });
     });
 
+    // Download as PDF (mock functionality)
+    document.getElementById('downloadSolution').addEventListener('click', () => {
+      showToast('Fitur ekspor PDF akan segera hadir!', 'info');
+    });
+
     // Update usage display
     function updateUsageDisplay(used, limit) {
-      usageDisplay.textContent = `${used}/${limit} per jam`;
+      const percentage = Math.round((used / limit) * 100);
+      const usageText = `${used} dari ${limit} (${percentage}%)`;
+      usageDisplay.textContent = usageText;
+      mobileUsageText.textContent = usageText;
       
-      if (used >= limit * 0.8) {
-        usageDisplay.classList.add('text-yellow-300');
-        usageDisplay.classList.remove('text-white');
+      if (percentage >= 80) {
+        usageDisplay.classList.add('text-red-500');
+        usageDisplay.classList.remove('text-indigo-700');
+        mobileUsageText.classList.add('text-red-500');
+        mobileUsageText.classList.remove('text-indigo-700');
       } else {
-        usageDisplay.classList.remove('text-yellow-300');
-        usageDisplay.classList.add('text-white');
+        usageDisplay.classList.remove('text-red-500');
+        usageDisplay.classList.add('text-indigo-700');
+        mobileUsageText.classList.remove('text-red-500');
+        mobileUsageText.classList.add('text-indigo-700');
       }
     }
 
-    // Show toast notification
+    // Show modern toast notification
     function showToast(message, type = 'info') {
       const toastContainer = document.getElementById('toastContainer');
       const toast = document.createElement('div');
       
-      toast.className = `toast px-4 py-2 rounded-lg shadow-lg text-white ${
-        type === 'error' ? 'bg-red-500' : 
-        type === 'success' ? 'bg-green-500' : 
-        type === 'warning' ? 'bg-yellow-500' : 'bg-indigo-500'
-      }`;
+      // Base classes
+      toast.className = 'flex items-center w-full p-4 rounded-lg shadow-lg text-white overflow-hidden transform transition-all duration-300 slide-in';
       
-      toast.textContent = message;
+      // Type specific classes
+      if (type === 'error') {
+        toast.className += ' bg-red-500';
+        toast.innerHTML = `
+          <div class="mr-3 flex-shrink-0">
+            <i class="fas fa-exclamation-circle text-xl"></i>
+          </div>
+          <div class="flex-grow">
+            ${message}
+          </div>
+          <button class="ml-3 text-white opacity-70 hover:opacity-100">
+            <i class="fas fa-times"></i>
+          </button>
+        `;
+      } else if (type === 'success') {
+        toast.className += ' bg-green-500';
+        toast.innerHTML = `
+          <div class="mr-3 flex-shrink-0">
+            <i class="fas fa-check-circle text-xl"></i>
+          </div>
+          <div class="flex-grow">
+            ${message}
+          </div>
+          <button class="ml-3 text-white opacity-70 hover:opacity-100">
+            <i class="fas fa-times"></i>
+          </button>
+        `;
+      } else if (type === 'warning') {
+        toast.className += ' bg-yellow-500';
+        toast.innerHTML = `
+          <div class="mr-3 flex-shrink-0">
+            <i class="fas fa-exclamation-triangle text-xl"></i>
+          </div>
+          <div class="flex-grow">
+            ${message}
+          </div>
+          <button class="ml-3 text-white opacity-70 hover:opacity-100">
+            <i class="fas fa-times"></i>
+          </button>
+        `;
+      } else {
+        toast.className += ' bg-indigo-500';
+        toast.innerHTML = `
+          <div class="mr-3 flex-shrink-0">
+            <i class="fas fa-info-circle text-xl"></i>
+          </div>
+          <div class="flex-grow">
+            ${message}
+          </div>
+          <button class="ml-3 text-white opacity-70 hover:opacity-100">
+            <i class="fas fa-times"></i>
+          </button>
+        `;
+      }
+      
+      // Add close button functionality
+      const closeBtn = toast.querySelector('button');
+      closeBtn.addEventListener('click', () => {
+        toast.classList.add('opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      });
+      
       toastContainer.appendChild(toast);
       
+      // Auto remove after 3 seconds
       setTimeout(() => {
-        toast.remove();
+        toast.classList.add('opacity-0');
+        setTimeout(() => toast.remove(), 300);
       }, 3000);
     }
 
