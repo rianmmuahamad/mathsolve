@@ -5,260 +5,196 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - MathSolve</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js" integrity="sha512-4i+RPfWOhgXE4XqS3jFFy7XPCkJxeYfJHL9u8Xb2vWFo1T1HDrdyQN3hR3ggrtIrhN4tTK9PI4TKkTfKUnVTn0A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js" integrity="sha512-4i+RPfWOhgXE4XqS3jFFy7XPCkJxeYfJHL9u8Xb2vWFo1T1HDrdyQN3hR3ggrtIrhN4tTK9PI4TKkTfKUnVTn0A==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/spin.js/2.3.2/spin.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script>
+    // MathJax Configuration
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']],
+        processEscapes: true,
+        processEnvironments: true,
+        tags: 'ams',
+      },
+      chtml: {
+        scale: 1.0,
+        linebreaks: { automatic: true },
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+        ignoreHtmlClass: 'tex2jax_ignore',
+      }
+    };
+
     tailwind.config = {
       theme: {
         extend: {
           colors: {
             primary: {
-              50: '#ecfeff', 100: '#cffafe', 200: '#a5f3fc', 300: '#67e8f9',
-              400: '#22d3ee', 500: '#06b6d4', 600: '#0891b2', 700: '#0e7490',
-              800: '#155e75', 900: '#164e63',
+              50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc',
+              400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1',
+              800: '#075985', 900: '#0c4a6e',
             },
             secondary: {
               50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1',
               400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155',
               800: '#1e293b', 900: '#0f172a',
             },
-            accent: '#a78bfa',
           },
           fontFamily: {
-            sans: ['Poppins', 'Inter', 'sans-serif'],
+            sans: ['Inter', 'sans-serif'],
           },
           animation: {
-            'fade-in': 'fadeIn 0.5s ease-out',
-            'slide-up': 'slideUp 0.5s ease-out',
-            'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'fade-in': 'fadeIn 0.3s ease-out',
+            'slide-down': 'slideDown 0.3s ease-out',
           },
           keyframes: {
             fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-            slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
-            pulse: { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0.5' } },
-          },
-          boxShadow: {
-            'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
-            'card': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-          },
-          backdropFilter: {
-            'none': 'none',
-            'blur': 'blur(20px)',
+            slideDown: { '0%': { transform: 'translateY(-10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } },
           },
         }
       }
     }
   </script>
   <style>
-    .math-output { line-height: 1.8; font-size: 1.1rem; }
-    .math-output p { margin-bottom: 1.25rem; }
+    .math-output { line-height: 1.8; font-size: 1.05rem; }
+    .math-output p { margin-bottom: 1rem; }
     .math-output p:last-child { margin-bottom: 0; }
-    .drop-zone {
-      border: 2px dashed #a5f3fc;
-      transition: all 0.3s ease;
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-    .drop-zone.active {
-      border-color: #06b6d4;
-      background: rgba(6, 182, 212, 0.1);
-    }
-    .solution-step {
-      position: relative;
-      padding-left: 2.5rem;
-      margin-bottom: 1.5rem;
-      transition: transform 0.3s ease;
-    }
-    .solution-step:hover { transform: translateX(5px); }
+    .drop-zone { border: 2px dashed #cbd5e1; transition: all 0.3s ease; }
+    .drop-zone.active { border-color: #0ea5e9; background-color: #f0f9ff; }
+    .solution-step { position: relative; padding-left: 2rem; }
     .solution-step:before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 4px;
-      background: linear-gradient(to bottom, #06b6d4, #a5f3fc);
-      border-radius: 4px;
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: linear-gradient(to bottom, #0ea5e9, #7dd3fc);
+      border-radius: 3px;
     }
-    .solution-content p:first-child { margin-top: 0.2rem; }
-    .profile-popup {
-      animation: slide-up 0.3s ease-out;
-      background: rgba(255, 255, 255, 0.9);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-    .card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-    .card:hover { transform: translateY(-5px); box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15); }
-    @media (max-width: 640px) {
-      .math-output { font-size: 1rem; }
-      .solution-step { padding-left: 2rem; }
-    }
-    .sidebar { transition: transform 0.3s ease; }
-    .sidebar.hidden { transform: translateX(-100%); }
+    .solution-content p:first-child { margin-top: 0.1rem; }
+    .profile-popup { animation: slide-down 0.3s ease-out; }
   </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-cyan-50 font-sans min-h-screen">
-  <div class="flex flex-col lg:flex-row">
-    <!-- Sidebar -->
-    <aside id="sidebar" class="lg:w-64 bg-white shadow-lg p-6 lg:h-screen lg:sticky lg:top-0 fixed inset-y-0 left-0 z-50 w-64 sidebar">
-      <div class="flex items-center space-x-2 mb-8">
+<body class="bg-gray-50 font-sans">
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto flex justify-between items-center px-6 py-4">
+      <div class="flex items-center space-x-2">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
         </svg>
         <h1 class="text-2xl font-bold text-gray-800">MathSolve</h1>
-        <button id="closeSidebar" class="lg:hidden ml-auto text-gray-600">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
       </div>
-      <nav class="space-y-2">
-        <a href="#" class="flex items-center space-x-2 text-gray-600 hover:text-primary-600 p-2 rounded-lg hover:bg-primary-50 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-          </svg>
-          <span>Dashboard</span>
-        </a>
-        <a href="#" class="flex items-center space-x-2 text-gray-600 hover:text-primary-600 p-2 rounded-lg hover:bg-primary-50 transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5h6m-3 0v14m-7-7h14" />
-          </svg>
-          <span>History</span>
-        </a>
-      </nav>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="flex-1">
-      <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center px-6 py-4">
-          <button id="openSidebar" class="lg:hidden text-gray-600">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <div class="flex items-center space-x-2 lg:hidden">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-            </svg>
-            <h1 class="text-2xl font-bold text-gray-800">MathSolve</h1>
+      <div class="relative">
+        <div id="profile" class="flex items-center space-x-3 cursor-pointer group" onclick="toggleProfilePopup()">
+          <div class="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-lg transition-all group-hover:ring-2 group-hover:ring-primary-300">
+            <span id="profileInitial"></span>
           </div>
-          <div class="relative">
-            <div id="profile" class="flex items-center space-x-3 cursor-pointer group" onclick="toggleProfilePopup()">
-              <div class="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-lg transition-all group-hover:ring-2 group-hover:ring-primary-300">
-                <span id="profileInitial"></span>
-              </div>
-              <div class="hidden md:block">
-                <div id="profileName" class="font-medium text-gray-800"></div>
-                <div class="text-primary-600 text-xs">Premium Member</div>
-              </div>
-            </div>
-            <div id="profilePopup" class="hidden absolute right-0 mt-2 w-64 rounded-xl shadow-glass border border-gray-100/30 p-4 profile-popup">
-              <div class="flex items-center space-x-3 mb-3">
-                <div class="w-12 h-12 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-lg">
-                  <span id="profileInitialPopup"></span>
-                </div>
-                <div>
-                  <div id="profileNamePopup" class="font-semibold text-gray-800"></div>
-                  <div id="profileEmail" class="text-sm text-gray-500"></div>
-                </div>
-              </div>
-              <a href="/api/auth/logout" class="block w-full bg-gradient-to-r from-primary-600 to-accent text-white text-center py-2 rounded-md hover:from-primary-700 hover:to-accent/80 transition-colors">Logout</a>
-            </div>
+          <div class="hidden md:block">
+            <div id="profileName" class="font-medium text-gray-800"></div>
+            <div class="text-primary-600 text-xs">Premium Member</div>
           </div>
         </div>
-      </header>
-
-      <main class="container mx-auto py-8 px-4 md:px-6">
-        <div class="grid lg:grid-cols-3 gap-6">
-          <div class="lg:col-span-2">
-            <div class="bg-white/80 rounded-2xl shadow-card p-6 card backdrop-filter backdrop-blur-lg">
-              <h2 class="text-2xl font-semibold text-gray-800 mb-2">Unggah Soal Matematika</h2>
-              <p class="text-sm text-gray-500 mb-6">Unggah gambar atau ambil foto soal matematika untuk solusi instan.</p>
-              <form id="uploadForm">
-                <div id="dropZone" class="drop-zone rounded-xl p-8 text-center mb-4 cursor-pointer hover:bg-primary-50/50 transition-colors">
-                  <input type="file" id="image" accept="image/jpeg,image/png" class="hidden">
-                  <div class="max-w-xs mx-auto">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-primary-400 mb-3 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <h3 class="font-medium text-gray-700 mb-1">Seret dan lepas gambar di sini</h3>
-                    <p class="text-sm text-gray-500 mb-3">atau klik untuk memilih file</p>
-                    <p class="text-xs text-gray-400">Mendukung JPG, PNG (Maks 5MB)</p>
-                  </div>
-                </div>
-                <div id="previewContainer" class="mb-6 hidden">
-                  <div class="flex justify-between items-center mb-2">
-                    <span class="text-sm font-medium text-gray-700">Pratinjau Gambar</span>
-                    <button type="button" id="clearPreview" class="text-xs text-red-500 hover:text-red-600 transition-colors">Hapus</button>
-                  </div>
-                  <img id="preview" class="w-full max-h-80 object-contain rounded-xl border border-gray-200/50" alt="Pratinjau Gambar">
-                </div>
-                <button type="submit" class="w-full bg-gradient-to-r from-primary-600 to-accent text-white font-medium py-3 rounded-xl hover:from-primary-700 hover:to-accent/80 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50">
-                  Selesaikan Soal
-                </button>
-              </form>
+        <div id="profilePopup" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 p-4 profile-popup">
+          <div class="flex items-center space-x-3 mb-3">
+            <div class="w-12 h-12 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-lg">
+              <span id="profileInitialPopup"></span>
+            </div>
+            <div>
+              <div id="profileNamePopup" class="font-semibold text-gray-800"></div>
+              <div id="profileEmail" class="text-sm text-gray-500"></div>
             </div>
           </div>
-          <div>
-            <div class="bg-white/80 rounded-2xl shadow-card p-6 card backdrop-filter backdrop-blur-lg h-full">
-              <h2 class="text-2xl font-semibold text-gray-800 mb-2">Solusi</h2>
-              <p class="text-sm text-gray-500 mb-6">Solusi langkah demi langkah akan muncul di sini.</p>
-              <div id="solutionContainer">
-                <div id="loadingContainer" class="hidden flex flex-col items-center justify-center py-12">
-                  <div id="spinner" class="mb-5"></div>
-                  <p class="text-gray-600 text-sm">Memproses soal matematika Anda...</p>
-                  <p class="text-gray-400 text-xs mt-1">Ini mungkin memakan waktu beberapa detik.</p>
-                </div>
-                <div id="emptyState" class="flex flex-col items-center justify-center py-12 text-center">
-                  <div class="bg-primary-50 rounded-full p-5 mb-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                    </svg>
-                  </div>
-                  <h3 class="font-medium text-gray-700 mb-1">Belum ada soal yang diselesaikan</h3>
-                  <p class="text-sm text-gray-500 max-w-xs">Unggah gambar soal matematika untuk melihat solusi langkah demi langkah.</p>
-                </div>
-                <div id="response" class="hidden">
-                  <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-gray-800">Detail Solusi</h3>
-                    <button id="copySolution" class="text-xs bg-primary-50 text-primary-600 hover:bg-primary-100 px-3 py-1 rounded-full flex items-center transition-colors">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                      </svg>
-                      Salin
-                    </button>
-                  </div>
-                  <div id="responseText" class="math-output text-gray-700"></div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <a href="/api/auth/logout" class="block w-full bg-primary-600 text-white text-center py-2 rounded-md hover:bg-primary-700 transition-colors">Logout</a>
         </div>
-      </main>
-
-      <footer class="bg-white/80 border-t border-gray-100/30 py-6 mt-12 backdrop-filter backdrop-blur-lg">
-        <div class="container mx-auto px-6">
-          <div class="flex flex-col md:flex-row justify-between items-center">
-            <div class="flex items-center space-x-2 mb-4 md:mb-0">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
-              </svg>
-              <span class="font-medium text-gray-800">MathSolve</span>
-            </div>
-            <div class="flex flex-col items-center md:flex-row md:space-x-6 space-y-2 md:space-y-0 text-sm text-gray-500">
-              <a href="#" class="hover:text-primary-600 transition-colors">Kebijakan Privasi</a>
-              <a href="#" class="hover:text-primary-600 transition-colors">Ketentuan Layanan</a>
-              <a href="#" class="hover:text-primary-600 transition-colors">Hubungi Kami</a>
-              <span>© 2025 MathSolve AI</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+      </div>
     </div>
-  </div>
+  </header>
+
+  <main class="container mx-auto py-8 px-4 md:px-6">
+    <div class="grid lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h2 class="text-2xl font-semibold text-gray-800 mb-2">Unggah Soal Matematika</h2>
+          <p class="text-sm text-gray-500 mb-6">Unggah gambar atau ambil foto soal matematika Anda untuk solusi instan.</p>
+          <form id="uploadForm">
+            <div id="dropZone" class="drop-zone rounded-lg p-8 text-center mb-4 cursor-pointer hover:bg-gray-50 transition-colors">
+              <input type="file" id="image" accept="image/jpeg,image/png" class="hidden">
+              <div class="max-w-xs mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-primary-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <h3 class="font-medium text-gray-700 mb-1">Seret dan lepas gambar di sini</h3>
+                <p class="text-sm text-gray-500 mb-3">atau klik untuk memilih file</p>
+                <p class="text-xs text-gray-400">Mendukung JPG, PNG (Maks 5MB)</p>
+              </div>
+            </div>
+            <div id="previewContainer" class="mb-6 hidden">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-sm font-medium text-gray-700">Pratinjau Gambar</span>
+                <button type="button" id="clearPreview" class="text-xs text-red-500 hover:text-red-600">Hapus</button>
+              </div>
+              <img id="preview" class="w-full max-h-80 object-contain rounded-lg border border-gray-200" alt="Pratinjau Gambar">
+            </div>
+            <button type="submit" class="w-full bg-primary-600 text-white font-medium py-3 rounded-lg hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50">
+              Selesaikan Soal
+            </button>
+          </form>
+        </div>
+      </div>
+      <div>
+        <div class="bg-white rounded-xl shadow-sm p-6 h-full">
+          <h2 class="text-2xl font-semibold text-gray-800 mb-2">Solusi</h2>
+          <p class="text-sm text-gray-500 mb-6">Solusi langkah demi langkah akan muncul di sini.</p>
+          <div id="solutionContainer">
+            <div id="loadingContainer" class="hidden flex flex-col items-center justify-center py-12">
+              <div id="spinner" class="mb-5"></div>
+              <p class="text-gray-600 text-sm">Memproses soal matematika Anda...</p>
+              <p class="text-gray-400 text-xs mt-1">Ini mungkin memakan waktu beberapa detik.</p>
+            </div>
+            <div id="emptyState" class="flex flex-col items-center justify-center py-12 text-center">
+              <div class="bg-primary-50 rounded-full p-5 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </div>
+              <h3 class="font-medium text-gray-700 mb-1">Belum ada soal yang diselesaikan</h3>
+              <p class="text-sm text-gray-500 max-w-xs">Unggah gambar soal matematika untuk melihat solusi langkah demi langkah.</p>
+            </div>
+            <div id="response" class="hidden">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-800">Detail Solusi</h3>
+                <button id="copySolution" class="text-xs bg-primary-50 text-primary-600 hover:bg-primary-100 px-3 py-1 rounded-full flex items-center transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                  Salin
+                </button>
+              </div>
+              <div id="responseText" class="math-output text-gray-700"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-white border-t border-gray-100 py-6 mt-12">
+    <div class="container mx-auto px-6">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="flex items-center space-x-2 mb-4 md:mb-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+          </svg>
+          <span class="font-medium text-gray-800">MathSolve</span>
+        </div>
+        <div class="flex flex-col items-center md:flex-row md:space-x-6 space-y-2 md:space-y-0 text-sm text-gray-500">
+          <a href="#" class="hover:text-primary-600 transition-colors">Kebijakan Privasi</a>
+          <a href="#" class="hover:text-primary-600 transition-colors">Ketentuan Layanan</a>
+          <a href="#" class="hover:text-primary-600 transition-colors">Hubungi Kami</a>
+          <span>© 2025 MathSolve AI</span>
+        </div>
+      </div>
+    </div>
+  </footer>
 
   <script>
     const token = new URLSearchParams(window.location.search).get('token');
@@ -304,21 +240,8 @@
       }
     });
 
-    // Sidebar toggle for mobile
-    const sidebar = document.getElementById('sidebar');
-    const openSidebarBtn = document.getElementById('openSidebar');
-    const closeSidebarBtn = document.getElementById('closeSidebar');
-
-    openSidebarBtn.addEventListener('click', () => {
-      sidebar.classList.remove('hidden');
-    });
-
-    closeSidebarBtn.addEventListener('click', () => {
-      sidebar.classList.add('hidden');
-    });
-
     const spinner = new Spinner({
-      lines: 12, length: 6, width: 2.5, radius: 10, color: '#06b6d4',
+      lines: 12, length: 6, width: 2.5, radius: 10, color: '#0ea5e9',
       speed: 1, trail: 60, shadow: false
     });
 
@@ -441,53 +364,153 @@
 
       let currentResponse = response;
 
-      try {
-        // 1. Pecahan sederhana (a/b)
-        currentResponse = currentResponse.replace(
-          /(\d+)\s*\/\s*(\d+)/g,
-          '\\(\\frac{$1}{$2}\\)'
-        );
-
-        // 2. Pangkat sederhana (a^b)
-        currentResponse = currentResponse.replace(
-          /([a-zA-Z0-9]+)\^([0-9]+)/g,
-          '\\($1^{$2}\\)'
-        );
-
-        // 3. Akar kuadrat
-        currentResponse = currentResponse.replace(
-          /sqrt\(([^)]+)\)/g,
-          '\\(\\sqrt{$1}\\)'
-        );
-
-        // 4. Simbol matematika dasar
-        currentResponse = currentResponse.replace(/\bpi\b/g, '\\(\\pi\\)');
-        currentResponse = currentResponse.replace(/<=/g, '\\(\\leq\\)');
-        currentResponse = currentResponse.replace(/>=/g, '\\(\\geq\\)');
-        currentResponse = currentResponse.replace(/!=/g, '\\(\\neq\\)');
-
-        // 5. Format teks bold dan italic
-        currentResponse = currentResponse.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        currentResponse = currentResponse.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-        // 6. Buat paragraf dari baris baru
-        const paragraphs = currentResponse.split('\n\n');
-        let htmlOutput = '';
-
-        for (let para of paragraphs) {
-          if (para.trim()) {
-            const lines = para.split('\n').join('<br>');
-            htmlOutput += `<p class="mb-3 solution-step">${lines}</p>`;
-          }
+      // 1. Konversi ekspresi matematika ke LaTeX
+      // Pecahan (a/b, termasuk variabel dan ekspresi kompleks)
+      currentResponse = currentResponse.replace(
+        /(?<![\$\\])(?<!\^\{)([\w\d\(\)\+\-\*\/\.]+)\s*\/\s*([\w\d\(\)\+\-\*\/\.]+)\b(?![\}\s]*\^)/g,
+        (match, num, denom) => {
+          // Pastikan bukan bagian dari URL atau ekspresi lain
+          if (num.match(/http/) || denom.match(/http/)) return match;
+          return `\\(\\frac{${num.trim()}}{${denom.trim()}}\\)`;
         }
+      );
 
-        return htmlOutput || `<p class="mb-3 solution-step">${currentResponse}</p>`;
-      } catch (error) {
-        console.error('Error formatting math:', error);
-        return response.split('\n').map(line => 
-          line.trim() ? `<p class="mb-2 solution-step">${line}</p>` : ''
-        ).join('');
+      // Eksponen (a^b, termasuk basis dan eksponen kompleks)
+      currentResponse = currentResponse.replace(
+        /([\w\d\(\)\|\+\-\*\/\.]+)\s*\^\s*([\w\d\(\)\{\}\+\-\*\/\.]+)/g,
+        (match, base, exponent) => {
+          const cleanedBase = base.trim();
+          const cleanedExponent = exponent.startsWith('{') && exponent.endsWith('}') ? exponent : `{${exponent.trim()}}`;
+          return `\\(${cleanedBase}^${cleanedExponent}\\)`;
+        }
+      );
+
+      // Akar (sqrt, cbrt, root(n)[x])
+      currentResponse = currentResponse.replace(
+        /\b(sqrt|cbrt|root\s*\(\s*(\d+)\s*\))\s*\[([^\]]+)\]/g,
+        (match, rootType, n, content) => {
+          if (rootType === 'sqrt') return `\\(\\sqrt{${content.trim()}}\\)`;
+          if (rootType === 'cbrt') return `\\(\\sqrt[3]{${content.trim()}}\\)`;
+          return `\\(\\sqrt[${n}]{${content.trim()}}\\)`;
+        }
+      );
+
+      // Fungsi matematika (trigonometri, logaritma, dll.)
+      const mathFunctions = [
+        'sin', 'cos', 'tan', 'cot', 'sec', 'csc',
+        'arcsin', 'arccos', 'arctan', 'arccot', 'arcsec', 'arccsc',
+        'log', 'ln', 'exp'
+      ];
+      const funcRegex = new RegExp(`\\b(${mathFunctions.join('|')})\\s*\\(([^)]+)\\)`, 'g');
+      currentResponse = currentResponse.replace(
+        funcRegex,
+        (match, func, arg) => `\\(\\${func}\\left(${arg.trim()}\\right)\\)`
+      );
+
+      // Simbol khusus
+      const symbolMap = {
+        'pi': '\\pi',
+        'theta': '\\theta',
+        'alpha': '\\alpha',
+        'beta': '\\beta',
+        'gamma': '\\gamma',
+        'delta': '\\delta',
+        'phi': '\\phi',
+        'infinity': '\\infty',
+        '<=': '\\leq',
+        '>=': '\\geq',
+        '!=': '\\neq',
+        'approx': '\\approx',
+        'pm': '\\pm',
+        'times': '\\times',
+        'div': '\\div'
+      };
+      for (const [key, value] of Object.entries(symbolMap)) {
+        currentResponse = currentResponse.replace(
+          new RegExp(`\\b${key}\\b`, 'g'),
+          `\\(${value}\\)`
+        );
       }
+
+      // Matriks (umum, mendukung lebih dari 2 baris)
+      currentResponse = currentResponse.replace(
+        /\[\s*([^\]]*?)\s*\]/g,
+        (match, content) => {
+          const rows = content.split(';').map(row => row.trim()).filter(row => row);
+          if (rows.length < 1) return match;
+          const matrixRows = rows.map(row => {
+            const elements = row.split(/\s+/).filter(el => el).join('&');
+            return elements;
+          }).join('\\\\');
+          return `\\(\\begin{pmatrix}${matrixRows}\\end{pmatrix}\\)`;
+        }
+      );
+
+      // Persamaan multi-baris dengan align
+      currentResponse = currentResponse.replace(
+        /([^=]+)\s*=\s*([^=\n]+(?:\s*=\s*[^=\n]+)*)/g,
+        (match, left, right) => {
+          const equations = right.split(/\s*=\s*/).map(eq => eq.trim());
+          if (equations.length > 1) {
+            const aligned = [left.trim(), ...equations].map((eq, i) => {
+              return i === 0 ? `${eq} &=` : `&=${eq}`;
+            }).join('\\\\');
+            return `\\[\\begin{aligned}${aligned}\\end{aligned}\\]`;
+          }
+          return `\\(${left.trim()}=${right.trim()}\\)`;
+        }
+      );
+
+      // 2. Konversi Markdown
+      currentResponse = currentResponse.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      currentResponse = currentResponse.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+      // 3. Format blok teks
+      function formatBlockToHtml(textBlock) {
+        if (!textBlock || textBlock.trim() === "") return "";
+        const paragraphs = textBlock.trim().split(/\n\s*\n+/);
+        return paragraphs
+          .map(para => {
+            if (para.trim() === "") return "";
+            const lines = para.split('\n').map(line => line.trim()).filter(line => line).join('<br>');
+            return `<p>${lines}</p>`;
+          })
+          .filter(p => p)
+          .join('');
+      }
+
+      // 4. Pisahkan langkah-langkah
+      const sections = currentResponse.split(/\bStep\s+/i);
+      let htmlOutput = '';
+
+      // Pendahuluan
+      if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
+        htmlOutput += formatBlockToHtml(sections[0]);
+      }
+
+      // Langkah-langkah
+      if (sections.length > 1) {
+        for (let i = 1; i < sections.length; i++) {
+          let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
+          if (stepText === "") continue;
+          htmlOutput += `
+            <div class="solution-step mb-5">
+              <div class="flex items-start">
+                <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
+                <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
+              </div>
+            </div>`;
+        }
+      } else if (htmlOutput.trim() === "" && response.trim() !== "") {
+        htmlOutput = formatBlockToHtml(currentResponse);
+      }
+
+      // 5. Fallback untuk LaTeX yang gagal
+      if (!htmlOutput || htmlOutput.trim() === "") {
+        htmlOutput = `<p class="text-gray-500">${response.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+      }
+
+      return htmlOutput;
     }
 
     loadProfile();
