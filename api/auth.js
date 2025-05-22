@@ -12,7 +12,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: 'https://mathsolve-five.vercel.app/api/auth/google/callback',
+      callbackURL: 'https://www.mathsolve.my.id/api/auth/google/callback',
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -54,7 +54,7 @@ router.get(
         process.env.JWT_SECRET,
         { expiresIn: '1h' }
       );
-      res.redirect(`https://mathsolve-five.vercel.app/dashboard.html?token=${token}`);
+      res.redirect(`https://www.mathsolve.my.id/dashboard.html?token=${token}`);
     } catch (err) {
       console.error('Callback error:', err);
       res.redirect('/login.html?error=auth_failed');
