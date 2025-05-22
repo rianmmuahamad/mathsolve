@@ -32,7 +32,7 @@ const uploadLimiter = rateLimit({
 const authenticate = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
-
+  
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return res.status(403).json({ error: 'Invalid token' });
     req.user = user;
@@ -76,73 +76,39 @@ function fileToGenerativePart(buffer, mimeType) {
 // Enhanced math notation formatter
 function formatMathNotation(text) {
   if (!text || typeof text !== 'string') return text;
-
+  
   try {
     let formatted = text;
 
-    // Preserve existing LaTeX blocks to avoid double-processing
-    const latexBlocks = [];
-    formatted = formatted.replace(/\\\(.*?\\\)/g, (match) => {
-      latexBlocks.push(match);
-      return `__LATEX_BLOCK_${latexBlocks.length - 1}__`;
-    });
-
-    // Handle bold and italic text
+    // First, handle bold text (**text**) to avoid conflict with italic (*text*)
     formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Then, handle italic text (*text*), ensuring it doesn't conflict with bold
     formatted = formatted.replace(/(?<!\*)\*([^\*]+)\*(?!\*)/g, '<em>$1</em>');
 
-    // Enhanced LaTeX notation handling
-    const replacements = [
-      // Fractions
-      { regex: /(\d+)\/(\d+)/g, replace: '\\(\\frac{$1}{$2}\\) ' },
-      // Superscripts
-      { regex: /([a-zA-Z0-9])\^(\d+)/g, replace: '\\($1^{$2}\\) ' },
-      { regex: /([a-zA-Z0-9])\^\{([^}]+)\}/g, replace: '\\($1^{$2}\\) ' },
-      // Subscripts
-      { regex: /([a-zA-Z0-9])_(\d+)/g, replace: '\\($1_{$2}\\) ' },
-      { regex: /([a-zA-Z0-9])_\{([^}]+)\}/g, replace: '\\($1_{$2}\\) ' },
-      // Square roots
-      { regex: /sqrt\(([^)]+)\)/g, replace: '\\(\\sqrt{$1}\\) ' },
-      // Trigonometric functions
-      { regex: /(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g, replace: '\\(\\$1{$2}\\) ' },
-      // Limits
-      { regex: /lim_\{([^}]+)\}/g, replace: '\\(\\lim_{$1}\\) ' },
-      // Absolute values
-      { regex: /\|([^|]+)\|/g, replace: '\\(\\|$1\\|) ' },
-      // Inequalities
-      { regex: /<=/g, replace: '\\(\\leq\\) ' },
-      { regex: />=/g, replace: '\\(\\geq\\) ' },
-      { regex: /!=/g, replace: '\\(\\neq\\) ' },
-    ];
+    // Handle math notations
+    formatted = formatted
+      .replace(/lim_\{([^}]+)\}/g, '\\lim_{$1}')
+      .replace(/\|([^|]+)\|/g, '\\|$1\\|')
+      .replace(/(\d+)\/(\d+)/g, '\\frac{$1}{$2}')
+      .replace(/(\w)\^(\d+)/g, '$1^{$2}')
+      .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')
+      .replace(/(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g, '\\$1($2)');
 
-    // Greek symbols
     const greekSymbols = {
-      alpha: '\\(\\alpha\\)',
-      beta: '\\(\\beta\\)',
-      gamma: '\\(\\gamma\\)',
-      delta: '\\(\\delta\\)',
-      epsilon: '\\(\\epsilon\\)',
-      theta: '\\(\\theta\\)',
-      pi: '\\(\\pi\\)',
-      sigma: '\\(\\sigma\\)',
-      omega: '\\(\\omega\\)',
+      'alpha': '\\alpha', 'beta': '\\beta', 'gamma': '\\gamma',
+      'delta': '\\delta', 'epsilon': '\\epsilon', 'theta': '\\theta',
+      'pi': '\\pi', 'sigma': '\\sigma', 'omega': '\\omega'
     };
-
-    // Apply LaTeX replacements
-    replacements.forEach(({ regex, replace }) => {
-      formatted = formatted.replace(regex, replace);
-    });
-
-    // Apply Greek symbols
+    
     for (const [key, val] of Object.entries(greekSymbols)) {
-      formatted = formatted.replace(new RegExp(`\\b${key}\\b`, 'g'), val);
+      formatted = formatted.replace(new RegExp(key, 'g'), val);
     }
 
-    // Restore LaTeX blocks
-    formatted = formatted.replace(/__LATEX_BLOCK_(\d+)__/g, (_, index) => latexBlocks[index]);
-
-    // Ensure all math expressions are wrapped in \( ... \)
-    formatted = formatted.replace(/([^\\])\$([^$]+)\$/g, '$1\\($2\\)');
+    formatted = formatted
+      .replace(/<=/g, '\\leq')
+      .replace(/>=/g, '\\geq')
+      .replace(/!=/g, '\\neq');
 
     return formatted;
   } catch (error) {
@@ -157,6 +123,7 @@ function formatResponseToHTML(response) {
 
   try {
     let formatted = formatMathNotation(response);
+
     const $ = cheerio.load('<div class="math-solution"></div>');
     const container = $('.math-solution');
 
@@ -167,38 +134,36 @@ function formatResponseToHTML(response) {
     sections.forEach(section => {
       if (!section.trim()) return;
 
-      // Check if section is a step
+      // Only treat as a step if it explicitly starts with "Langkah" or "Step" followed by a number
       const isStep = section.match(/^(Langkah|Step)\s*\d+/i);
 
       if (isStep) {
         stepCounter++;
         const stepDiv = $('<div class="solution-step"></div>');
-
+        
         const stepMatch = section.match(/^(Langkah|Step)\s*(\d+):?/i);
         const stepNumber = stepMatch ? stepMatch[2] : stepCounter;
-
+        
         stepDiv.append(`<div class="step-number">${stepNumber}.</div>`);
-
+        
         let content = section
           .replace(/^(Langkah|Step)\s*\d+:?\s*/i, '')
           .replace(/^\d+\.\s*/, '');
-
+        
         const paragraphs = content.split('\n');
-
+        
         paragraphs.forEach(para => {
           if (para.trim()) {
-            // Wrap math expressions in span for MathJax
-            const processedPara = para.replace(/\\\(.*?\\\)/g, match => `<span class="math-expression">${match}</span>`);
-            stepDiv.append(`<p class="break-words">${processedPara}</p>`);
+            stepDiv.append(`<p class="break-words">${para.trim()}</p>`);
           }
         });
-
+        
         container.append(stepDiv);
       } else {
+        // Remove any standalone numbers followed by a period (e.g., "6.", "10.")
         section = section.replace(/^\d+\.\s*/, '');
         if (section.trim()) {
-          const processedSection = section.replace(/\\\(.*?\\\)/g, match => `<span class="math-expression">${match}</span>`);
-          container.append(`<p class="break-words">${processedSection}</p>`);
+          container.append(`<p class="break-words">${section}</p>`);
         }
       }
     });
@@ -282,11 +247,11 @@ Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak beri
 
   } catch (err) {
     console.error('Upload processing error:', err);
-
-    const statusCode = err.message.includes('GOOGLE_API_KEY') ? 500 :
+    
+    const statusCode = err.message.includes('GOOGLE_API_KEY') ? 500 : 
                       err.message.includes('image') ? 400 : 500;
-
-    res.status(statusCode).json({
+    
+    res.status(statusCode).json({ 
       error: 'Maaf, terjadi kesalahan saat memproses gambar.',
       details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
