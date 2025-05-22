@@ -5,6 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MathSolve AI | Solusi Matematika</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']],
+        processEscapes: true,
+        processEnvironments: true,
+        tags: 'ams',
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+        ignoreHtmlClass: 'no-mathjax',
+        renderActions: {
+          addMenu: [0, '', '']
+        }
+      },
+      chtml: {
+        scale: 0.9,
+        mtextInheritFont: true,
+        adaptiveCSS: true
+      }
+    };
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
@@ -21,7 +44,7 @@
       --error: #ef4444;
       --warning: #f59e0b;
     }
-    
+
     body {
       font-family: 'Inter', sans-serif;
       background-color: #f1f5f9;
@@ -144,17 +167,14 @@
 
     .math-expression {
       display: inline-block;
-      margin: 0.75rem 0;
-      padding: 0.75rem;
+      padding: 0.2rem 0.5rem;
       background-color: #f8fafc;
-      border-radius: 0.5rem;
+      border-radius: 0.3rem;
       border: 1px solid #e2e8f0;
-      font-family: 'Times New Roman', serif;
-      word-break: break-word;
-      overflow-wrap: break-word;
       max-width: 100%;
-      overflow-x: hidden;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      overflow-x: auto;
+      white-space: nowrap;
+      vertical-align: middle;
     }
 
     .drop-zone {
@@ -164,13 +184,13 @@
       border-radius: 1rem;
       background-color: #f8fafc;
     }
-    
+
     .drop-zone.active {
       border-color: var(--primary);
       background-color: rgba(99, 102, 241, 0.05);
       box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
     }
-    
+
     .toast {
       animation: toast-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       max-width: 90vw;
@@ -178,21 +198,21 @@
       border-radius: 0.75rem;
       overflow: hidden;
     }
-    
+
     @keyframes toast-in {
       from { transform: translateY(20px) scale(0.95); opacity: 0; }
       to { transform: translateY(0) scale(1); opacity: 1; }
     }
-    
+
     .spinner {
       animation: spin 1s linear infinite;
     }
-    
+
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-    
+
     .card {
       background: white;
       border-radius: 1rem;
@@ -201,13 +221,12 @@
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
       border: 1px solid rgba(226, 232, 240, 0.7);
     }
-    
+
     .card:hover {
       transform: translateY(-4px);
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
-    /* Enhanced MathJax and Solution Text Styling */
     .MathJax, .MathJax_Display {
       display: inline-flex !important;
       flex-wrap: wrap !important;
@@ -215,9 +234,11 @@
       white-space: normal !important;
       overflow-wrap: break-word !important;
       word-break: break-all !important;
-      overflow-x: hidden !important;
+      overflow-x: auto !important;
       box-sizing: border-box;
-      padding: 0.2rem;
+      padding: 0.2rem 0.5rem;
+      margin: 0.2rem 0;
+      scroll-behavior: smooth;
     }
 
     .solution-text-container {
@@ -228,7 +249,12 @@
       padding: 0.5rem;
     }
 
-    /* Button Styles */
+    .mfrac {
+      display: inline-block !important;
+      vertical-align: middle !important;
+      font-size: 0.9em !important;
+    }
+
     .btn-primary {
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: white;
@@ -262,7 +288,6 @@
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
     }
 
-    /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
       height: 8px;
@@ -282,7 +307,6 @@
       background: #94a3b8;
     }
 
-    /* Floating Action Button */
     .fab {
       position: fixed;
       bottom: 2rem;
@@ -305,7 +329,6 @@
       box-shadow: 0 20px 25px -5px rgba(99, 102, 241, 0.3), 0 10px 10px -5px rgba(99, 102, 241, 0.1);
     }
 
-    /* Pulse Animation */
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.05); }
@@ -316,7 +339,6 @@
       animation: pulse 2s infinite;
     }
 
-    /* Tooltip */
     .tooltip {
       position: relative;
     }
@@ -355,14 +377,11 @@
       opacity: 1;
     }
 
-    /* Responsive Adjustments */
     @media (max-width: 768px) {
-      /* Sembunyikan usage counter di mobile */
       #usageDisplay {
         display: none;
       }
 
-      /* Tampilkan indikator sederhana */
       .usage-mobile-indicator {
         display: flex;
         width: 24px;
@@ -374,12 +393,10 @@
         margin-right: 8px;
       }
 
-      /* Perbaikan layout header mobile */
       header .flex.items-center.space-x-2 {
         gap: 8px;
       }
 
-      /* Perbaikan tampilan solusi di mobile */
       #solutionContent {
         min-height: auto;
         max-height: 60vh;
@@ -411,21 +428,28 @@
         font-size: 0.9rem;
       }
 
-      /* Perbaikan preview image di mobile */
       #previewImage {
         max-height: 40vh;
       }
 
-      /* Perbaikan MathJax di mobile */
       .MathJax, .MathJax_Display {
         font-size: 0.8em !important;
         max-width: 95% !important;
         overflow-x: auto !important;
+        padding: 0.2rem !important;
+      }
+
+      .math-expression {
+        font-size: 0.85em;
+        padding: 0.2rem 0.4rem;
+      }
+
+      .mfrac {
+        font-size: 0.8em !important;
       }
     }
 
     @media (max-width: 480px) {
-      /* Perbaikan lebih lanjut untuk layar kecil */
       .math-solution {
         font-size: 0.85rem;
       }
@@ -442,18 +466,25 @@
         padding-left: 1.75rem;
       }
 
-      /* Pastikan MathJax tidak overflow */
       .MathJax, .MathJax_Display {
+        font-size: 0.75em !important;
+        max-width: 90% !important;
+      }
+
+      .math-expression {
+        font-size: 0.8em;
+        padding: 0.1rem 0.3rem;
+      }
+
+      .mfrac {
         font-size: 0.75em !important;
       }
 
-      /* Tombol lebih besar untuk mobile */
       .btn-primary, .btn-secondary {
         padding: 0.75rem 1rem;
         font-size: 0.9rem;
       }
 
-      /* Drop zone lebih compact */
       .drop-zone {
         padding: 1.5rem;
       }
@@ -690,21 +721,20 @@
         const res = await fetch('/api/auth/profile', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        
+
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
             window.location.href = '/login.html';
           }
           throw new Error('Failed to load profile');
         }
-        
+
         const data = await res.json();
         if (data.name && data.email) {
           document.getElementById('profileInitial').textContent = data.name.charAt(0).toUpperCase();
           document.getElementById('profileName').textContent = data.name;
           document.getElementById('profileEmail').textContent = data.email;
-          
-          // Update usage display if available
+
           if (data.usage) {
             updateUsageDisplay(data.usage.used, data.usage.limit);
           }
@@ -728,8 +758,7 @@
 
     // File upload handling
     dropZone.addEventListener('click', () => fileInput.click());
-    
-    // Drag and drop events
+
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
       dropZone.addEventListener(eventName, preventDefaults, false);
     });
@@ -783,13 +812,13 @@
         showToast('Hanya file gambar yang diperbolehkan', 'error');
         return;
       }
-      
+
       if (file.size > 5 * 1024 * 1024) {
         showToast('Ukuran file terlalu besar. Maksimum 5MB.', 'error');
         fileInput.value = '';
         return;
       }
-      
+
       const reader = new FileReader();
       reader.onload = (e) => {
         previewImage.src = e.target.result;
@@ -802,19 +831,17 @@
     // Form submission
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const imageFile = fileInput.files[0];
       if (!imageFile) {
         showToast('Pilih gambar terlebih dahulu', 'error');
         return;
       }
 
-      // Show loading state
       emptyState.classList.add('hidden');
       solutionResult.classList.add('hidden');
       loadingState.classList.remove('hidden');
-      
-      // Disable submit button
+
       submitBtn.disabled = true;
       submitText.textContent = 'Memproses...';
       submitSpinner.classList.remove('hidden');
@@ -828,9 +855,9 @@
           headers: { 'Authorization': `Bearer ${token}` },
           body: formData
         });
-        
+
         const data = await res.json();
-        
+
         if (!res.ok) {
           if (res.status === 401 || res.status === 403) {
             window.location.href = '/login.html';
@@ -838,29 +865,43 @@
           throw new Error(data.error || 'Server error');
         }
 
-        // Show solution
         loadingState.classList.add('hidden');
         solutionText.innerHTML = data.formatted_response || data.response;
         solutionResult.classList.remove('hidden');
-        
-        // Update usage display
+
         if (data.usage) {
           updateUsageDisplay(data.usage.used, data.usage.limit);
         }
-        
-        // Show warning if available
+
         if (data.warning) {
           showToast(data.warning, 'warning');
         }
-        
-        // Render MathJax
+
         if (window.MathJax) {
-          MathJax.typesetPromise().then(() => {
-            // Check if solution is long enough to need scroll-to-top button
-            if (solutionText.scrollHeight > solutionText.clientHeight) {
-              scrollToTopBtn.classList.remove('hidden');
+          const renderMathJax = (attempts = 3, delay = 100) => {
+            if (attempts <= 0) {
+              console.error('MathJax rendering failed after retries');
+              showToast('Gagal merender rumus matematika', 'warning');
+              return;
             }
-          });
+            try {
+              MathJax.typesetPromise([solutionText]).then(() => {
+                if (solutionText.scrollHeight > solutionText.clientHeight) {
+                  scrollToTopBtn.classList.remove('hidden');
+                }
+              }).catch(err => {
+                console.error('MathJax rendering error:', err);
+                setTimeout(() => renderMathJax(attempts - 1, delay * 2), delay);
+              });
+            } catch (err) {
+              console.error('MathJax initialization error:', err);
+              setTimeout(() => renderMathJax(attempts - 1, delay * 2), delay);
+            }
+          };
+          renderMathJax();
+        } else {
+          console.warn('MathJax not loaded');
+          showToast('MathJax tidak tersedia, beberapa rumus mungkin tidak dirender dengan benar', 'warning');
         }
       } catch (err) {
         console.error('Upload error:', err);
@@ -868,7 +909,6 @@
         loadingState.classList.add('hidden');
         emptyState.classList.remove('hidden');
       } finally {
-        // Reset submit button
         submitBtn.disabled = false;
         submitText.textContent = 'Selesaikan Soal';
         submitSpinner.classList.add('hidden');
@@ -887,15 +927,13 @@
     });
 
     // Update usage display
-    // Update usage display - Diperbarui untuk mobile
     function updateUsageDisplay(used, limit) {
       const percentage = (used / limit) * 100;
-      
-      // Update desktop display
+
       const desktopDisplay = document.getElementById('usageDisplay');
       if (desktopDisplay) {
         desktopDisplay.textContent = `${used}/${limit} per jam`;
-        
+
         if (percentage >= 90) {
           desktopDisplay.classList.add('text-red-500');
           desktopDisplay.classList.remove('text-indigo-700');
@@ -907,13 +945,11 @@
           desktopDisplay.classList.add('text-indigo-700');
         }
       }
-      
-      // Update mobile display
+
       const mobileDisplay = document.getElementById('mobileUsageText');
       if (mobileDisplay) {
         mobileDisplay.textContent = `${used}/${limit}`;
-        
-        // Update tooltip color based on usage
+
         const tooltip = document.querySelector('.usage-mobile-indicator .tooltip-text');
         if (tooltip) {
           if (percentage >= 90) {
@@ -934,8 +970,7 @@
     function showToast(message, type = 'info') {
       const toastContainer = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      
-      // Create icon based on type
+
       let icon;
       switch(type) {
         case 'error':
@@ -958,13 +993,13 @@
                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                  </svg>`;
       }
-      
+
       toast.className = `toast px-4 py-3 flex items-start space-x-2 ${
-        type === 'error' ? 'bg-red-500 text-white' : 
-        type === 'success' ? 'bg-green-500 text-white' : 
+        type === 'error' ? 'bg-red-500 text-white' :
+        type === 'success' ? 'bg-green-500 text-white' :
         type === 'warning' ? 'bg-yellow-500 text-white' : 'bg-white text-gray-800 border border-gray-200'
       }`;
-      
+
       toast.innerHTML = `
         <div class="flex-shrink-0">${icon}</div>
         <div class="flex-grow text-sm">${message}</div>
@@ -974,9 +1009,9 @@
           </svg>
         </button>
       `;
-      
+
       toastContainer.appendChild(toast);
-      
+
       setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateY(10px)';
@@ -1013,7 +1048,6 @@
       document.body.style.overflow = 'auto';
     });
 
-    // Close modal when clicking outside image
     imageModal?.addEventListener('click', (e) => {
       if (e.target === imageModal) {
         imageModal.classList.add('hidden');
@@ -1025,7 +1059,6 @@
     loadProfile();
     updateUsageDisplay(0, 10);
 
-    // Make showToast available globally
     window.showToast = showToast;
   </script>
 </body>
