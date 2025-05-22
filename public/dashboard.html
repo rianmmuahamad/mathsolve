@@ -53,6 +53,43 @@
     }
     .solution-content p:first-child { margin-top: 0.1rem; }
     .profile-popup { animation: slide-down 0.3s ease-out; }
+    .math-frac {
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  margin: 0 0.2em;
+}
+.math-frac:before {
+  content: '';
+  border-top: 1px solid;
+  display: block;
+  margin-bottom: 0.1em;
+}
+.math-exp sup {
+  font-size: 0.8em;
+  vertical-align: super;
+  line-height: 1;
+}
+.math-sqrt {
+  position: relative;
+  padding-left: 0.3em;
+}
+.math-sqrt:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 0.8em;
+  height: 0.1em;
+  border-top: 1px solid;
+  border-left: 1px solid;
+  border-radius: 0.2em 0 0 0;
+  transform: translateY(-50%);
+}
+.math-sqrt-content {
+  border-top: 1px solid;
+  padding-left: 0.2em;
+}
   </style>
 </head>
 <body class="bg-gray-50 font-sans">
@@ -355,144 +392,50 @@
     });
 
     function formatMathResponse(response) {
-      if (!response || response.trim() === "") {
-        return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
-      }
+  if (!response || response.trim() === "") {
+    return '<p class="text-gray-500">Tidak ada solusi yang dapat dihasilkan atau respons kosong.</p>';
+  }
 
-      let currentResponse = response;
+  // Simple formatting for steps
+  const sections = response.split(/\bStep\s+/i);
+  let htmlOutput = '';
 
-      // 1. Enhanced LaTeX conversion for mathematical expressions
-      // Fractions (e.g., a/b, (a+b)/c)
-      currentResponse = currentResponse.replace(
-        /(?<![\$\\])(?:(\([^)]+\)|\d+(?:\.\d+)?|\w)\s*\/\s*(\([^)]+\)|\d+(?:\.\d+)?|\w))\b(?![\}\s]*\^)/g,
-        (match, num, denom) => `\\(\\frac{${num}}{${denom}}\\)`
-      );
+  // Introduction
+  if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
+    htmlOutput += formatBlockToHtml(sections[0]);
+  }
 
-      // Exponents (e.g., a^b, x^2, (x+1)^n)
-      currentResponse = currentResponse.replace(
-        /(?<![\$\\])(?:(\([^)]+\)|\b[\w\d]+(?:\.\d+)?%?)\s*\^\s*([\w\d.\{\}\+\-\*\/]+%?))\b/g,
-        (match, base, exponent) => {
-          const cleanedExponent = exponent.startsWith('{') && exponent.endsWith('}') ? exponent : `{${exponent}}`;
-          return `\\(${base}^${cleanedExponent}\\)`;
-        }
-      );
+  // Steps
+  if (sections.length > 1) {
+    for (let i = 1; i < sections.length; i++) {
+      let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
+      if (stepText === "") continue;
+      
+      // Format basic math expressions
+      stepText = stepText
+        .replace(/(\d+)\/(\d+)/g, '<span class="math-frac">$1/$2</span>')
+        .replace(/(\d+)\^(\d+)/g, '<span class="math-exp">$1<sup>$2</sup></span>')
+        .replace(/sqrt\(([^)]+)\)/g, '<span class="math-sqrt">√<span class="math-sqrt-content">$1</span></span>');
 
-      // Square roots and nth roots (e.g., sqrt(x), sqrt[3]{x})
-      currentResponse = currentResponse.replace(
-        /\b(sqrt|nrt|cbrt)\s*(?:\[([^\]]+)\])?\s*\{([^\}]+)\}/g,
-        (match, rootType, n, content) => {
-          if (rootType === 'sqrt' && !n) return `\\(\\sqrt{${content}}\\)`;
-          if (rootType === 'cbrt') return `\\(\\sqrt[3]{${content}}\\)`;
-          return `\\(\\sqrt[${n || rootType}]{${content}}\\)`;
-        }
-      );
-
-      // Trigonometric functions (e.g., sin(x), cos(2x))
-      currentResponse = currentResponse.replace(
-        /\b(sin|cos|tan|cot|sec|csc)\s*\(([^)]+)\)/g,
-        (match, func, arg) => `\\(${func}\\left(${arg}\\right)\\)`
-      );
-
-      // Logarithms (e.g., log(x), ln(x), log_b(x))
-      currentResponse = currentResponse.replace(
-        /\b(log|ln)\s*\(([^)]+)\)/g,
-        (match, func, arg) => `\\(${func}\\left(${arg}\\right)\\)`
-      );
-      currentResponse = currentResponse.replace(
-        /\blog_(\w+)\s*\(([^)]+)\)/g,
-        (match, base, arg) => `\\(\\log_{${base}}\\left(${arg}\\right)\\)`
-      );
-
-      // Equations (e.g., x = y, x <= y)
-      currentResponse = currentResponse.replace(
-        /\b([\w\d\s\+\-\*\/\(\)]+)\s*(=|\<=|\>=|\!=)\s*([\w\d\s\+\-\*\/\(\)]+)\b/g,
-        (match, left, op, right) => {
-          const opMap = { '=': '=', '<=': '\\leq', '>=': '\\geq', '!=': '\\neq' };
-          return `\\(${left} ${opMap[op]} ${right}\\)`;
-        }
-      );
-
-      // Special symbols
-      const symbolMap = {
-        'pi': '\\pi',
-        'theta': '\\theta',
-        'alpha': '\\alpha',
-        'beta': '\\beta',
-        'gamma': '\\gamma',
-        'delta': '\\delta',
-        'infinity': '\\infty',
-        'approx': '\\approx',
-        'pm': '\\pm'
-      };
-      for (const [key, value] of Object.entries(symbolMap)) {
-        currentResponse = currentResponse.replace(
-          new RegExp(`\\b${key}\\b`, 'g'),
-          `\\(${value}\\)`
-        );
-      }
-
-      // Matrices (e.g., [a b; c d])
-      currentResponse = currentResponse.replace(
-        /\[\s*([^;]+)\s*;\s*([^;]+)\s*\]/g,
-        (match, row1, row2) => {
-          const r1 = row1.trim().split(/\s+/).join('&');
-          const r2 = row2.trim().split(/\s+/).join('&');
-          return `\\(\\begin{pmatrix}${r1}\\\\${r2}\\end{pmatrix}\\)`;
-        }
-      );
-
-      // Display math for equations on new lines
-      currentResponse = currentResponse.replace(
-        /^\s*([\w\d\s\+\-\*\/\(\)\^\=]+)$/gm,
-        (match, equation) => `\\[ ${equation} \\]`
-      );
-
-      // 2. Markdown formatting
-      currentResponse = currentResponse.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      currentResponse = currentResponse.replace(/\*(.*?)\*/g, '<em>$1</em>');
-
-      // 3. Format text blocks
-      function formatBlockToHtml(textBlock) {
-        if (!textBlock || textBlock.trim() === "") return "";
-        const paragraphs = textBlock.trim().split(/\n\s*\n+/);
-        return paragraphs
-          .map(para => {
-            if (para.trim() === "") return "";
-            const lines = para.split('\n').map(line => line.trim()).filter(line => line).join('<br>');
-            return `<p>${lines}</p>`;
-          })
-          .filter(p => p !== "")
-          .join('');
-      }
-
-      // 4. Split and format steps
-      const sections = currentResponse.split(/\bStep\s+/i);
-      let htmlOutput = '';
-
-      // Introduction (before steps)
-      if (sections.length > 0 && sections[0].trim() !== "" && !/^\d+[:.]?\s*/.test(sections[0].trim())) {
-        htmlOutput += formatBlockToHtml(sections[0]);
-      }
-
-      // Steps
-      if (sections.length > 1) {
-        for (let i = 1; i < sections.length; i++) {
-          let stepText = sections[i].replace(/^\d+[:.]?\s*/, '').trim();
-          if (stepText === "") continue;
-          htmlOutput += `
-            <div class="solution-step mb-5">
-              <div class="flex items-start">
-                <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
-                <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
-              </div>
-            </div>`;
-        }
-      } else if (htmlOutput.trim() === "" && response.trim() !== "") {
-        htmlOutput = formatBlockToHtml(currentResponse);
-      }
-
-      return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
+      htmlOutput += `
+        <div class="solution-step mb-5">
+          <div class="flex items-start">
+            <div class="flex-shrink-0 mt-1 mr-3 text-primary-600 font-medium">${i}.</div>
+            <div class="solution-content flex-grow">${formatBlockToHtml(stepText)}</div>
+          </div>
+        </div>`;
     }
+  } else if (htmlOutput.trim() === "" && response.trim() !== "") {
+    htmlOutput = formatBlockToHtml(response);
+  }
+
+  return htmlOutput || '<p class="text-gray-500">Solusi tidak dapat diformat.</p>';
+}
+
+// Add these styles to your CSS
+/*
+
+*/
 
     loadProfile();
   </script>
