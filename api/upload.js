@@ -223,25 +223,12 @@ Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak beri
       VALUES (${userId}, ${fileName}, ${responseText});
     `;
 
-    const usageCount = await sql`
-      SELECT COUNT(*) as count
-      FROM uploads
-      WHERE user_id = ${userId}
-      AND created_at > NOW() - INTERVAL '1 hour';
-    `;
-    const used = parseInt(usageCount[0].count);
-    const limit = 10;
-
+    // Simplified response without usage or warning
     const response = {
       response: responseText,
       formatted_response: formattedResponse,
-      usage: { used, limit },
       timestamp: new Date().toISOString()
     };
-
-    if (used >= limit * 0.9) {
-      response.warning = `Anda telah menggunakan ${used}/${limit} kuota. Reset dalam ${60 - new Date().getMinutes()} menit.`;
-    }
 
     res.json(response);
 
