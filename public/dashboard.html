@@ -24,9 +24,9 @@
       font-family: 'Inter', sans-serif;
       line-height: 1.6;
       color: #374151;
-      word-break: break-word; /* Ensure text wraps */
-      overflow-wrap: break-word; /* Fallback for older browsers */
-      white-space: normal; /* Ensure normal text flow */
+      word-break: break-word;
+      overflow-wrap: break-word;
+      white-space: normal;
     }
 
     .math-solution h2 {
@@ -45,7 +45,7 @@
 
     .math-solution p {
       margin-bottom: 1rem;
-      word-break: break-word; /* Ensure paragraphs wrap */
+      word-break: break-word;
     }
 
     .math-solution strong {
@@ -61,7 +61,7 @@
       position: relative;
       padding-left: 2rem;
       margin-bottom: 1.5rem;
-      word-break: break-word; /* Ensure steps wrap */
+      word-break: break-word;
     }
 
     .solution-step .step-number {
@@ -91,7 +91,7 @@
       background-color: #f3f4f6;
       border-radius: 0.375rem;
       font-family: 'Times New Roman', serif;
-      word-break: break-word; /* Ensure math expressions wrap */
+      word-break: break-word;
     }
 
     .math-section {
@@ -144,7 +144,6 @@
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
-    /* Ensure MathJax doesn't overflow */
     .MathJax {
       max-width: 100% !important;
       overflow-x: auto !important;
@@ -168,7 +167,6 @@
         <div class="flex items-center space-x-4">
           <div class="hidden md:flex items-center space-x-2">
             <span id="usageDisplay" class="text-sm text-gray-600"></span>
-            <span id="pointsDisplay" class="text-sm text-indigo-600 font-medium"></span>
           </div>
           <div class="relative">
             <button id="profileBtn" class="flex items-center space-x-2 focus:outline-none">
@@ -312,7 +310,6 @@
     const solutionText = document.getElementById('solutionText');
     const copySolutionBtn = document.getElementById('copySolution');
     const usageDisplay = document.getElementById('usageDisplay');
-    const pointsDisplay = document.getElementById('pointsDisplay');
 
     // Load user profile
     async function loadProfile() {
@@ -467,12 +464,9 @@
         solutionText.innerHTML = data.formatted_response || data.response;
         solutionResult.classList.remove('hidden');
         
-        // Update usage and points display
+        // Update usage display
         if (data.usage) {
           updateUsageDisplay(data.usage.used, data.usage.limit);
-        }
-        if (data.points !== undefined) {
-          updatePointsDisplay(data.points);
         }
         
         // Show warning if available
@@ -521,11 +515,6 @@
       }
     }
 
-    // Update points display
-    function updatePointsDisplay(points) {
-      pointsDisplay.textContent = `Poin: ${points}`;
-    }
-
     // Show toast notification
     function showToast(message, type = 'info') {
       const toastContainer = document.getElementById('toastContainer');
@@ -548,7 +537,6 @@
     // Initialize
     loadProfile();
     updateUsageDisplay(0, 10);
-    updatePointsDisplay(0); // Initial points display
   </script>
 </body>
 </html>

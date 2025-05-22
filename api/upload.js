@@ -64,32 +64,6 @@ async function getUploadHistory(userId) {
   }
 }
 
-async function getUserPoints(userId) {
-  try {
-    const result = await sql`
-      SELECT points
-      FROM users
-      WHERE id = ${userId};
-    `;
-    return result[0]?.points || 0;
-  } catch (err) {
-    console.error('Error fetching user points:', err);
-    return 0;
-  }
-}
-
-async function updateUserPoints(userId, pointsToAdd) {
-  try {
-    await sql`
-      UPDATE users
-      SET points = points + ${pointsToAdd}
-      WHERE id = ${userId};
-    `;
-  } catch (err) {
-    console.error('Error updating user points:', err);
-  }
-}
-
 function fileToGenerativePart(buffer, mimeType) {
   return {
     inlineData: {
@@ -111,8 +85,8 @@ function formatMathNotation(text) {
       .replace(/(\w)\^(\d+)/g, '$1^{$2}')
       .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')
       .replace(/(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g, '\\$1($2)')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Ensure bold text is converted
-      .replace(/\*(.*?)\*/g, '<em>$1</em>'); // Ensure italic text is converted
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>');
 
     const greekSymbols = {
       'alpha': '\\alpha', 'beta': '\\beta', 'gamma': '\\gamma',
@@ -146,22 +120,22 @@ function formatResponseToHTML(response) {
     const $ = cheerio.load('<div class="math-solution"></div>');
     const container = $('.math-solution');
 
+    // Split into sections by double newlines
     const sections = formatted.split(/(?:\n\s*){2,}/);
+    let stepCounter = 0;
 
-    sections.forEach((section, index) => {
+    sections.forEach(section => {
       if (!section.trim()) return;
 
-      const isStep = section.match(/^(Langkah|Step)\s*\d+/i) || 
-                    section.match(/^\d+\./) ||
-                    section.length > 150;
+      // Only treat as a step if it explicitly starts with "Langkah" or "Step" followed by a number
+      const isStep = section.match(/^(Langkah|Step)\s*\d+/i);
 
       if (isStep) {
+        stepCounter++;
         const stepDiv = $('<div class="solution-step"></div>');
         
-        const stepMatch = section.match(/^(Langkah|Step)\s*(\d+):?/i) || 
-                         section.match(/^(\d+)\./);
-        
-        const stepNumber = stepMatch ? stepMatch[2] || stepMatch[1] : index + 1;
+        const stepMatch = section.match(/^(Langkah|Step)\s*(\d+):?/i);
+        const stepNumber = stepMatch ? stepMatch[2] : stepCounter;
         
         stepDiv.append(`<div class="step-number">${stepNumber}.</div>`);
         
@@ -173,13 +147,17 @@ function formatResponseToHTML(response) {
         
         paragraphs.forEach(para => {
           if (para.trim()) {
-            stepDiv.append(`<p class="break-words">${para.trim()}</p>`); // Added break-words class
+            stepDiv.append(`<p class="break-words">${para.trim()}</p>`);
           }
         });
         
         container.append(stepDiv);
       } else {
-        container.append(`<p class="break-words">${section}</p>`); // Added break-words class
+        // Remove any standalone numbers followed by a period (e.g., "6.", "10.") at the start of a section
+        section = section.replace(/^\d+\.\s*/, '');
+        if (section.trim()) {
+          container.append(`<p class="break-words">${section}</p>`);
+        }
       }
     });
 
@@ -217,11 +195,12 @@ Anda adalah ahli matematika. Analisis gambar soal matematika yang diunggah. Beri
 
 FORMAT RESPONS:
 1. Gunakan notasi matematika yang tepat (contoh: \\(\\frac{1}{2}\\), \\(x^2\\), \\(\\sqrt{4}\\))
-2. Pisahkan setiap langkah dengan jelas
+2. Pisahkan setiap langkah dengan jelas menggunakan "Langkah" di awal setiap langkah utama
 3. Berikan penjelasan untuk setiap langkah
 4. Gunakan format yang mudah dibaca
 5. Gunakan **teks tebal** untuk penekanan
 6. Gunakan *teks miring* untuk istilah penting
+7. Jangan gunakan nomor acak untuk memisahkan bagian (seperti "6." atau "10.")
 
 Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak berisi soal matematika."
     `;
@@ -232,17 +211,11 @@ Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak beri
 
     const formattedResponse = formatResponseToHTML(responseText);
 
-    // Calculate points (e.g., 10 points per successful upload)
-    const pointsToAdd = responseText.includes("Gambar ini tidak berisi soal matematika") ? 0 : 10;
-    await updateUserPoints(userId, pointsToAdd);
-
-    // Store in database
     await sql`
       INSERT INTO uploads (user_id, image_path, response)
       VALUES (${userId}, ${fileName}, ${responseText});
     `;
 
-    // Get usage statistics
     const usageCount = await sql`
       SELECT COUNT(*) as count
       FROM uploads
@@ -252,14 +225,10 @@ Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak beri
     const used = parseInt(usageCount[0].count);
     const limit = 10;
 
-    // Get user points
-    const points = await getUserPoints(userId);
-
     const response = {
       response: responseText,
       formatted_response: formattedResponse,
       usage: { used, limit },
-      points: points,
       timestamp: new Date().toISOString()
     };
 
