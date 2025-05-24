@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const { google } = require('googleapis');
-const { sql } = require('./db');
+const { sql, pool } = require('./db');
 
 const router = express.Router();
 const oauth2Client = new google.auth.OAuth2(
@@ -127,22 +127,25 @@ router.delete('/delete-account', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.id;
 
-    // Begin transaction to ensure data consistency
-    await sql.begin(async (sql) => {
+    // Use a client from the pool for transaction
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
       // Delete user's uploads
-      await sql`
-        DELETE FROM uploads WHERE user_id = ${userId};
-      `;
+      await client.query('DELETE FROM uploads WHERE user_id = $1', [userId]);
       // Delete user
-      const result = await sql`
-        DELETE FROM users WHERE id = ${userId} RETURNING id;
-      `;
-      if (result.length === 0) {
+      const result = await client.query('DELETE FROM users WHERE id = $1 RETURNING id', [userId]);
+      if (result.rowCount === 0) {
         throw new Error('User not found');
       }
-    });
-
-    res.status(200).json({ message: 'Account deleted successfully' });
+      await client.query('COMMIT');
+      res.status(200).json({ message: 'Account deleted successfully' });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   } catch (err) {
     console.error('Account deletion error:', err);
     if (err.name === 'JsonWebTokenError') {
