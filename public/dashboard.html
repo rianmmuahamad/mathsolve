@@ -325,6 +325,15 @@
                 <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
                 Logout
               </a>
+              <button id="deleteAccountBtn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
+                <i class="fas fa-trash-alt mr-2 text-red-400"></i>
+                Hapus Akun
+              </button>
+            
+              <a href="/api/auth/logout" id="logoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+                <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
+                Logout
+              </a>
             </div>
           </div>
         </div>
@@ -366,6 +375,10 @@
         <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
         Logout
       </a>
+      <button id="mobileDeleteAccountBtn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
+        <i class="fas fa-trash-alt mr-2 text-red-400"></i>
+        Hapus Akun
+      </button>
     </div>
   </div>
 
@@ -640,6 +653,42 @@
         window.location.href = '/login.html';
       }
     }
+
+    // Delete account
+async function deleteAccount() {
+  if (!confirm('Apakah Anda yakin ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data Anda.')) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/delete-account', {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403 || res.status === 400) {
+        localStorage.removeItem('token');
+        window.location.href = '/login.html';
+      }
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to delete account');
+    }
+
+    showToast('Akun Anda telah dihapus', 'success');
+    localStorage.removeItem('token');
+    setTimeout(() => {
+      window.location.href = '/login.html';
+    }, 1000);
+  } catch (err) {
+    console.error('Delete account error:', err);
+    showToast(err.message || 'Gagal menghapus akun', 'error');
+  }
+}
+
+// Add delete account button listeners
+document.getElementById('deleteAccountBtn').addEventListener('click', deleteAccount);
+document.getElementById('mobileDeleteAccountBtn').addEventListener('click', deleteAccount);
 
     // Load social users
     async function loadSocialUsers() {
