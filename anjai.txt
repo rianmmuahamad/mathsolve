@@ -1,4 +1,756 @@
-<!DOCTYPE html>
+folder api
+  auth.js
+   const express = require('express');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const jwt = require('jsonwebtoken');
+const { sql } = require('./db'); // Import from db.js in api folder
+
+const router = express.Router();
+
+// Passport setup
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: 'https://www.mathsolve.my.id/api/auth/google/callback',
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        let user = await sql`SELECT * FROM users WHERE google_id = ${profile.id}`;
+        if (user.length === 0) {
+          const displayName = profile.displayName || profile.emails[0].value.split('@')[0];
+          user = await sql`
+            INSERT INTO users (google_id, email, display_name)
+            VALUES (${profile.id}, ${profile.emails[0].value}, ${displayName})
+            RETURNING *;
+          `;
+        }
+        return done(null, user[0]);
+      } catch (err) {
+        console.error('Auth error:', err);
+        return done(err);
+      }
+    }
+  )
+);
+
+// Routes
+router.get(
+  '/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+router.get(
+  '/google/callback',
+  passport.authenticate('google', { session: false, failureRedirect: '/login.html' }),
+  (req, res) => {
+    try {
+      // Validate JWT_SECRET
+      if (!process.env.JWT_SECRET) {
+        throw new Error('JWT_SECRET is not set in environment variables');
+      }
+      const token = jwt.sign(
+        { id: req.user.id, email: req.user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+      res.redirect(`https://www.mathsolve.my.id/dashboard.html?token=${token}`);
+    } catch (err) {
+      console.error('Callback error:', err);
+      res.redirect('/login.html?error=auth_failed');
+    }
+  }
+);
+
+router.get('/profile', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1]; // Fixed from previous error
+    if (!token) {
+      return res.status(401).json({ error: 'Unauthorized: No token provided' });
+    }
+    // Validate JWT_SECRET
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not set in environment variables');
+    }
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    const userData = await sql`SELECT display_name, email FROM users WHERE id = ${user.id}`;
+    if (userData.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ name: userData[0].display_name, email: userData[0].email });
+  } catch (err) {
+    console.error('Profile fetch error:', err);
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token expired' });
+    }
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(403).json({ error: 'Invalid token' });
+    }
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/logout', (req, res) => {
+  res.redirect('https://www.mathsolve.my.id/login.html');
+});
+
+module.exports = router;
+
+db.js
+ const { neon } = require('@neondatabase/serverless');
+
+// Initialize the database connection
+const sql = neon(process.env.NEON_DATABASE_URL || '');
+
+// Initialize database tables and ensure schema
+async function initDB() {
+  try {
+    if (!process.env.NEON_DATABASE_URL) {
+      throw new Error('NEON_DATABASE_URL is not set in environment variables');
+    }
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        google_id VARCHAR(255) UNIQUE,
+        email VARCHAR(255),
+        display_name VARCHAR(255)
+      );
+    `;
+    console.log('Users table checked/created');
+
+    const columnCheck = await sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' AND column_name = 'display_name';
+    `;
+    if (columnCheck.length === 0) {
+      await sql`
+        ALTER TABLE users ADD COLUMN display_name VARCHAR(255);
+      `;
+      console.log('Added display_name column to users table');
+    } else {
+      console.log('display_name column already exists in users table');
+    }
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS uploads (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        image_path VARCHAR(255),
+        response TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+    console.log('Uploads table checked/created');
+  } catch (err) {
+    console.error('Error initializing database:', err);
+    throw err;
+  }
+}
+
+// Retry logic for database initialization
+async function initDBWithRetry(maxRetries = 3, retryDelayMs = 2000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await initDB();
+      console.log('Database initialized successfully');
+      return;
+    } catch (err) {
+      console.error(`Attempt ${attempt} failed:`, err.message);
+      if (attempt === maxRetries) {
+        console.error('Max retries reached. Database initialization failed.');
+        throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+    }
+  }
+}
+
+module.exports = {
+  sql,
+  initDB: initDBWithRetry,
+};
+   
+   index.js
+      require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const authRoutes = require('./auth'); // Path relatif di folder api
+const uploadRoutes = require('./upload'); // Path relatif di folder api
+const { initDB } = require('./db'); // Path relatif di folder api
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+app.use(express.static(path.join(__dirname, '../public'))); // public di root proyek
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// Serve frontend
+app.get('*', (req, res) => {
+  console.log('Serving index.html');
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Initialize database and start server
+async function startServer() {
+  try {
+    await initDB(); // Initialize database with retries
+    console.log('Database initialized successfully');
+
+    // Start server only for local development
+    if (process.env.NODE_ENV !== 'production') {
+      const PORT = process.env.PORT || 3000;
+      app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+      });
+    }
+  } catch (err) {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  }
+}
+
+startServer();
+
+module.exports = app;
+  
+
+  upload.js
+    const express = require('express');
+const multer = require('multer');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
+const { sql } = require('./db');
+const cheerio = require('cheerio');
+
+const router = express.Router();
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+// Configure multer for in-memory storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
+
+// Rate limiting configuration
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  keyGenerator: (req) => req.user.id,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Maaf, Anda telah mencapai batas 10 gambar per jam. Silakan tunggu hingga reset setiap jam.'
+    });
+  }
+});
+
+// Authentication middleware
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+};
+
+// Utility functions
+function estimateTokens(text) {
+  return Math.ceil(text.length / 4);
+}
+
+async function getUploadHistory(userId) {
+  try {
+    const history = await sql`
+      SELECT response, created_at
+      FROM uploads
+      WHERE user_id = ${userId}
+      ORDER BY created_at DESC
+      LIMIT 3;
+    `;
+    return history.map(row => ({
+      role: 'assistant',
+      content: `Respons sebelumnya (pada ${row.created_at}): ${row.response}`
+    }));
+  } catch (err) {
+    console.error('Error fetching upload history:', err);
+    return [];
+  }
+}
+
+function fileToGenerativePart(buffer, mimeType) {
+  return {
+    inlineData: {
+      data: buffer.toString('base64'),
+      mimeType
+    },
+  };
+}
+
+// Enhanced math notation formatter
+function formatMathNotation(text) {
+  if (!text || typeof text !== 'string') return text;
+  
+  try {
+    let formatted = text;
+
+    // First, handle bold text (**text**) to avoid conflict with italic (*text*)
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Then, handle italic text (*text*), ensuring it doesn't conflict with bold
+    formatted = formatted.replace(/(?<!\*)\*([^\*]+)\*(?!\*)/g, '<em>$1</em>');
+
+    // Handle math notations
+    formatted = formatted
+      .replace(/lim_\{([^}]+)\}/g, '\\lim_{$1}')
+      .replace(/\|([^|]+)\|/g, '\\|$1\\|')
+      .replace(/(\d+)\/(\d+)/g, '\\frac{$1}{$2}')
+      .replace(/(\w)\^(\d+)/g, '$1^{$2}')
+      .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')
+      .replace(/(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g, '\\$1($2)');
+
+    const greekSymbols = {
+      'alpha': '\\alpha', 'beta': '\\beta', 'gamma': '\\gamma',
+      'delta': '\\delta', 'epsilon': '\\epsilon', 'theta': '\\theta',
+      'pi': '\\pi', 'sigma': '\\sigma', 'omega': '\\omega'
+    };
+    
+    for (const [key, val] of Object.entries(greekSymbols)) {
+      formatted = formatted.replace(new RegExp(key, 'g'), val);
+    }
+
+    formatted = formatted
+      .replace(/<=/g, '\\leq')
+      .replace(/>=/g, '\\geq')
+      .replace(/!=/g, '\\neq');
+
+    return formatted;
+  } catch (error) {
+    console.error('Math notation formatting error:', error);
+    return text;
+  }
+}
+
+// Enhanced response formatter with HTML structure
+function formatResponseToHTML(response) {
+  if (!response) return '';
+
+  try {
+    let formatted = formatMathNotation(response);
+
+    const $ = cheerio.load('<div class="math-solution"></div>');
+    const container = $('.math-solution');
+
+    // Split into sections by double newlines
+    const sections = formatted.split(/(?:\n\s*){2,}/);
+    let stepCounter = 0;
+
+    sections.forEach(section => {
+      if (!section.trim()) return;
+
+      // Only treat as a step if it explicitly starts with "Langkah" or "Step" followed by a number
+      const isStep = section.match(/^(Langkah|Step)\s*\d+/i);
+
+      if (isStep) {
+        stepCounter++;
+        const stepDiv = $('<div class="solution-step"></div>');
+        
+        const stepMatch = section.match(/^(Langkah|Step)\s*(\d+):?/i);
+        const stepNumber = stepMatch ? stepMatch[2] : stepCounter;
+        
+        stepDiv.append(`<div class="step-number">${stepNumber}.</div>`);
+        
+        let content = section
+          .replace(/^(Langkah|Step)\s*\d+:?\s*/i, '')
+          .replace(/^\d+\.\s*/, '');
+        
+        const paragraphs = content.split('\n');
+        
+        paragraphs.forEach(para => {
+          if (para.trim()) {
+            stepDiv.append(`<p class="break-words">${para.trim()}</p>`);
+          }
+        });
+        
+        container.append(stepDiv);
+      } else {
+        // Remove any standalone numbers followed by a period (e.g., "6.", "10.")
+        section = section.replace(/^\d+\.\s*/, '');
+        if (section.trim()) {
+          container.append(`<p class="break-words">${section}</p>`);
+        }
+      }
+    });
+
+    return $.html();
+  } catch (error) {
+    console.error('Response formatting error:', error);
+    return response;
+  }
+}
+
+// Main upload endpoint
+router.post('/', authenticate, uploadLimiter, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+
+    const { id: userId, email } = req.user;
+    const fileBuffer = req.file.buffer;
+    const mimeType = req.file.mimetype;
+    const fileName = `${Date.now()}-${req.file.originalname}`;
+
+    if (!process.env.GOOGLE_API_KEY) {
+      throw new Error('GOOGLE_API_KEY is not configured');
+    }
+
+    const history = await getUploadHistory(userId);
+    const historyText = history.map(msg => `${msg.role}: ${msg.content}`).join('\n');
+
+    const prompt = `
+Riwayat unggahan terbaru dari ${email.split('@')[0]}:
+${historyText || 'Tidak ada riwayat unggahan sebelumnya.'}
+
+Anda adalah ahli matematika. Analisis gambar soal matematika yang diunggah. Berikan solusi langkah demi langkah menggunakan metode yang paling umum dan mudah dipahami dalam bahasa Indonesia.
+
+FORMAT RESPONS:
+1. Gunakan notasi matematika yang tepat (contoh: \\(\\frac{1}{2}\\), \\(x^2\\), \\(\\sqrt{4}\\))
+2. Pisahkan setiap langkah dengan jelas menggunakan "Langkah" di awal setiap langkah utama
+3. Berikan penjelasan untuk setiap langkah
+4. Gunakan format yang mudah dibaca
+5. Gunakan **teks tebal** untuk penekanan
+6. Gunakan *teks miring* untuk istilah penting
+7. Jangan gunakan nomor acak untuk memisahkan bagian (seperti "6." atau "10.")
+
+Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak berisi soal matematika."
+    `;
+
+    const imagePart = fileToGenerativePart(fileBuffer, mimeType);
+    const result = await model.generateContent([prompt, imagePart]);
+    const responseText = result.response.text();
+
+    const formattedResponse = formatResponseToHTML(responseText);
+
+    await sql`
+      INSERT INTO uploads (user_id, image_path, response)
+      VALUES (${userId}, ${fileName}, ${responseText});
+    `;
+
+    const usageCount = await sql`
+      SELECT COUNT(*) as count
+      FROM uploads
+      WHERE user_id = ${userId}
+      AND created_at > NOW() - INTERVAL '1 hour';
+    `;
+    const used = parseInt(usageCount[0].count);
+    const limit = 10;
+
+    const response = {
+      response: responseText,
+      formatted_response: formattedResponse,
+      usage: { used, limit },
+      timestamp: new Date().toISOString()
+    };
+
+    if (used >= limit * 0.9) {
+      response.warning = `Anda telah menggunakan ${used}/${limit} kuota. Reset dalam ${60 - new Date().getMinutes()} menit.`;
+    }
+
+    res.json(response);
+
+  } catch (err) {
+    console.error('Upload processing error:', err);
+    
+    const statusCode = err.message.includes('GOOGLE_API_KEY') ? 500 : 
+                      err.message.includes('image') ? 400 : 500;
+    
+    res.status(statusCode).json({ 
+      error: 'Maaf, terjadi kesalahan saat memproses gambar.',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+});
+
+module.exports = router;
+
+  upload.js
+    const express = require('express');
+const multer = require('multer');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
+const { sql } = require('./db');
+const cheerio = require('cheerio');
+
+const router = express.Router();
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+// Configure multer for in-memory storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
+
+// Rate limiting configuration
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  keyGenerator: (req) => req.user.id,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: 'Maaf, Anda telah mencapai batas 10 gambar per jam. Silakan tunggu hingga reset setiap jam.'
+    });
+  }
+});
+
+// Authentication middleware
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid token' });
+    req.user = user;
+    next();
+  });
+};
+
+// Utility functions
+function estimateTokens(text) {
+  return Math.ceil(text.length / 4);
+}
+
+async function getUploadHistory(userId) {
+  try {
+    const history = await sql`
+      SELECT response, created_at
+      FROM uploads
+      WHERE user_id = ${userId}
+      ORDER BY created_at DESC
+      LIMIT 3;
+    `;
+    return history.map(row => ({
+      role: 'assistant',
+      content: `Respons sebelumnya (pada ${row.created_at}): ${row.response}`
+    }));
+  } catch (err) {
+    console.error('Error fetching upload history:', err);
+    return [];
+  }
+}
+
+function fileToGenerativePart(buffer, mimeType) {
+  return {
+    inlineData: {
+      data: buffer.toString('base64'),
+      mimeType
+    },
+  };
+}
+
+// Enhanced math notation formatter
+function formatMathNotation(text) {
+  if (!text || typeof text !== 'string') return text;
+  
+  try {
+    let formatted = text;
+
+    // First, handle bold text (**text**) to avoid conflict with italic (*text*)
+    formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+    // Then, handle italic text (*text*), ensuring it doesn't conflict with bold
+    formatted = formatted.replace(/(?<!\*)\*([^\*]+)\*(?!\*)/g, '<em>$1</em>');
+
+    // Handle math notations
+    formatted = formatted
+      .replace(/lim_\{([^}]+)\}/g, '\\lim_{$1}')
+      .replace(/\|([^|]+)\|/g, '\\|$1\\|')
+      .replace(/(\d+)\/(\d+)/g, '\\frac{$1}{$2}')
+      .replace(/(\w)\^(\d+)/g, '$1^{$2}')
+      .replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}')
+      .replace(/(sin|cos|tan|cot|sec|csc)\(([^)]+)\)/g, '\\$1($2)');
+
+    const greekSymbols = {
+      'alpha': '\\alpha', 'beta': '\\beta', 'gamma': '\\gamma',
+      'delta': '\\delta', 'epsilon': '\\epsilon', 'theta': '\\theta',
+      'pi': '\\pi', 'sigma': '\\sigma', 'omega': '\\omega'
+    };
+    
+    for (const [key, val] of Object.entries(greekSymbols)) {
+      formatted = formatted.replace(new RegExp(key, 'g'), val);
+    }
+
+    formatted = formatted
+      .replace(/<=/g, '\\leq')
+      .replace(/>=/g, '\\geq')
+      .replace(/!=/g, '\\neq');
+
+    return formatted;
+  } catch (error) {
+    console.error('Math notation formatting error:', error);
+    return text;
+  }
+}
+
+// Enhanced response formatter with HTML structure
+function formatResponseToHTML(response) {
+  if (!response) return '';
+
+  try {
+    let formatted = formatMathNotation(response);
+
+    const $ = cheerio.load('<div class="math-solution"></div>');
+    const container = $('.math-solution');
+
+    // Split into sections by double newlines
+    const sections = formatted.split(/(?:\n\s*){2,}/);
+    let stepCounter = 0;
+
+    sections.forEach(section => {
+      if (!section.trim()) return;
+
+      // Only treat as a step if it explicitly starts with "Langkah" or "Step" followed by a number
+      const isStep = section.match(/^(Langkah|Step)\s*\d+/i);
+
+      if (isStep) {
+        stepCounter++;
+        const stepDiv = $('<div class="solution-step"></div>');
+        
+        const stepMatch = section.match(/^(Langkah|Step)\s*(\d+):?/i);
+        const stepNumber = stepMatch ? stepMatch[2] : stepCounter;
+        
+        stepDiv.append(`<div class="step-number">${stepNumber}.</div>`);
+        
+        let content = section
+          .replace(/^(Langkah|Step)\s*\d+:?\s*/i, '')
+          .replace(/^\d+\.\s*/, '');
+        
+        const paragraphs = content.split('\n');
+        
+        paragraphs.forEach(para => {
+          if (para.trim()) {
+            stepDiv.append(`<p class="break-words">${para.trim()}</p>`);
+          }
+        });
+        
+        container.append(stepDiv);
+      } else {
+        // Remove any standalone numbers followed by a period (e.g., "6.", "10.")
+        section = section.replace(/^\d+\.\s*/, '');
+        if (section.trim()) {
+          container.append(`<p class="break-words">${section}</p>`);
+        }
+      }
+    });
+
+    return $.html();
+  } catch (error) {
+    console.error('Response formatting error:', error);
+    return response;
+  }
+}
+
+// Main upload endpoint
+router.post('/', authenticate, uploadLimiter, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file provided' });
+    }
+
+    const { id: userId, email } = req.user;
+    const fileBuffer = req.file.buffer;
+    const mimeType = req.file.mimetype;
+    const fileName = `${Date.now()}-${req.file.originalname}`;
+
+    if (!process.env.GOOGLE_API_KEY) {
+      throw new Error('GOOGLE_API_KEY is not configured');
+    }
+
+    const history = await getUploadHistory(userId);
+    const historyText = history.map(msg => `${msg.role}: ${msg.content}`).join('\n');
+
+    const prompt = `
+Riwayat unggahan terbaru dari ${email.split('@')[0]}:
+${historyText || 'Tidak ada riwayat unggahan sebelumnya.'}
+
+Anda adalah ahli matematika. Analisis gambar soal matematika yang diunggah. Berikan solusi langkah demi langkah menggunakan metode yang paling umum dan mudah dipahami dalam bahasa Indonesia.
+
+FORMAT RESPONS:
+1. Gunakan notasi matematika yang tepat (contoh: \\(\\frac{1}{2}\\), \\(x^2\\), \\(\\sqrt{4}\\))
+2. Pisahkan setiap langkah dengan jelas menggunakan "Langkah" di awal setiap langkah utama
+3. Berikan penjelasan untuk setiap langkah
+4. Gunakan format yang mudah dibaca
+5. Gunakan **teks tebal** untuk penekanan
+6. Gunakan *teks miring* untuk istilah penting
+7. Jangan gunakan nomor acak untuk memisahkan bagian (seperti "6." atau "10.")
+
+Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak berisi soal matematika."
+    `;
+
+    const imagePart = fileToGenerativePart(fileBuffer, mimeType);
+    const result = await model.generateContent([prompt, imagePart]);
+    const responseText = result.response.text();
+
+    const formattedResponse = formatResponseToHTML(responseText);
+
+    await sql`
+      INSERT INTO uploads (user_id, image_path, response)
+      VALUES (${userId}, ${fileName}, ${responseText});
+    `;
+
+    const usageCount = await sql`
+      SELECT COUNT(*) as count
+      FROM uploads
+      WHERE user_id = ${userId}
+      AND created_at > NOW() - INTERVAL '1 hour';
+    `;
+    const used = parseInt(usageCount[0].count);
+    const limit = 10;
+
+    const response = {
+      response: responseText,
+      formatted_response: formattedResponse,
+      usage: { used, limit },
+      timestamp: new Date().toISOString()
+    };
+
+    if (used >= limit * 0.9) {
+      response.warning = `Anda telah menggunakan ${used}/${limit} kuota. Reset dalam ${60 - new Date().getMinutes()} menit.`;
+    }
+
+    res.json(response);
+
+  } catch (err) {
+    console.error('Upload processing error:', err);
+    
+    const statusCode = err.message.includes('GOOGLE_API_KEY') ? 500 : 
+                      err.message.includes('image') ? 400 : 500;
+    
+    res.status(statusCode).json({ 
+      error: 'Maaf, terjadi kesalahan saat memproses gambar.',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+});
+
+module.exports = router;
+
+folder public
+   dasboard.html
+    <!DOCTYPE html>
 <html lang="id">
 <head>
   <meta charset="UTF-8">
@@ -27,6 +779,7 @@
       overflow-x: hidden;
     }
 
+    /* Glassmorphism effect */
     .glass-card {
       background: rgba(255, 255, 255, 0.85);
       backdrop-filter: blur(12px);
@@ -36,6 +789,7 @@
       box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
     }
 
+    /* Modern scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
       height: 8px;
@@ -50,6 +804,7 @@
       border-radius: 10px;
     }
 
+    /* Updated Math solution styling */
     .math-solution {
       font-family: 'Inter', sans-serif;
       line-height: 1.6;
@@ -177,6 +932,7 @@
       box-sizing: border-box;
     }
 
+    /* Responsive adjustments */
     @media (max-width: 768px) {
       .MathJax, .MathJax_Display {
         font-size: 0.9em !important;
@@ -219,6 +975,7 @@
       }
     }
 
+    /* New modern elements */
     .gradient-bg {
       background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     }
@@ -243,9 +1000,15 @@
     }
 
     @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(108, 99, 255, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0); }
+      0% {
+        box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.7);
+      }
+      70% {
+        box-shadow: 0 0 0 10px rgba(108, 99, 255, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(108, 99, 255, 0);
+      }
     }
 
     .slide-in {
@@ -253,8 +1016,14 @@
     }
 
     @keyframes slideIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .fade-in {
@@ -300,10 +1069,6 @@
                   <div class="w-2 h-2 rounded-full bg-indigo-500 pulse-animation"></div>
                 </div>
               </div>
-              <button id="socialMenuBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-                <i class="fas fa-users mr-2 text-gray-400"></i>
-                Bersosialisasi
-              </button>
               <a href="/api/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
                 <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
                 Logout
@@ -314,17 +1079,6 @@
       </nav>
     </div>
   </header>
-
-  <!-- Social Menu Dropdown -->
-  <div id="socialDropdown" class="hidden fixed top-16 right-4 w-72 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100">
-    <div class="px-4 py-3 border-b border-gray-100">
-      <h3 class="text-sm font-semibold text-gray-800">Bersosialisasi dengan Pengguna</h3>
-      <p class="text-xs text-gray-500">Temukan dan hubungi pengguna lain</p>
-    </div>
-    <div id="userList" class="max-h-64 overflow-y-auto">
-      <!-- User list will be populated here -->
-    </div>
-  </div>
 
   <!-- Main Content -->
   <main class="container mx-auto px-4 py-8">
@@ -388,23 +1142,6 @@
           </form>
         </div>
         
-        <!-- History Section -->
-        <div class="glass-card p-6 mt-6 slide-in">
-          <div class="mb-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-2">Riwayat Unggahan</h2>
-            <p class="text-gray-600">Lihat soal-soal yang pernah Anda unggah</p>
-          </div>
-          <div id="historyContent" class="space-y-4">
-            <div id="historyEmptyState" class="flex flex-col items-center justify-center py-8 text-center">
-              <div class="gradient-bg rounded-2xl p-4 mb-4 text-white shadow-lg">
-                <i class="fas fa-history text-2xl"></i>
-              </div>
-              <p class="text-gray-500">Belum ada riwayat unggahan</p>
-            </div>
-            <div id="historyList" class="hidden space-y-4"></div>
-          </div>
-        </div>
-
         <!-- Features Section -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           <div class="glass-card p-4 rounded-xl flex items-start">
@@ -452,6 +1189,7 @@
           </div>
           
           <div id="solutionContent" class="min-h-[300px]">
+            <!-- Empty State -->
             <div id="emptyState" class="flex flex-col items-center justify-center py-12 text-center">
               <div class="gradient-bg rounded-2xl p-4 mb-5 text-white shadow-lg">
                 <i class="fas fa-lightbulb text-3xl"></i>
@@ -465,6 +1203,7 @@
               </div>
             </div>
             
+            <!-- Loading State -->
             <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12">
               <div class="relative w-16 h-16 mb-5">
                 <div class="absolute inset-0 rounded-full border-4 border-t-indigo-500 border-r-indigo-500 border-b-transparent border-l-transparent animate-spin"></div>
@@ -474,6 +1213,7 @@
               <p class="text-xs text-gray-500 mt-1">Tunggu sebentar, AI sedang bekerja</p>
             </div>
             
+            <!-- Solution Result -->
             <div id="solutionResult" class="hidden h-full">
               <div class="flex justify-between items-center mb-4">
                 <h3 class="font-semibold text-gray-800 flex items-center">
@@ -536,9 +1276,6 @@
     // DOM Elements
     const profileBtn = document.getElementById('profileBtn');
     const profileDropdown = document.getElementById('profileDropdown');
-    const socialMenuBtn = document.getElementById('socialMenuBtn');
-    const socialDropdown = document.getElementById('socialDropdown');
-    const userList = document.getElementById('userList');
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const previewContainer = document.getElementById('previewContainer');
@@ -558,9 +1295,6 @@
     const usageDisplay = document.getElementById('usageDisplay');
     const mobileUsageText = document.getElementById('mobileUsageText');
     const processingOverlay = document.getElementById('processingOverlay');
-    const historyContent = document.getElementById('historyContent');
-    const historyEmptyState = document.getElementById('historyEmptyState');
-    const historyList = document.getElementById('historyList');
 
     // Load user profile
     async function loadProfile() {
@@ -588,151 +1322,21 @@
       }
     }
 
-    // Load upload history
-    async function loadHistory() {
-      try {
-        const res = await fetch('/api/upload/history', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (!res.ok) {
-          throw new Error('Failed to load history');
-        }
-        
-        const history = await res.json();
-        historyList.innerHTML = '';
-        
-        if (history.length === 0) {
-          historyEmptyState.classList.remove('hidden');
-          historyList.classList.add('hidden');
-        } else {
-          historyEmptyState.classList.add('hidden');
-          historyList.classList.remove('hidden');
-          
-          history.forEach(item => {
-            const historyItem = document.createElement('div');
-            historyItem.className = 'bg-gray-50 rounded-xl p-4 relative';
-            historyItem.innerHTML = `
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-sm font-semibold text-gray-700">Unggahan pada ${new Date(item.created_at).toLocaleString('id-ID')}</span>
-                <button class="delete-history-btn text-xs text-red-500 hover:text-red-600 flex items-center" data-id="${item.id}">
-                  <i class="fas fa-trash-alt mr-1"></i>
-                  Hapus
-                </button>
-              </div>
-              <div class="prose max-w-none solution-text-container">${item.response}</div>
-            `;
-            historyList.appendChild(historyItem);
-          });
-          
-          // Add delete button listeners
-          document.querySelectorAll('.delete-history-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-              const uploadId = btn.dataset.id;
-              if (confirm('Apakah Anda yakin ingin menghapus unggahan ini?')) {
-                try {
-                  const res = await fetch(`/api/upload/${uploadId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                  });
-                  
-                  if (!res.ok) {
-                    throw new Error('Failed to delete upload');
-                  }
-                  
-                  showToast('Unggahan berhasil dihapus', 'success');
-                  loadHistory(); // Reload history
-                } catch (err) {
-                  console.error('Delete error:', err);
-                  showToast('Gagal menghapus unggahan', 'error');
-                }
-              }
-            });
-          });
-          
-          // Render MathJax for history items
-          if (window.MathJax) {
-            MathJax.typesetPromise();
-          }
-        }
-      } catch (err) {
-        console.error('History load error:', err);
-        showToast('Gagal memuat riwayat', 'error');
-      }
-    }
-
-    // Load social users
-    async function loadSocialUsers() {
-      try {
-        const res = await fetch('/api/social/users', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (!res.ok) {
-          throw new Error('Failed to load users');
-        }
-        
-        const users = await res.json();
-        userList.innerHTML = '';
-        
-        if (users.length === 0) {
-          userList.innerHTML = '<p class="px-4 py-2 text-sm text-gray-500">Tidak ada pengguna lain ditemukan</p>';
-        } else {
-          users.forEach(user => {
-            const userItem = document.createElement('div');
-            userItem.className = 'px-4 py-2 hover:bg-gray-50 flex items-center justify-between';
-            userItem.innerHTML = `
-              <div>
-                <p class="text-sm font-semibold text-gray-800">${user.display_name}</p>
-                <p class="text-xs text-gray-500 truncate">${user.email}</p>
-              </div>
-              <button class="connect-btn text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center transition-colors" data-email="${user.email}">
-                <i class="fas fa-user-plus mr-1"></i>
-                Hubungi
-              </button>
-            `;
-            userList.appendChild(userItem);
-          });
-          
-          // Add connect button listeners
-          document.querySelectorAll('.connect-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-              const email = btn.dataset.email;
-              showToast(`Fitur koneksi dengan ${email} akan segera hadir!`, 'info');
-              // Implement actual connection logic here when ready
-            });
-          });
-        }
-      } catch (err) {
-        console.error('Social users load error:', err);
-        showToast('Gagal memuat daftar pengguna', 'error');
-      }
-    }
-
     // Toggle profile dropdown
     profileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       profileDropdown.classList.toggle('hidden');
-      socialDropdown.classList.add('hidden');
     });
 
-    // Toggle social dropdown
-    socialMenuBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      socialDropdown.classList.toggle('hidden');
-      profileDropdown.classList.add('hidden');
-      loadSocialUsers();
-    });
-
-    // Close dropdowns when clicking outside
+    // Close dropdown when clicking outside
     document.addEventListener('click', () => {
       profileDropdown.classList.add('hidden');
-      socialDropdown.classList.add('hidden');
     });
 
     // File upload handling
     dropZone.addEventListener('click', () => fileInput.click());
     
+    // Drag and drop events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
       dropZone.addEventListener(eventName, preventDefaults, false);
     });
@@ -791,12 +1395,15 @@
         return;
       }
       
+      // Show processing overlay briefly
       processingOverlay.classList.remove('hidden');
       
       const reader = new FileReader();
       reader.onload = (e) => {
         previewImage.src = e.target.result;
         previewContainer.classList.remove('hidden');
+        
+        // Hide processing overlay after a short delay
         setTimeout(() => {
           processingOverlay.classList.add('hidden');
         }, 500);
@@ -814,10 +1421,12 @@
         return;
       }
 
+      // Show loading state
       emptyState.classList.add('hidden');
       solutionResult.classList.add('hidden');
       loadingState.classList.remove('hidden');
       
+      // Disable submit button
       submitBtn.disabled = true;
       submitText.innerHTML = '<i class="fas fa-cog animate-spin mr-2"></i> Memproses...';
       submitSpinner.classList.remove('hidden');
@@ -841,21 +1450,25 @@
           throw new Error(data.error || 'Server error');
         }
 
+        // Show solution
         loadingState.classList.add('hidden');
         solutionText.innerHTML = data.formatted_response || data.response;
         solutionResult.classList.remove('hidden');
+        
+        // Add fade-in effect
         solutionResult.classList.add('fade-in');
         
+        // Update usage display
         if (data.usage) {
           updateUsageDisplay(data.usage.used, data.usage.limit);
         }
         
+        // Show warning if available
         if (data.warning) {
           showToast(data.warning, 'warning');
         }
         
-        loadHistory(); // Reload history after new upload
-        
+        // Render MathJax
         if (window.MathJax) {
           MathJax.typesetPromise();
         }
@@ -865,6 +1478,7 @@
         loadingState.classList.add('hidden');
         emptyState.classList.remove('hidden');
       } finally {
+        // Reset submit button
         submitBtn.disabled = false;
         submitText.innerHTML = '<i class="fas fa-robot mr-2"></i> Selesaikan Soal';
         submitSpinner.classList.add('hidden');
@@ -912,8 +1526,10 @@
       const toastContainer = document.getElementById('toastContainer');
       const toast = document.createElement('div');
       
+      // Base classes
       toast.className = 'flex items-center w-full p-4 rounded-lg shadow-lg text-white overflow-hidden transform transition-all duration-300 slide-in';
       
+      // Type specific classes
       if (type === 'error') {
         toast.className += ' bg-red-500';
         toast.innerHTML = `
@@ -968,6 +1584,7 @@
         `;
       }
       
+      // Add close button functionality
       const closeBtn = toast.querySelector('button');
       closeBtn.addEventListener('click', () => {
         toast.classList.add('opacity-0');
@@ -976,6 +1593,7 @@
       
       toastContainer.appendChild(toast);
       
+      // Auto remove after 3 seconds
       setTimeout(() => {
         toast.classList.add('opacity-0');
         setTimeout(() => toast.remove(), 300);
@@ -984,7 +1602,6 @@
 
     // Initialize
     loadProfile();
-    loadHistory();
     updateUsageDisplay(0, 10);
   </script>
 </body>

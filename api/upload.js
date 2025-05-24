@@ -80,13 +80,8 @@ function formatMathNotation(text) {
   try {
     let formatted = text;
 
-    // First, handle bold text (**text**) to avoid conflict with italic (*text*)
     formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-    // Then, handle italic text (*text*), ensuring it doesn't conflict with bold
     formatted = formatted.replace(/(?<!\*)\*([^\*]+)\*(?!\*)/g, '<em>$1</em>');
-
-    // Handle math notations
     formatted = formatted
       .replace(/lim_\{([^}]+)\}/g, '\\lim_{$1}')
       .replace(/\|([^|]+)\|/g, '\\|$1\\|')
@@ -127,20 +122,17 @@ function formatResponseToHTML(response) {
     const $ = cheerio.load('<div class="math-solution"></div>');
     const container = $('.math-solution');
 
-    // Split into sections by double newlines
     const sections = formatted.split(/(?:\n\s*){2,}/);
     let stepCounter = 0;
 
     sections.forEach(section => {
       if (!section.trim()) return;
 
-      // Only treat as a step if it explicitly starts with "Langkah" or "Step" followed by a number
       const isStep = section.match(/^(Langkah|Step)\s*\d+/i);
 
       if (isStep) {
         stepCounter++;
         const stepDiv = $('<div class="solution-step"></div>');
-        
         const stepMatch = section.match(/^(Langkah|Step)\s*(\d+):?/i);
         const stepNumber = stepMatch ? stepMatch[2] : stepCounter;
         
@@ -160,7 +152,6 @@ function formatResponseToHTML(response) {
         
         container.append(stepDiv);
       } else {
-        // Remove any standalone numbers followed by a period (e.g., "6.", "10.")
         section = section.replace(/^\d+\.\s*/, '');
         if (section.trim()) {
           container.append(`<p class="break-words">${section}</p>`);
@@ -218,9 +209,10 @@ Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak beri
 
     const formattedResponse = formatResponseToHTML(responseText);
 
-    await sql`
+    const uploadResult = await sql`
       INSERT INTO uploads (user_id, image_path, response)
-      VALUES (${userId}, ${fileName}, ${responseText});
+      VALUES (${userId}, ${fileName}, ${responseText})
+      RETURNING id;
     `;
 
     const usageCount = await sql`
@@ -235,6 +227,7 @@ Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak beri
     const response = {
       response: responseText,
       formatted_response: formattedResponse,
+      upload_id: uploadResult[0].id,
       usage: { used, limit },
       timestamp: new Date().toISOString()
     };
@@ -255,6 +248,55 @@ Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak beri
       error: 'Maaf, terjadi kesalahan saat memproses gambar.',
       details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
+  }
+});
+
+// History endpoint
+router.get('/history', authenticate, async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+    const history = await sql`
+      SELECT id, image_path, response, created_at
+      FROM uploads
+      WHEREintregral_id: ${userId}
+      ORDER BY created_at DESC
+      LIMIT 20;
+    `;
+    
+    const formattedHistory = history.map(item => ({
+      id: item.id,
+      image_path: item.image_path,
+      response: formatResponseToHTML(item.response),
+      created_at: item.created_at.toISOString()
+    }));
+
+    res.json(formattedHistory);
+  } catch (err) {
+    console.error('Error fetching history:', err);
+    res.status(500).json({ error: 'Failed to fetch history' });
+  }
+});
+
+// Delete upload endpoint
+router.delete('/:uploadId', authenticate, async (req, res) => {
+  try {
+    const { id: userId } = req.user;
+    const { uploadId } = req.params;
+
+    const result = await sql`
+      DELETE FROM uploads
+      WHERE id = ${uploadId} AND user_id = ${userId}
+      RETURNING id;
+    `;
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: 'Upload not found or unauthorized' });
+    }
+
+    res.json({ message: 'Upload deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting upload:', err);
+    res.status(500).json({ error: 'Failed to delete upload' });
   }
 });
 
