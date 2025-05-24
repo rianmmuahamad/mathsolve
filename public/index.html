@@ -3,120 +3,422 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MathSolve AI | Solusi Matematika</title>
+  <title>MathSolve AI | Solusi Matematika Pintar</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
-      --primary: #4f46e5;
-      --primary-light: #6366f1;
-      --primary-dark: #4338ca;
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --primary-dark: #4f46e5;
+      --secondary: #f59e0b;
+      --dark: #1e293b;
+      --light: #f8fafc;
     }
 
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #f9fafb;
+      background-color: var(--light);
       overflow-x: hidden;
+      color: var(--dark);
+    }
+
+    .gradient-bg {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     }
 
     .card {
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      max-width: 100%;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      border-radius: 16px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+      background: white;
     }
 
     .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .text-container {
-      max-width: 100%;
-      overflow-x: hidden;
-      word-break: break-word;
-      overflow-wrap: break-word;
+      transform: translateY(-5px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
 
     .btn-primary {
-      background-color: var(--primary);
-      color: #fff;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.375rem;
-      font-weight: 500;
-      transition: background-color 0.2s ease;
+      background: var(--primary);
+      color: white;
+      padding: 0.75rem 2rem;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 6px rgba(99, 102, 241, 0.3);
     }
 
     .btn-primary:hover {
-      background-color: var(--primary-dark);
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--secondary);
+      color: white;
+      padding: 0.75rem 2rem;
+      border-radius: 12px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background: #e67e22;
+      transform: translateY(-2px);
+    }
+
+    .feature-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      background: rgba(99, 102, 241, 0.1);
+      color: var(--primary);
+      font-size: 1.5rem;
+    }
+
+    .nav-link {
+      position: relative;
+      padding: 0.5rem 0;
+      color: var(--dark);
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--primary);
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--primary);
+      transition: width 0.3s ease;
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    .hero-section {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(79, 70, 229, 0.05) 100%);
+    }
+
+    .floating {
+      animation: floating 6s ease-in-out infinite;
+    }
+
+    @keyframes floating {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+      100% { transform: translateY(0px); }
+    }
+
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     /* Responsive Adjustments */
     @media (max-width: 768px) {
       .container {
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
       }
-      h1 {
-        font-size: 1.75rem;
-      }
-      h2 {
-        font-size: 1.5rem;
-      }
-      p {
-        font-size: 0.9em;
-      }
-      .btn-primary {
-        padding: 0.5rem 1rem;
-        font-size: 0.9em;
+      
+      .hero-text {
+        font-size: 2.5rem;
       }
     }
 
     @media (max-width: 480px) {
-      h1 {
-        font-size: 1.5rem;
+      .hero-text {
+        font-size: 2rem;
       }
-      h2 {
+      
+      .feature-icon {
+        width: 50px;
+        height: 50px;
         font-size: 1.25rem;
-      }
-      p {
-        font-size: 0.85em;
-      }
-      .btn-primary {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.85em;
       }
     }
   </style>
 </head>
-<body class="min-h-screen bg-gray-50">
-  <!-- Header -->
-  <header class="bg-white shadow-sm sticky top-0 z-50">
+<body class="min-h-screen">
+  <!-- Header with Glass Effect -->
+  <header class="glass-effect fixed w-full top-0 z-50">
     <div class="container mx-auto px-4 sm:px-6 py-4">
       <div class="flex justify-between items-center">
         <div class="flex items-center space-x-3">
-          <div class="bg-indigo-100 p-2 rounded-lg">
+          <div class="bg-indigo-100 p-2 rounded-xl">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
             </svg>
           </div>
-          <h1 class="text-lg sm:text-xl font-bold text-gray-800">MathSolve AI</h1>
+          <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">MathSolve AI</h1>
         </div>
-        <div class="flex items-center space-x-2 sm:space-x-4">
-          <a href="/login.html" class="btn-primary">Login dengan Google</a>
+        
+        <nav class="hidden md:flex items-center space-x-8">
+          <a href="#" class="nav-link">Beranda</a>
+          <a href="#" class="nav-link">Fitur</a>
+          <a href="#" class="nav-link">Tentang</a>
+          <a href="#" class="nav-link">Kontak</a>
+        </nav>
+        
+        <div class="flex items-center space-x-4">
+          <a href="/login.html" class="btn-primary flex items-center">
+            <i class="fab fa-google mr-2"></i>
+            Masuk
+          </a>
+          <button class="md:hidden text-gray-600 focus:outline-none">
+            <i class="fas fa-bars text-xl"></i>
+          </button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="container mx-auto px-4 sm:px-6 py-8 text-center">
-    <div class="card bg-white rounded-lg p-4 sm:p-6 max-w-2xl mx-auto">
-      <div class="text-container">
-        <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Mulai Sekarang</h2>
-        <p class="text-xs sm:text-sm text-gray-600 mb-6">Unggah gambar soal matematika dan dapatkan solusi langkah demi langkah dalam hitungan detik!</p>
-        <a href="/login.html" class="btn-primary inline-block">Login dengan Google</a>
+  <!-- Hero Section -->
+  <section class="hero-section pt-32 pb-20">
+    <div class="container mx-auto px-4 sm:px-6">
+      <div class="flex flex-col md:flex-row items-center">
+        <div class="md:w-1/2 mb-12 md:mb-0 animate__animated animate__fadeInLeft">
+          <h1 class="hero-text text-4xl md:text-5xl font-bold leading-tight mb-6">
+            Solusi Matematika <span class="text-indigo-600">AI</span> dalam 
+            <span class="text-indigo-600">Hitungan Detik</span>
+          </h1>
+          <p class="text-lg text-gray-600 mb-8">
+            Unggah gambar soal matematika dan dapatkan solusi langkah demi langkah dengan teknologi kecerdasan buatan terkini.
+          </p>
+          <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+            <a href="/login.html" class="btn-primary">
+              <i class="fas fa-rocket mr-2"></i> Mulai Sekarang
+            </a>
+            <a href="#" class="btn-secondary">
+              <i class="fas fa-play-circle mr-2"></i> Lihat Demo
+            </a>
+          </div>
+          
+          <div class="mt-10 flex items-center">
+            <div class="flex -space-x-2">
+              <img class="w-10 h-10 rounded-full border-2 border-white" src="https://randomuser.me/api/portraits/women/12.jpg" alt="User">
+              <img class="w-10 h-10 rounded-full border-2 border-white" src="https://randomuser.me/api/portraits/men/32.jpg" alt="User">
+              <img class="w-10 h-10 rounded-full border-2 border-white" src="https://randomuser.me/api/portraits/women/45.jpg" alt="User">
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-600">Digunakan oleh <span class="text-indigo-600">10,000+</span> pelajar</p>
+              <div class="flex items-center">
+                <i class="fas fa-star text-yellow-400 mr-1"></i>
+                <span class="text-sm font-medium">4.9 (1,200+ ulasan)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="md:w-1/2 animate__animated animate__fadeInRight">
+          <div class="relative">
+            <div class="card p-6 max-w-md mx-auto floating">
+              <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-lg">Soal Matematika</h3>
+                <span class="text-xs bg-indigo-100 text-indigo-600 px-2 py-1 rounded-full">Kelas 10</span>
+              </div>
+              
+              <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                <p class="text-gray-700 mb-2">Tentukan nilai x dari persamaan:</p>
+                <p class="text-xl font-semibold">2x + 5 = 15</p>
+              </div>
+              
+              <div class="bg-indigo-50 p-4 rounded-lg">
+                <p class="text-sm text-indigo-600 font-medium mb-2">Solusi:</p>
+                <div class="space-y-2">
+                  <p class="text-sm">1. 2x + 5 = 15</p>
+                  <p class="text-sm">2. 2x = 15 - 5</p>
+                  <p class="text-sm">3. 2x = 10</p>
+                  <p class="text-sm font-bold">4. x = 5</p>
+                </div>
+              </div>
+              
+              <div class="mt-6 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <i class="fas fa-check-circle text-green-500"></i>
+                  <span class="text-sm text-gray-600">Terverifikasi</span>
+                </div>
+                <button class="text-indigo-600 hover:text-indigo-800">
+                  <i class="fas fa-share-alt"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="absolute -z-10 w-full h-full bg-indigo-100 rounded-2xl top-4 left-4"></div>
+          </div>
+        </div>
       </div>
     </div>
-  </main>
+  </section>
+
+  <!-- Features Section -->
+  <section class="py-20 bg-white">
+    <div class="container mx-auto px-4 sm:px-6">
+      <div class="text-center mb-16">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">Kenapa Memilih MathSolve AI?</h2>
+        <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+          Teknologi canggih kami memberikan solusi matematika dengan cara yang belum pernah ada sebelumnya.
+        </p>
+      </div>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="card p-8 text-center">
+          <div class="feature-icon mx-auto">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-3">Cepat dan Akurat</h3>
+          <p class="text-gray-600">
+            Dapatkan solusi dalam hitungan detik dengan akurasi hingga 99% untuk berbagai jenis soal matematika.
+          </p>
+        </div>
+        
+        <div class="card p-8 text-center">
+          <div class="feature-icon mx-auto">
+            <i class="fas fa-list-ol"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-3">Langkah demi Langkah</h3>
+          <p class="text-gray-600">
+            Tidak hanya jawaban akhir, tapi juga penjelasan detail setiap langkah penyelesaian soal.
+          </p>
+        </div>
+        
+        <div class="card p-8 text-center">
+          <div class="feature-icon mx-auto">
+            <i class="fas fa-brain"></i>
+          </div>
+          <h3 class="text-xl font-bold mb-3">AI yang Terlatih</h3>
+          <p class="text-gray-600">
+            Sistem AI kami terus belajar dari jutaan soal untuk memberikan solusi terbaik.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="gradient-bg py-20 text-white">
+    <div class="container mx-auto px-4 sm:px-6 text-center">
+      <h2 class="text-3xl md:text-4xl font-bold mb-6">Siap Menguasai Matematika?</h2>
+      <p class="text-xl mb-8 max-w-2xl mx-auto">
+        Bergabunglah dengan ribuan pelajar yang telah merasakan kemudahan belajar matematika.
+      </p>
+      <a href="/login.html" class="btn-primary inline-flex items-center bg-white text-indigo-600 hover:bg-gray-100 hover:text-indigo-700">
+        <i class="fab fa-google mr-2"></i> Daftar Gratis Sekarang
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-12">
+    <div class="container mx-auto px-4 sm:px-6">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <div class="flex items-center space-x-3 mb-4">
+            <div class="bg-indigo-100 p-2 rounded-xl">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold">MathSolve AI</h3>
+          </div>
+          <p class="text-gray-400 mb-4">
+            Solusi matematika berbasis AI untuk pelajar di seluruh Indonesia.
+          </p>
+          <div class="flex space-x-4">
+            <a href="#" class="text-gray-400 hover:text-white transition">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="text-gray-400 hover:text-white transition">
+              <i class="fab fa-linkedin-in"></i>
+            </a>
+          </div>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Produk</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Fitur</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Harga</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">API</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Status</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Perusahaan</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Tentang</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Blog</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Karir</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Kontak</a></li>
+          </ul>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-4">Dukungan</h4>
+          <ul class="space-y-2">
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Bantuan</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">FAQ</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Privasi</a></li>
+            <li><a href="#" class="text-gray-400 hover:text-white transition">Syarat</a></li>
+          </ul>
+        </div>
+      </div>
+      
+      <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
+        <p>© 2023 MathSolve AI. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Simple animation trigger
+    document.addEventListener('DOMContentLoaded', function() {
+      const elements = document.querySelectorAll('.animate__animated');
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add(entry.target.dataset.animate);
+            observer.unobserve(entry.target);
+          }
+        });
+      }, {
+        threshold: 0.1
+      });
+      
+      elements.forEach(element => {
+        observer.observe(element);
+      });
+    });
+  </script>
 </body>
 </html>

@@ -40,10 +40,24 @@ async function initDB() {
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         image_path VARCHAR(255),
         response TEXT,
+        topic VARCHAR(100),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `;
     console.log('Uploads table checked/created');
+
+    // Add topic column if it doesn't exist
+    const topicColumnCheck = await sql`
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = 'uploads' AND column_name = 'topic';
+    `;
+    if (topicColumnCheck.length === 0) {
+      await sql`
+        ALTER TABLE uploads ADD COLUMN topic VARCHAR(100);
+      `;
+      console.log('Added topic column to uploads table');
+    }
   } catch (err) {
     console.error('Error initializing database:', err);
     throw err;

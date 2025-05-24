@@ -73,6 +73,27 @@ function fileToGenerativePart(buffer, mimeType) {
   };
 }
 
+// Extract math topic from response
+function extractMathTopic(response) {
+  const topics = {
+    'aljabar': 'Aljabar',
+    'geometri': 'Geometri',
+    'kalkulus': 'Kalkulus',
+    'trigonometri': 'Trigonometri',
+    'statistik': 'Statistik',
+    'probabilitas': 'Probabilitas',
+    'matematika dasar': 'Matematika Dasar'
+  };
+  
+  response = response.toLowerCase();
+  for (const [keyword, topic] of Object.entries(topics)) {
+    if (response.includes(keyword)) {
+      return topic;
+    }
+  }
+  return 'Lainnya'; // Default topic if none matched
+}
+
 // Enhanced math notation formatter
 function formatMathNotation(text) {
   if (!text || typeof text !== 'string') return text;
@@ -206,12 +227,13 @@ Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak beri
     const imagePart = fileToGenerativePart(fileBuffer, mimeType);
     const result = await model.generateContent([prompt, imagePart]);
     const responseText = result.response.text();
+    const topic = extractMathTopic(responseText);
 
     const formattedResponse = formatResponseToHTML(responseText);
 
     const uploadResult = await sql`
-      INSERT INTO uploads (user_id, image_path, response)
-      VALUES (${userId}, ${fileName}, ${responseText})
+      INSERT INTO uploads (user_id, image_path, response, topic)
+      VALUES (${userId}, ${fileName}, ${responseText}, ${topic})
       RETURNING id;
     `;
 
@@ -228,6 +250,7 @@ Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak beri
       response: responseText,
       formatted_response: formattedResponse,
       upload_id: uploadResult[0].id,
+      topic: topic,
       usage: { used, limit },
       timestamp: new Date().toISOString()
     };
@@ -256,7 +279,7 @@ router.get('/history', authenticate, async (req, res) => {
   try {
     const { id: userId } = req.user;
     const history = await sql`
-      SELECT id, image_path, response, created_at
+      SELECT id, image_path, response, topic, created_at
       FROM uploads
       WHERE user_id = ${userId}
       ORDER BY created_at DESC
@@ -267,6 +290,7 @@ router.get('/history', authenticate, async (req, res) => {
       id: item.id,
       image_path: item.image_path,
       response: formatResponseToHTML(item.response),
+      topic: item.topic || 'Lainnya',
       created_at: item.created_at.toISOString()
     }));
 
