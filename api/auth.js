@@ -1,119 +1,95 @@
 const express = require('express');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const jwt = require('jsonwebtoken');
-const { google } = require('googleapis');
 const { sql } = require('./db');
 
 const router = express.Router();
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI
+
+// Passport setup
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: 'https://www.mathsolve.my.id/api/auth/google/callback',
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        let user = await sql`SELECT * FROM users WHERE google_id = ${profile.id}`;
+        if (user.length === 0) {
+          const displayName = profile.displayName || profile.emails[0].value.split('@')[0];
+          user = await sql`
+            INSERT INTO users (google_id, email, display_name)
+            VALUES (${profile.id}, ${profile.emails[0].value}, ${displayName})
+            RETURNING *;
+          `;
+        }
+        return done(null, user[0]);
+      } catch (err) {
+        console.error('Auth error:', err);
+        return done(err);
+      }
+    }
+  )
 );
 
-// Google OAuth login route
-router.get('/google', (req, res) => {
-  try {
-    const url = oauth2Client.generateAuthUrl({
-      scope: ['profile', 'email'],
-    });
-    res.redirect(url);
-  } catch (err) {
-    console.error('Google auth URL generation error:', err);
-    res.redirect('/login.html?error=auth_failed');
+// Routes
+router.get(
+  '/google',
+  passport.authenticate('google', { scope: ['profile', 'email'] })
+);
+
+router.get(
+  '/google/callback',
+  passport.authenticate('google', { session: false, failureRedirect: '/login.html' }),
+  (req, res) => {
+    try {
+      if (!process.env.JWT_SECRET) {
+        throw new Error('JWT_SECRET is not set in environment variables');
+      }
+      const token = jwt.sign(
+        { id: req.user.id, email: req.user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+      res.redirect(`https://www.mathsolve.my.id/dashboard.html?token=${token}`);
+    } catch (err) {
+      console.error('Callback error:', err);
+      res.redirect('/login.html?error=auth_failed');
+    }
   }
-});
+);
 
-// Google OAuth callback route
-router.get('/google/callback', async (req, res) => {
-  try {
-    const { code } = req.query;
-    if (!code) {
-      throw new Error('No code provided');
-    }
-
-    const { tokens } = await oauth2Client.getToken(code);
-    oauth2Client.setCredentials(tokens);
-
-    const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
-    const { data } = await oauth2.userinfo.get();
-
-    if (!data.id || !data.email) {
-      throw new Error('Invalid user data from Google');
-    }
-
-    let user = await sql`
-      SELECT * FROM users WHERE google_id = ${data.id};
-    `;
-
-    if (user.length === 0) {
-      user = await sql`
-        INSERT INTO users (google_id, email, display_name)
-        VALUES (${data.id}, ${data.email}, ${data.name || data.email.split('@')[0]})
-        RETURNING *;
-      `;
-    } else {
-      user = await sql`
-        UPDATE users
-        SET email = ${data.email}, display_name = ${data.name || data.email.split('@')[0]}
-        WHERE google_id = ${data.id}
-        RETURNING *;
-      `;
-    }
-
-    if (!process.env.JWT_SECRET) {
-      throw new Error('JWT_SECRET is not configured');
-    }
-
-    const token = jwt.sign(
-      { id: user[0].id, email: user[0].email, name: user[0].display_name },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.redirect(`/dashboard.html?token=${token}`);
-  } catch (err) {
-    console.error('Google auth callback error:', err);
-    res.redirect('/login.html?error=auth_failed');
-  }
-});
-
-// Profile route
 router.get('/profile', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
+      return res.status(401).json({ error: 'Unauthorized: No token provided' });
     }
-
-    // Basic token format check
-    if (!token.match(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/)) {
-      return res.status(400).json({ error: 'Malformed token' });
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is not set in environment variables');
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await sql`
-      SELECT id, email, display_name AS name
-      FROM users
-      WHERE id = ${decoded.id};
-    `;
-
-    if (user.length === 0) {
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    const userData = await sql`SELECT display_name, email FROM users WHERE id = ${user.id}`;
+    if (userData.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
-
-    res.json(user[0]);
+    res.json({ name: userData[0].display_name, email: userData[0].email });
   } catch (err) {
     console.error('Profile fetch error:', err);
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Token expired' });
+    }
     if (err.name === 'JsonWebTokenError') {
       return res.status(403).json({ error: 'Invalid token' });
     }
-    res.status(500).json({ error: 'Failed to fetch profile' });
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Logout route
 router.get('/logout', (req, res) => {
-  res.redirect('/login.html');
+  res.redirect('https://www.mathsolve.my.id/login.html');
 });
 
 module.exports = router;
