@@ -237,7 +237,7 @@
                 <i class="fas fa-users mr-2 text-gray-400"></i>
                 Bersosialisasi
               </button>
-              <a href="/api/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+              <a href="/api/auth/logout" id="logoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
                 <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
                 Logout
               </a>
@@ -278,7 +278,7 @@
         <i class="fas fa-users mr-2 text-gray-400"></i>
         Bersosialisasi
       </button>
-      <a href="/api/auth/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
+      <a href="/api/auth/logout" id="mobileLogoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
         <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
         Logout
       </a>
@@ -327,9 +327,15 @@
   <div id="toastContainer" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 space-y-2 z-50 w-full max-w-xs sm:max-w-md px-4"></div>
 
   <script>
+    // Validate JWT token format
+    function isValidJwt(token) {
+      return token && typeof token === 'string' && token.match(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/);
+    }
+
     // Check authentication
-    const token = new URLSearchParams(window.location.search).get('token') || localStorage.getItem('token');
-    if (!token) {
+    let token = new URLSearchParams(window.location.search).get('token') || localStorage.getItem('token');
+    if (!isValidJwt(token)) {
+      localStorage.removeItem('token');
       window.location.href = '/login.html';
     } else {
       localStorage.setItem('token', token);
@@ -352,6 +358,8 @@
     const hamburgerBtn = document.getElementById('hamburgerBtn');
     const hamburgerMenu = document.getElementById('hamburgerMenu');
     const closeHamburgerBtn = document.getElementById('closeHamburgerBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
 
     // Load user profile
     async function loadProfile() {
@@ -361,7 +369,7 @@
         });
         
         if (!res.ok) {
-          if (res.status === 401 || res.status === 403) {
+          if (res.status === 401 || res.status === 403 || res.status === 400) {
             localStorage.removeItem('token');
             window.location.href = '/login.html';
           }
@@ -379,6 +387,8 @@
       } catch (err) {
         console.error('Profile load error:', err);
         showToast('Gagal memuat profil', 'error');
+        localStorage.removeItem('token');
+        window.location.href = '/login.html';
       }
     }
 
@@ -390,6 +400,10 @@
         });
         
         if (!res.ok) {
+          if (res.status === 401 || res.status === 403 || res.status === 400) {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+          }
           throw new Error('Failed to load users');
         }
         
@@ -437,7 +451,7 @@
         });
         
         if (!res.ok) {
-          if (res.status === 401 || res.status === 403) {
+          if (res.status === 401 || res.status === 403 || res.status === 400) {
             localStorage.removeItem('token');
             window.location.href = '/login.html';
           }
@@ -503,6 +517,10 @@
                   });
                   
                   if (!res.ok) {
+                    if (res.status === 401 || res.status === 403 || res.status === 400) {
+                      localStorage.removeItem('token');
+                      window.location.href = '/login.html';
+                    }
                     throw new Error('Failed to delete upload');
                   }
                   
@@ -571,6 +589,15 @@
     closeHamburgerBtn.addEventListener('click', () => {
       hamburgerMenu.classList.add('hidden');
     });
+
+    // Handle logout
+    function handleLogout() {
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
+    }
+
+    logoutBtn.addEventListener('click', handleLogout);
+    mobileLogoutBtn.addEventListener('click', handleLogout);
 
     // Close dropdowns when clicking outside
     document.addEventListener('click', () => {

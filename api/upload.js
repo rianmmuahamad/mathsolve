@@ -31,14 +31,24 @@ const uploadLimiter = rateLimit({
 // Authentication middleware
 const authenticate = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // Basic token format check
+  if (!token.match(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/)) {
+    return res.status(400).json({ error: 'Malformed token' });
+  }
+
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ error: 'Invalid token' });
+    if (err) {
+      return res.status(403).json({ error: 'Invalid token' });
+    }
     req.user = user;
     next();
   });
 };
+
 
 // Utility functions
 function estimateTokens(text) {
