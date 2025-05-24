@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MathSolve AI | Solusi Matematika Cerdas</title>
+  <title>Dashboard - MathSolve AI</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,7 +19,7 @@
       --gray: #E2E8F0;
       --dark-gray: #94A3B8;
     }
-    
+
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
       background-color: var(--light);
@@ -64,24 +64,6 @@
       font-size: 1.05rem;
     }
 
-    .math-solution h2 {
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 1rem;
-      max-width: 100%;
-      overflow-x: hidden;
-    }
-
-    .math-solution h3 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #1f2937;
-      margin: 1.5rem 0 1rem;
-      max-width: 100%;
-      overflow-x: hidden;
-    }
-
     .math-solution p {
       margin-bottom: 1rem;
       word-break: break-word;
@@ -109,53 +91,6 @@
       font-weight: 600;
     }
 
-    .math-step {
-      margin-bottom: 1.5rem;
-      padding-left: 1.5rem;
-      border-left: 3px solid var(--primary);
-      max-width: 100%;
-      overflow-x: hidden;
-    }
-
-    .math-step-header {
-      font-weight: 600;
-      color: var(--primary);
-      margin-bottom: 0.5rem;
-      max-width: 100%;
-      overflow-x: hidden;
-    }
-
-    .math-expression {
-      display: inline-block;
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      background-color: #f3f4f6;
-      border-radius: 0.375rem;
-      font-family: 'Times New Roman', serif;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-      max-width: 100%;
-      overflow-x: auto;
-      white-space: nowrap;
-      box-sizing: border-box;
-    }
-
-    .math-section {
-      margin-bottom: 2rem;
-      max-width: 100%;
-      overflow-x: hidden;
-    }
-
-    .math-section-title {
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 0.75rem;
-      padding-bottom: 0.25rem;
-      border-bottom: 1px solid #e5e7eb;
-      max-width: 100%;
-      overflow-x: hidden;
-    }
-
     .MathJax, .MathJax_Display {
       display: inline-block !important;
       max-width: 100% !important;
@@ -177,48 +112,6 @@
       box-sizing: border-box;
     }
 
-    @media (max-width: 768px) {
-      .MathJax, .MathJax_Display {
-        font-size: 0.9em !important;
-        max-width: 100% !important;
-        overflow-x: auto !important;
-        display: inline-block !important;
-      }
-      .math-solution {
-        font-size: 0.95rem;
-        padding: 0.5rem;
-      }
-      .math-solution p {
-        font-size: 0.95rem;
-      }
-      .solution-step {
-        padding-left: 1.5rem;
-      }
-      .math-expression {
-        font-size: 0.9rem;
-        white-space: normal;
-        overflow-x: auto;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .MathJax, .MathJax_Display {
-        font-size: 0.85em !important;
-      }
-      .math-solution {
-        font-size: 0.9rem;
-      }
-      .math-solution h2 {
-        font-size: 1.5rem;
-      }
-      .math-solution h3 {
-        font-size: 1.3rem;
-      }
-      .math-expression {
-        font-size: 0.85rem;
-      }
-    }
-
     .gradient-bg {
       background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     }
@@ -231,11 +124,6 @@
     .floating-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 15px 30px -5px rgba(108, 99, 255, 0.5);
-    }
-
-    .drop-zone-active {
-      border-color: var(--primary) !important;
-      background-color: rgba(108, 99, 255, 0.05) !important;
     }
 
     .pulse-animation {
@@ -276,6 +164,25 @@
       }
       .desktop-nav {
         display: none;
+      }
+      .math-solution {
+        font-size: 0.95rem;
+        padding: 0.5rem;
+      }
+      .math-solution p {
+        font-size: 0.95rem;
+      }
+      .solution-step {
+        padding-left: 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .MathJax, .MathJax_Display {
+        font-size: 0.85em !important;
+      }
+      .math-solution {
+        font-size: 0.9rem;
       }
     }
   </style>
@@ -329,11 +236,6 @@
                 <i class="fas fa-trash-alt mr-2 text-red-400"></i>
                 Hapus Akun
               </button>
-            
-              <a href="/api/auth/logout" id="logoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-                <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
-                Logout
-              </a>
             </div>
           </div>
         </div>
@@ -395,174 +297,33 @@
 
   <!-- Main Content -->
   <main class="container mx-auto px-4 py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- Upload Section -->
-      <div class="lg:col-span-8">
-        <div class="glass-card p-6 slide-in">
-          <div class="mb-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Pemecah Masalah Matematika</h2>
-            <p class="text-gray-600">Unggah soal matematika dan dapatkan solusi langkah demi langkah dengan AI canggih</p>
+    <div class="glass-card p-6 slide-in">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">Unggah Soal Matematika</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Upload Section -->
+        <div>
+          <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors">
+            <input type="file" id="imageInput" accept="image/*" class="hidden">
+            <label for="imageInput" class="cursor-pointer">
+              <div class="gradient-bg rounded-2xl p-4 inline-block mb-4">
+                <i class="fas fa-upload text-2xl text-white"></i>
+              </div>
+              <p class="text-gray-600 font-medium">Unggah gambar soal matematika</p>
+              <p class="text-gray-400 text-sm">Format: JPG, PNG (maks. 5MB)</p>
+            </label>
           </div>
-          
-          <form id="uploadForm">
-            <div id="dropZone" class="drop-zone border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center mb-6 cursor-pointer transition-all duration-300 hover:border-indigo-400">
-              <input type="file" id="fileInput" accept="image/*" class="hidden">
-              <div class="max-w-md mx-auto">
-                <div class="gradient-bg w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
-                  <i class="fas fa-cloud-upload-alt text-2xl"></i>
-                </div>
-                <h3 class="font-semibold text-gray-700 text-lg mb-1">Seret gambar ke sini</h3>
-                <p class="text-gray-500 mb-3">atau klik untuk memilih file</p>
-                <div class="inline-flex items-center px-4 py-2 bg-gray-100 rounded-full">
-                  <i class="fas fa-camera mr-2 text-indigo-500"></i>
-                  <span class="text-xs text-gray-600">Format: JPG, PNG (Maks 5MB)</span>
-                </div>
-              </div>
-            </div>
-            
-            <div id="previewContainer" class="hidden mb-6">
-              <div class="flex justify-between items-center mb-3">
-                <span class="text-sm font-semibold text-gray-700 flex items-center">
-                  <i class="fas fa-image mr-2 text-indigo-500"></i>
-                  Pratinjau Gambar
-                </span>
-                <button type="button" id="clearPreview" class="text-xs text-red-500 hover:text-red-600 flex items-center">
-                  <i class="fas fa-trash-alt mr-1"></i>
-                  Hapus
-                </button>
-              </div>
-              <div class="relative">
-                <img id="previewImage" class="w-full max-h-72 object-contain rounded-xl border-2 border-gray-200" alt="Pratinjau Gambar">
-                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-xl hidden" id="processingOverlay">
-                  <div class="text-white text-center">
-                    <div class="spinner rounded-full h-8 w-8 border-t-2 border-b-2 border-white mb-2 mx-auto animate-spin"></div>
-                    <p class="text-sm">Memproses...</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <button type="submit" id="submitBtn" class="w-full gradient-bg hover:opacity-90 text-white font-semibold py-3 px-4 rounded-xl focus:outline-none transition-all duration-300 floating-btn flex items-center justify-center">
-              <span id="submitText">
-                <i class="fas fa-robot mr-2"></i>
-                Selesaikan Soal
-              </span>
-              <svg id="submitSpinner" class="hidden animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            </button>
-          </form>
+          <div id="imagePreview" class="mt-4 hidden">
+            <img id="previewImage" class="max-w-full h-auto rounded-lg shadow-md" alt="Pratinjau Gambar">
+          </div>
+          <button id="submitBtn" class="mt-4 w-full gradient-bg text-white font-semibold py-3 rounded-xl floating-btn opacity-50 cursor-not-allowed" disabled>
+            Kirim Soal
+          </button>
         </div>
 
-        <!-- Features Section -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div class="glass-card p-4 rounded-xl flex items-start">
-            <div class="bg-indigo-100 p-2 rounded-lg mr-3 text-indigo-600">
-              <i class="fas fa-bolt"></i>
-            </div>
-            <div>
-              <h3 class="font-semibold text-gray-800">Cepat</h3>
-              <p class="text-xs text-gray-600">Solusi instan dalam hitungan detik</p>
-            </div>
-          </div>
-          <div class="glass-card p-4 rounded-xl flex items-start">
-            <div class="bg-purple-100 p-2 rounded-lg mr-3 text-purple-600">
-              <i class="fas fa-list-ol"></i>
-            </div>
-            <div>
-              <h3 class="font-semibold text-gray-800">Langkah Demi Langkah</h3>
-              <p class="text-xs text-gray-600">Penjelasan detail setiap langkah</p>
-            </div>
-          </div>
-          <div class="glass-card p-4 rounded-xl flex items-start">
-            <div class="bg-pink-100 p-2 rounded-lg mr-3 text-pink-600">
-              <i class="fas fa-infinity"></i>
-            </div>
-            <div>
-              <h3 class="font-semibold text-gray-800">Multi Topik</h3>
-              <p class="text-xs text-gray-600">Aljabar, Geometri, Kalkulus, dll</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <!-- Solution Section -->
-      <div class="lg:col-span-4">
-        <div class="glass-card p-6 h-full">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h2 class="text-xl font-bold text-gray-800">Solusi Matematika</h2>
-              <p class="text-sm text-gray-600">Hasil analisis akan muncul di sini</p>
-            </div>
-            <div class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-medium">
-              <i class="fas fa-circle text-xs mr-1"></i>
-              AI Aktif
-            </div>
-          </div>
-          
-          <div id="solutionContent" class="min-h-[300px]">
-            <div id="emptyState" class="flex flex-col items-center justify-center py-12 text-center">
-              <div class="gradient-bg rounded-2xl p-4 mb-5 text-white shadow-lg">
-                <i class="fas fa-lightbulb text-3xl"></i>
-              </div>
-              <h3 class="font-semibold text-gray-700 text-lg mb-2">Belum ada soal yang diunggah</h3>
-              <p class="text-gray-500 max-w-xs text-sm">Unggah gambar soal matematika untuk melihat solusi cerdas</p>
-              <div class="mt-4 flex space-x-2">
-                <div class="w-3 h-3 rounded-full bg-indigo-200 animate-bounce" style="animation-delay: 0s"></div>
-                <div class="w-3 h-3 rounded-full bg-indigo-300 animate-bounce" style="animation-delay: 0.2s"></div>
-                <div class="w-3 h-3 rounded-full bg-indigo-400 animate-bounce" style="animation-delay: 0.4s"></div>
-              </div>
-            </div>
-            
-            <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12">
-              <div class="relative w-16 h-16 mb-5">
-                <div class="absolute inset-0 rounded-full border-4 border-t-indigo-500 border-r-indigo-500 border-b-transparent border-l-transparent animate-spin"></div>
-                <div class="absolute inset-2 rounded-full border-4 border-t-indigo-400 border-r-indigo-400 border-b-transparent border-l-transparent animate-spin" style="animation-direction: reverse"></div>
-              </div>
-              <p class="text-gray-600 font-medium">Menganalisis soal...</p>
-              <p class="text-xs text-gray-500 mt-1">Tunggu sebentar, AI sedang bekerja</p>
-            </div>
-            
-            <div id="solutionResult" class="hidden h-full">
-              <div class="flex justify-between items-center mb-4">
-                <h3 class="font-semibold text-gray-800 flex items-center">
-                  <i class="fas fa-clipboard-list mr-2 text-indigo-500"></i>
-                  Detail Solusi
-                </h3>
-                <div class="flex space-x-2">
-                  <button id="copySolution" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center transition-colors">
-                    <i class="fas fa-copy mr-1"></i>
-                    Salin
-                  </button>
-                  <button id="downloadSolution" class="text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 px-3 py-1 rounded-full flex items-center transition-colors">
-                    <i class="fas fa-download mr-1"></i>
-                    PDF
-                  </button>
-                </div>
-              </div>
-              <div id="solutionText" class="prose max-w-none solution-text-container bg-gray-50 rounded-xl p-4 max-h-[500px] overflow-y-auto"></div>
-              
-              <div class="mt-4 pt-4 border-t border-gray-200">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center">
-                    <div class="w-8 h-8 rounded-full gradient-bg text-white flex items-center justify-center mr-2">
-                      <i class="fas fa-thumbs-up text-sm"></i>
-                    </div>
-                    <span class="text-sm text-gray-600">Apakah solusi ini membantu?</span>
-                  </div>
-                  <div class="flex space-x-2">
-                    <button class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                      <i class="fas fa-thumbs-up"></i>
-                    </button>
-                    <button class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors">
-                      <i class="fas fa-thumbs-down"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        <!-- Response Section -->
+        <div id="responseSection" class="glass-card p-6 hidden">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4">Solusi Matematika</h3>
+          <div id="responseContent" class="math-solution solution-text-container"></div>
         </div>
       </div>
     </div>
@@ -592,36 +353,29 @@
     }
 
     // DOM Elements
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImage = document.getElementById('previewImage');
+    const submitBtn = document.getElementById('submitBtn');
+    const responseSection = document.getElementById('responseSection');
+    const responseContent = document.getElementById('responseContent');
     const profileBtn = document.getElementById('profileBtn');
     const profileDropdown = document.getElementById('profileDropdown');
     const socialMenuBtn = document.getElementById('socialMenuBtn');
     const mobileSocialMenuBtn = document.getElementById('mobileSocialMenuBtn');
     const socialDropdown = document.getElementById('socialDropdown');
     const userList = document.getElementById('userList');
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const previewContainer = document.getElementById('previewContainer');
-    const previewImage = document.getElementById('previewImage');
-    const uploadForm = document.getElementById('uploadForm');
-    const submitBtn = document.getElementById('submitBtn');
-    const submitText = document.getElementById('submitText');
-    const submitSpinner = document.getElementById('submitSpinner');
-    const solutionContent = document.getElementById('solutionContent');
-    const emptyState = document.getElementById('emptyState');
-    const loadingState = document.getElementById('loadingState');
-    const solutionResult = document.getElementById('solutionResult');
-    const solutionText = document.getElementById('solutionText');
-    const copySolutionBtn = document.getElementById('copySolution');
     const desktopUsageDisplay = document.getElementById('desktopUsageDisplay');
     const mobileUsageDisplay = document.getElementById('mobileUsageDisplay');
     const usageDisplay = document.getElementById('usageDisplay');
     const mobileUsageText = document.getElementById('mobileUsageText');
-    const processingOverlay = document.getElementById('processingOverlay');
     const hamburgerBtn = document.getElementById('hamburgerBtn');
     const hamburgerMenu = document.getElementById('hamburgerMenu');
     const closeHamburgerBtn = document.getElementById('closeHamburgerBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    const mobileDeleteAccountBtn = document.getElementById('mobileDeleteAccountBtn');
 
     // Load user profile
     async function loadProfile() {
@@ -653,42 +407,6 @@
         window.location.href = '/login.html';
       }
     }
-
-    // Delete account
-async function deleteAccount() {
-  if (!confirm('Apakah Anda yakin ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data Anda.')) {
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/auth/delete-account', {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
-    if (!res.ok) {
-      if (res.status === 401 || res.status === 403 || res.status === 400) {
-        localStorage.removeItem('token');
-        window.location.href = '/login.html';
-      }
-      const data = await res.json();
-      throw new Error(data.error || 'Failed to delete account');
-    }
-
-    showToast('Akun Anda telah dihapus', 'success');
-    localStorage.removeItem('token');
-    setTimeout(() => {
-      window.location.href = '/login.html';
-    }, 1000);
-  } catch (err) {
-    console.error('Delete account error:', err);
-    showToast(err.message || 'Gagal menghapus akun', 'error');
-  }
-}
-
-// Add delete account button listeners
-document.getElementById('deleteAccountBtn').addEventListener('click', deleteAccount);
-document.getElementById('mobileDeleteAccountBtn').addEventListener('click', deleteAccount);
 
     // Load social users
     async function loadSocialUsers() {
@@ -727,7 +445,6 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
             userList.appendChild(userItem);
           });
           
-          // Add connect button listeners
           document.querySelectorAll('.connect-btn').forEach(btn => {
             btn.addEventListener('click', () => {
               const email = btn.dataset.email;
@@ -740,6 +457,77 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
         showToast('Gagal memuat daftar pengguna', 'error');
       }
     }
+
+    // Handle image upload
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.size > 5 * 1024 * 1024) {
+          showToast('Ukuran file maksimum adalah 5MB', 'error');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          previewImage.src = e.target.result;
+          imagePreview.classList.remove('hidden');
+          submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          submitBtn.disabled = false;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Handle submit
+    submitBtn.addEventListener('click', async () => {
+      if (!imageInput.files[0]) {
+        showToast('Pilih gambar terlebih dahulu', 'warning');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Memproses...';
+
+      try {
+        const formData = new FormData();
+        formData.append('image', imageInput.files[0]);
+
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData,
+        });
+
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        submitBtn.innerHTML = 'Kirim Soal';
+
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403 || res.status === 400) {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+          }
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to process image');
+        }
+
+        const data = await res.json();
+        responseContent.innerHTML = data.response || 'Solusi tidak tersedia';
+        responseSection.classList.remove('hidden');
+        responseSection.classList.add('fade-in');
+        updateUsageDisplay(data.usage.used, data.usage.limit);
+
+        if (window.MathJax) {
+          MathJax.typesetPromise();
+        }
+      } catch (err) {
+        console.error('Upload error:', err);
+        showToast(err.message || 'Gagal memproses gambar', 'error');
+        submitBtn.disabled = false;
+        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        submitBtn.innerHTML = 'Kirim Soal';
+      }
+    });
 
     // Toggle profile dropdown
     profileBtn.addEventListener('click', (e) => {
@@ -786,167 +574,46 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
     logoutBtn.addEventListener('click', handleLogout);
     mobileLogoutBtn.addEventListener('click', handleLogout);
 
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', () => {
-      profileDropdown.classList.add('hidden');
-      socialDropdown.classList.add('hidden');
-      hamburgerMenu.classList.add('hidden');
-    });
-
-    // File upload handling
-    dropZone.addEventListener('click', () => fileInput.click());
-    
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      dropZone.addEventListener(eventName, preventDefaults, false);
-    });
-
-    function preventDefaults(e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    ['dragenter', 'dragover'].forEach(eventName => {
-      dropZone.addEventListener(eventName, () => {
-        dropZone.classList.add('drop-zone-active');
-        dropZone.classList.add('border-indigo-400');
-      }, false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-      dropZone.addEventListener(eventName, () => {
-        dropZone.classList.remove('drop-zone-active');
-        dropZone.classList.remove('border-indigo-400');
-      }, false);
-    });
-
-    dropZone.addEventListener('drop', handleDrop, false);
-
-    function handleDrop(e) {
-      const files = e.dataTransfer.files;
-      if (files.length) {
-        fileInput.files = files;
-        handleFiles(files);
-      }
-    }
-
-    fileInput.addEventListener('change', () => {
-      if (fileInput.files.length) {
-        handleFiles(fileInput.files);
-      }
-    });
-
-    document.getElementById('clearPreview').addEventListener('click', () => {
-      previewContainer.classList.add('hidden');
-      previewImage.src = '';
-      fileInput.value = '';
-    });
-
-    function handleFiles(files) {
-      const file = files[0];
-      if (!file.type.match('image.*')) {
-        showToast('Hanya file gambar yang diperbolehkan', 'error');
+    // Delete account
+    async function deleteAccount() {
+      if (!confirm('Apakah Anda yakin ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data Anda.')) {
         return;
       }
-      
-      if (file.size > 5 * 1024 * 1024) {
-        showToast('Ukuran file terlalu besar. Maksimum 5MB.', 'error');
-        fileInput.value = '';
-        return;
-      }
-      
-      processingOverlay.classList.remove('hidden');
-      
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        previewImage.src = e.target.result;
-        previewContainer.classList.remove('hidden');
-        setTimeout(() => {
-          processingOverlay.classList.add('hidden');
-        }, 500);
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // Form submission
-    uploadForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const imageFile = fileInput.files[0];
-      if (!imageFile) {
-        showToast('Pilih gambar terlebih dahulu', 'error');
-        return;
-      }
-
-      emptyState.classList.add('hidden');
-      solutionResult.classList.add('hidden');
-      loadingState.classList.remove('hidden');
-      
-      submitBtn.disabled = true;
-      submitText.innerHTML = '<i class="fas fa-cog animate-spin mr-2"></i> Memproses...';
-      submitSpinner.classList.remove('hidden');
-
-      const formData = new FormData();
-      formData.append('image', imageFile);
 
       try {
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` },
-          body: formData
+        const res = await fetch('/api/auth/delete-account', {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        
-        const data = await res.json();
-        
+
         if (!res.ok) {
           if (res.status === 401 || res.status === 403 || res.status === 400) {
             localStorage.removeItem('token');
             window.location.href = '/login.html';
           }
-          throw new Error(data.error || 'Server error');
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to delete account');
         }
 
-        loadingState.classList.add('hidden');
-        solutionText.innerHTML = data.formatted_response || data.response;
-        solutionResult.classList.remove('hidden');
-        solutionResult.classList.add('fade-in');
-        
-        if (data.usage) {
-          updateUsageDisplay(data.usage.used, data.usage.limit);
-        }
-        
-        if (data.warning) {
-          showToast(data.warning, 'warning');
-        }
-        
-        if (window.MathJax) {
-          MathJax.typesetPromise();
-        }
+        showToast('Akun Anda telah dihapus', 'success');
+        localStorage.removeItem('token');
+        setTimeout(() => {
+          window.location.href = '/login.html';
+        }, 1000);
       } catch (err) {
-        console.error('Upload error:', err);
-        showToast(err.message || 'Gagal memproses gambar', 'error');
-        loadingState.classList.add('hidden');
-        emptyState.classList.remove('hidden');
-      } finally {
-        submitBtn.disabled = false;
-        submitText.innerHTML = '<i class="fas fa-robot mr-2"></i> Selesaikan Soal';
-        submitSpinner.classList.add('hidden');
+        console.error('Delete account error:', err);
+        showToast(err.message || 'Gagal menghapus akun', 'error');
       }
-    });
+    }
 
-    // Copy solution
-    copySolutionBtn.addEventListener('click', () => {
-      const solution = solutionText.textContent;
-      navigator.clipboard.writeText(solution).then(() => {
-        showToast('Solusi berhasil disalin', 'success');
-      }).catch(err => {
-        console.error('Copy failed:', err);
-        showToast('Gagal menyalin solusi', 'error');
-      });
-    });
+    deleteAccountBtn.addEventListener('click', deleteAccount);
+    mobileDeleteAccountBtn.addEventListener('click', deleteAccount);
 
-    // Download as PDF (mock functionality)
-    document.getElementById('downloadSolution').addEventListener('click', () => {
-      showToast('Fitur ekspor PDF akan segera hadir!', 'info');
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', () => {
+      profileDropdown.classList.add('hidden');
+      socialDropdown.classList.add('hidden');
+      hamburgerMenu.classList.add('hidden');
     });
 
     // Update usage display
