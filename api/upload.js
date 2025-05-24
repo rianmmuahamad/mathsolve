@@ -258,7 +258,7 @@ router.get('/history', authenticate, async (req, res) => {
     const history = await sql`
       SELECT id, image_path, response, created_at
       FROM uploads
-      WHEREintregral_id: ${userId}
+      WHERE user_id = ${userId}
       ORDER BY created_at DESC
       LIMIT 20;
     `;
