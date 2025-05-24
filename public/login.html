@@ -5,29 +5,81 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - MathSolve AI</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #4f46e5;
-      --primary-light: #6366f1;
-      --primary-dark: #4338ca;
+      --primary: #6C63FF;
+      --primary-light: #8B85FF;
+      --primary-dark: #534BC7;
+      --secondary: #FF6584;
+      --dark: #1A1A2E;
+      --light: #F8F9FF;
+      --gray: #E2E8F0;
+      --dark-gray: #94A3B8;
     }
 
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f9fafb;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: linear-gradient(135deg, var(--light) 0%, #E2E1FF 100%);
+      color: var(--dark);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       overflow-x: hidden;
     }
 
-    .card {
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      max-width: 100%;
+    .glass-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
     }
 
-    .card:hover {
+    .gradient-bg {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    }
+
+    .floating-btn {
+      box-shadow: 0 10px 25px -5px rgba(108, 99, 255, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .floating-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 15px 30px -5px rgba(108, 99, 255, 0.5);
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary) 100%);
+    }
+
+    .slide-in {
+      animation: slideIn 0.5s ease-out forwards;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .pulse-animation {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(108, 99, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0); }
     }
 
     .text-container {
@@ -37,64 +89,122 @@
       overflow-wrap: break-word;
     }
 
-    .btn-primary {
-      background-color: var(--primary);
-      color: #fff;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.375rem;
-      font-weight: 500;
-      transition: background-color 0.2s ease;
-    }
-
-    .btn-primary:hover {
-      background-color: var(--primary-dark);
-    }
-
     /* Responsive Adjustments */
     @media (max-width: 768px) {
       .container {
         padding-left: 1rem;
         padding-right: 1rem;
       }
-      .card {
-        padding: 1rem;
+      .glass-card {
+        padding: 1.5rem;
       }
       h2 {
         font-size: 1.5rem;
       }
       p {
-        font-size: 0.9em;
+        font-size: 0.9rem;
       }
-      .btn-primary {
-        padding: 0.5rem 1rem;
-        font-size: 0.9em;
+      .floating-btn {
+        padding: 0.75rem 1.25rem;
+        font-size: 0.9rem;
       }
     }
 
     @media (max-width: 480px) {
-      .card {
-        padding: 0.75rem;
+      .glass-card {
+        padding: 1rem;
       }
       h2 {
         font-size: 1.25rem;
       }
       p {
-        font-size: 0.85em;
+        font-size: 0.85rem;
       }
-      .btn-primary {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.85em;
+      .floating-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
       }
     }
   </style>
 </head>
-<body class="min-h-screen bg-gray-50 flex items-center justify-center">
-  <div class="card bg-white p-4 sm:p-8 rounded-lg shadow-md text-center max-w-md w-full">
-    <div class="text-container">
-      <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Login ke MathSolve AI</h2>
-      <p class="text-xs sm:text-sm text-gray-600 mb-6">Masuk dengan akun Google Anda untuk mulai menggunakan aplikasi</p>
-      <a href="/api/auth/google" class="btn-primary inline-block">Login dengan Google</a>
+<body>
+  <div class="container mx-auto px-4">
+    <div class="glass-card p-6 sm:p-8 max-w-md mx-auto text-center slide-in">
+      <div class="text-container">
+        <div class="flex items-center justify-center mb-6">
+          <div class="gradient-bg p-3 rounded-xl text-white mr-3">
+            <i class="fas fa-square-root-alt text-2xl"></i>
+          </div>
+          <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">MathSolve AI</h1>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Selamat Datang!</h2>
+        <p class="text-sm sm:text-base text-gray-600 mb-8">Masuk dengan akun Google Anda untuk mulai menyelesaikan soal matematika dengan AI canggih</p>
+        <a href="/api/auth/google" class="gradient-bg inline-flex items-center justify-center text-white font-semibold py-3 px-6 rounded-xl floating-btn">
+          <i class="fab fa-google mr-2"></i>
+          Login dengan Google
+        </a>
+      </div>
     </div>
   </div>
+
+  <!-- Toast Notification -->
+  <div id="toastContainer" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 space-y-2 z-50 w-full max-w-xs sm:max-w-md px-4"></div>
+
+  <script>
+    // Show toast notification for errors
+    function showToast(message, type = 'info') {
+      const toastContainer = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      
+      toast.className = 'flex items-center w-full p-4 rounded-lg shadow-lg text-white overflow-hidden transform transition-all duration-300 slide-in';
+      
+      if (type === 'error') {
+        toast.className += ' bg-red-500';
+        toast.innerHTML = `
+          <div class="mr-3 flex-shrink-0">
+            <i class="fas fa-exclamation-circle text-xl"></i>
+          </div>
+          <div class="flex-grow">
+            ${message}
+          </div>
+          <button class="ml-3 text-white opacity-70 hover:opacity-100">
+            <i class="fas fa-times"></i>
+          </button>
+        `;
+      } else {
+        toast.className += ' bg-indigo-500';
+        toast.innerHTML = `
+          <div class="mr-3 flex-shrink-0">
+            <i class="fas fa-info-circle text-xl"></i>
+          </div>
+          <div class="flex-grow">
+            ${message}
+          </div>
+          <button class="ml-3 text-white opacity-70 hover:opacity-100">
+            <i class="fas fa-times"></i>
+          </button>
+        `;
+      }
+      
+      const closeBtn = toast.querySelector('button');
+      closeBtn.addEventListener('click', () => {
+        toast.classList.add('opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      });
+      
+      toastContainer.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add('opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    // Check for error in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('error') === 'auth_failed') {
+      showToast('Gagal login. Silakan coba lagi.', 'error');
+    }
+  </script>
 </body>
 </html>
