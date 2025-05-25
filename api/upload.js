@@ -7,8 +7,36 @@ const { sql } = require('./db');
 const cheerio = require('cheerio');
 
 const router = express.Router();
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+
+// Inisialisasi tiga instance model dengan tiga API key untuk Gemini 1.5 Flash
+const apiKeys = [
+  process.env.GOOGLE_API_KEY_1,
+  process.env.GOOGLE_API_KEY_2,
+  process.env.GOOGLE_API_KEY_3
+];
+
+// Validasi API keys
+apiKeys.forEach((key, index) => {
+  if (!key) {
+    console.error(`GOOGLE_API_KEY_${index + 1} is not configured`);
+    process.exit(1);
+  }
+});
+
+const models = apiKeys.map(key => {
+  const genAI = new GoogleGenerativeAI(key);
+  return genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+});
+
+// Variabel untuk round-robin load balancing
+let currentModelIndex = 0;
+
+// Fungsi untuk memilih model berikutnya (round-robin)
+function getNextModel() {
+  const model = models[currentModelIndex];
+  currentModelIndex = (currentModelIndex + 1) % models.length;
+  return model;
+}
 
 // Configure multer for in-memory storage
 const upload = multer({
@@ -35,7 +63,6 @@ const authenticate = (req, res, next) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  // Basic token format check
   if (!token.match(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/)) {
     return res.status(400).json({ error: 'Malformed token' });
   }
@@ -48,7 +75,6 @@ const authenticate = (req, res, next) => {
     next();
   });
 };
-
 
 // Utility functions
 function estimateTokens(text) {
@@ -83,7 +109,6 @@ function fileToGenerativePart(buffer, mimeType) {
   };
 }
 
-// Extract math topic from response
 function extractMathTopic(response) {
   const topics = {
     'aljabar': 'Aljabar',
@@ -101,16 +126,14 @@ function extractMathTopic(response) {
       return topic;
     }
   }
-  return 'Lainnya'; // Default topic if none matched
+  return 'Lainnya';
 }
 
-// Enhanced math notation formatter
 function formatMathNotation(text) {
   if (!text || typeof text !== 'string') return text;
   
   try {
     let formatted = text;
-
     formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     formatted = formatted.replace(/(?<!\*)\*([^\*]+)\*(?!\*)/g, '<em>$1</em>');
     formatted = formatted
@@ -143,13 +166,11 @@ function formatMathNotation(text) {
   }
 }
 
-// Enhanced response formatter with HTML structure
 function formatResponseToHTML(response) {
   if (!response) return '';
 
   try {
     let formatted = formatMathNotation(response);
-
     const $ = cheerio.load('<div class="math-solution"></div>');
     const container = $('.math-solution');
 
@@ -197,7 +218,7 @@ function formatResponseToHTML(response) {
   }
 }
 
-// Main upload endpoint
+// Main upload endpoint with load balancing
 router.post('/', authenticate, uploadLimiter, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
@@ -209,36 +230,71 @@ router.post('/', authenticate, uploadLimiter, upload.single('image'), async (req
     const mimeType = req.file.mimetype;
     const fileName = `${Date.now()}-${req.file.originalname}`;
 
-    if (!process.env.GOOGLE_API_KEY) {
-      throw new Error('GOOGLE_API_KEY is not configured');
-    }
-
     const history = await getUploadHistory(userId);
     const historyText = history.map(msg => `${msg.role}: ${msg.content}`).join('\n');
 
     const prompt = `
-Riwayat unggahan terbaru dari ${email.split('@')[0]}:
+Anda adalah ahli matematika dengan pengalaman mengajar yang mendalam. Tugas Anda adalah menganalisis soal matematika dari gambar yang diunggah dan memberikan solusi langkah demi langkah yang jelas, logis, dan mudah dipahami oleh siswa SMA atau mahasiswa tingkat awal. Gunakan bahasa Indonesia yang formal namun sederhana.
+
+**Instruksi**:
+1. **Identifikasi Soal**: Jelaskan secara singkat soal yang ditemukan dalam gambar, termasuk topik matematika yang relevan (misalnya, aljabar, geometri, kalkulus, trigonometri, statistik, atau probabilitas).
+2. **Solusi Langkah demi Langkah**:
+   - Mulai setiap langkah utama dengan "Langkah [nomor]:", misalnya, "Langkah 1:".
+   - Berikan penjelasan singkat dan jelas untuk setiap langkah, termasuk alasan mengapa metode tersebut digunakan.
+   - Gunakan metode yang paling umum dan mudah dipahami, hindari pendekatan yang terlalu rumit kecuali diperlukan.
+3. **Notasi Matematika**:
+   - Gunakan notasi LaTeX untuk rumus matematika, misalnya:
+     - Pecahan: \\(\\frac{a}{b}\\)
+     - Pangkat: \\(x^2\\)
+     - Akar: \\(\\sqrt{x}\\)
+     - Fungsi trigonometri: \\(\\sin(x)\\), \\(\\cos(x)\\)
+     - Limit: \\(\\lim_{x \\to a} f(x)\\)
+     - Simbol khusus: \\(\\leq\\), \\(\\geq\\), \\(\\neq\\), \\(\\pi\\), \\(\\alpha\\), dll.
+   - Pastikan semua rumus ditulis dalam format LaTeX yang benar dan diletakkan di antara \\(...\\).
+4. **Format Respons**:
+   - Gunakan **teks tebal** untuk menyoroti konsep kunci atau langkah penting.
+   - Gunakan *teks miring* untuk istilah teknis atau definisi penting.
+   - Pisahkan setiap langkah dengan baris kosong untuk kejelasan.
+   - Hindari penomoran acak seperti "6." atau "10." yang tidak relevan dengan langkah-langkah.
+5. **Kesimpulan**:
+   - Berikan jawaban akhir dalam kalimat yang jelas, misalnya, "Jadi, nilai \\(x\\) adalah \\(5\\)."
+   - Jika relevan, tambahkan catatan singkat tentang aplikasi atau konteks soal.
+6. **Penanganan Kasus Khusus**:
+   - Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak berisi soal matematika."
+   - Jika soal ambigu atau tidak jelas, nyatakan asumsi yang Anda buat sebelum menyelesaikan.
+
+**Riwayat Konteks**:
+Riwayat unggahan terbaru dari pengguna (jika ada):  
 ${historyText || 'Tidak ada riwayat unggahan sebelumnya.'}
 
-Anda adalah ahli matematika. Analisis gambar soal matematika yang diunggah. Berikan solusi langkah demi langkah menggunakan metode yang paling umum dan mudah dipahami dalam bahasa Indonesia.
-
-FORMAT RESPONS:
-1. Gunakan notasi matematika yang tepat (contoh: \\(\\frac{1}{2}\\), \\(x^2\\), \\(\\sqrt{4}\\))
-2. Pisahkan setiap langkah dengan jelas menggunakan "Langkah" di awal setiap langkah utama
-3. Berikan penjelasan untuk setiap langkah
-4. Gunakan format yang mudah dibaca
-5. Gunakan **teks tebal** untuk penekanan
-6. Gunakan *teks miring* untuk istilah penting
-7. Jangan gunakan nomor acak untuk memisahkan bagian (seperti "6." atau "10.")
-
-Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak berisi soal matematika."
+Sekarang, analisis soal matematika dari gambar yang diunggah dan berikan solusi sesuai format di atas.
     `;
 
     const imagePart = fileToGenerativePart(fileBuffer, mimeType);
-    const result = await model.generateContent([prompt, imagePart]);
-    const responseText = result.response.text();
-    const topic = extractMathTopic(responseText);
 
+    // Coba setiap model hingga berhasil atau semua gagal
+    let responseText = null;
+    let lastError = null;
+    for (let i = 0; i < models.length; i++) {
+      const model = getNextModel();
+      try {
+        const result = await model.generateContent([prompt, imagePart]);
+        responseText = result.response.text();
+        break;
+      } catch (err) {
+        lastError = err;
+        console.error(`Error with model ${currentModelIndex} (gemini-1.5-flash):`, err.message);
+        if (i === models.length - 1) {
+          throw new Error('All API keys failed to process the request');
+        }
+      }
+    }
+
+    if (!responseText) {
+      throw lastError;
+    }
+
+    const topic = extractMathTopic(responseText);
     const formattedResponse = formatResponseToHTML(responseText);
 
     const uploadResult = await sql`
@@ -274,7 +330,7 @@ Jika gambar tidak berisi soal matematika, respons dengan: "Gambar ini tidak beri
   } catch (err) {
     console.error('Upload processing error:', err);
     
-    const statusCode = err.message.includes('GOOGLE_API_KEY') ? 500 : 
+    const statusCode = err.message.includes('API key') ? 500 : 
                       err.message.includes('image') ? 400 : 500;
     
     res.status(statusCode).json({ 
