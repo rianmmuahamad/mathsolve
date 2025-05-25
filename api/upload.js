@@ -8,7 +8,7 @@ const cheerio = require('cheerio');
 
 const router = express.Router();
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
 
 // Configure multer for in-memory storage
 const upload = multer({
