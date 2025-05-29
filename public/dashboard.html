@@ -7,81 +7,90 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    /* Updated Color Palette */
     :root {
-      --white: #FFFFFF;
-      --blue: #3B82F6; /* Blue-500 */
-      --blue-dark: #1E40AF; /* Blue-800 */
-      --purple: #8B5CF6; /* Purple-500 */
-      --purple-dark: #6D28D9; /* Purple-700 */
-      --gray: #E5E7EB; /* Gray-200 */
-      --dark-gray: #6B7280; /* Gray-500 */
-      --dark: #111827; /* Gray-900 */
+      --primary-blue: #4F46E5; /* A vibrant, modern blue */
+      --secondary-purple: #8B5CF6; /* A softer, complementary purple */
+      --accent-light-blue: #DBEAFE; /* Light blue for backgrounds/accents */
+      --text-dark: #1F2937; /* Dark gray for main text */
+      --text-medium: #4B5563; /* Medium gray for secondary text */
+      --text-light: #6B7280; /* Light gray for subtle text */
+      --bg-light: #F9FAFB; /* Off-white for general background */
+      --card-bg: #FFFFFF; /* Pure white for cards */
+      --border-light: #E5E7EB; /* Light border color */
+      --shadow-color: rgba(31, 41, 55, 0.08); /* Soft shadow */
     }
-
+    
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: var(--white);
-      color: var(--dark);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-light);
+      color: var(--text-dark);
       overflow-x: hidden;
     }
 
-    .card {
-      background: var(--white);
-      border-radius: 12px;
-      border: 1px solid var(--gray);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    .glass-card {
+      /* Replaced with a more modern, subtle shadow and pure white background */
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px var(--shadow-color), 0 4px 12px rgba(0, 0, 0, 0.05); /* Enhanced shadow */
+      border: none; /* Removed border for cleaner look */
     }
 
     ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      width: 8px;
+      height: 8px;
     }
 
     ::-webkit-scrollbar-track {
-      background: var(--gray);
+      background: var(--bg-light);
     }
 
     ::-webkit-scrollbar-thumb {
-      background: var(--blue);
-      border-radius: 6px;
+      background: var(--primary-blue);
+      border-radius: 10px;
     }
 
+    /* Math Solution Styling - Adjusted for better visual hierarchy and readability */
     .math-solution {
-      font-family: 'Inter', sans-serif;
-      line-height: 1.7;
-      color: var(--dark);
+      font-family: 'Plus Jakarta Sans', sans-serif; /* Consistent font */
+      line-height: 1.7; /* Increased line-height for readability */
+      color: var(--text-medium);
       word-break: break-word;
       overflow-wrap: anywhere;
       white-space: normal;
       max-width: 100%;
-      padding: 1rem;
-      font-size: 1rem;
+      overflow-x: hidden;
+      padding: 1rem; /* Slightly more padding */
+      box-sizing: border-box;
+      font-size: 1rem; /* Slightly smaller base font size */
     }
 
     .math-solution h2 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--dark);
-      margin-bottom: 1.5rem;
+      font-size: 2rem; /* Larger heading */
+      font-weight: 700; /* Bolder */
+      color: var(--text-dark);
+      margin-bottom: 1.25rem;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-solution h3 {
-      font-size: 1.25rem;
+      font-size: 1.625rem; /* Adjusted h3 size */
       font-weight: 600;
-      color: var(--dark);
-      margin: 1.5rem 0 1rem;
+      color: var(--text-dark);
+      margin: 2rem 0 1rem; /* More vertical spacing */
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-solution p {
       margin-bottom: 1rem;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      max-width: 100%;
+      overflow-x: hidden;
       font-size: 1rem;
     }
 
@@ -89,73 +98,97 @@
       position: relative;
       padding-left: 2rem;
       margin-bottom: 1.5rem;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .solution-step .step-number {
       position: absolute;
       left: 0;
       top: 0;
-      color: var(--blue);
-      font-weight: 600;
+      color: var(--primary-blue);
+      font-weight: 700; /* Bolder step number */
     }
 
     .math-step {
       margin-bottom: 1.5rem;
       padding-left: 1.5rem;
-      border-left: 3px solid var(--blue);
+      border-left: 3px solid var(--secondary-purple); /* Changed to purple for distinction */
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-step-header {
       font-weight: 600;
-      color: var(--blue);
+      color: var(--primary-blue);
       margin-bottom: 0.5rem;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-expression {
-      display: block;
-      margin: 0.75rem 0;
-      padding: 1rem;
-      background-color: var(--gray);
-      border-radius: 8px;
+      display: inline-block;
+      margin: 0.5rem 0;
+      padding: 0.75rem 1rem; /* Increased padding */
+      background-color: var(--accent-light-blue); /* Lighter background for expressions */
+      border-radius: 0.5rem; /* Softer corners */
       font-family: 'Times New Roman', serif;
       word-break: break-word;
+      overflow-wrap: anywhere;
+      max-width: 100%;
       overflow-x: auto;
-      white-space: nowrap;
+      white-space: normal; /* Allow wrapping */
+      box-sizing: border-box;
+      color: var(--text-dark); /* Ensure good contrast */
+      font-size: 1.1rem; /* Slightly larger math font */
     }
 
     .math-section {
       margin-bottom: 2rem;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
     .math-section-title {
-      font-weight: 600;
-      color: var(--dark);
-      margin-bottom: 0.75rem;
-      padding-bottom: 0.25rem;
-      border-bottom: 1px solid var(--gray);
+      font-weight: 700; /* Bolder title */
+      color: var(--text-dark);
+      margin-bottom: 1rem; /* More space */
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border-light);
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
+    /* MathJax specific styling for better rendering */
     .MathJax, .MathJax_Display {
       display: inline-block !important;
       max-width: 100% !important;
       white-space: normal !important;
       overflow-wrap: break-word !important;
       word-break: break-all !important;
-      overflow-x: auto !important;
-      padding: 0.3rem !important;
-      font-size: 1rem !important;
+      overflow-x: auto !important; /* Ensure horizontal scroll if needed */
+      box-sizing: border-box !important;
+      padding: 0.2rem !important;
+      font-size: 1em !important;
     }
 
     .solution-text-container {
       max-width: 100%;
       overflow-x: hidden;
       word-break: break-word;
-      padding: 1rem;
+      overflow-wrap: anywhere;
+      padding: 1rem; /* Consistent padding */
+      box-sizing: border-box;
     }
 
     @media (max-width: 768px) {
       .MathJax, .MathJax_Display {
-        font-size: 0.95rem !important;
+        font-size: 0.9em !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        display: inline-block !important;
       }
       .math-solution {
         font-size: 0.95rem;
@@ -168,84 +201,74 @@
         padding-left: 1.5rem;
       }
       .math-expression {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         white-space: normal;
         overflow-x: auto;
+        padding: 0.6rem 0.8rem;
       }
     }
 
     @media (max-width: 480px) {
       .MathJax, .MathJax_Display {
-        font-size: 0.9rem !important;
+        font-size: 0.85em !important;
       }
       .math-solution {
         font-size: 0.9rem;
       }
       .math-solution h2 {
-        font-size: 1.3rem;
+        font-size: 1.75rem;
       }
       .math-solution h3 {
-        font-size: 1.2rem;
+        font-size: 1.4rem;
       }
       .math-expression {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        padding: 0.5rem 0.7rem;
       }
     }
 
-    .btn-primary {
-      background: var(--blue);
-      color: var(--white);
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 500;
-      transition: background 0.3s ease, transform 0.3s ease;
+    /* Gradient Background - Adjusted to new primary and secondary colors */
+    .gradient-bg {
+      background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-purple) 100%);
     }
 
-    .btn-primary:hover {
-      background: var(--blue-dark);
-      transform: translateY(-2px);
+    .floating-btn {
+      box-shadow: 0 12px 30px -8px rgba(79, 70, 229, 0.4); /* Stronger but softer shadow */
+      transition: all 0.3s ease;
     }
 
-    .btn-secondary {
-      background: var(--purple);
-      color: var(--white);
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-weight: 500;
-      transition: background 0.3s ease, transform 0.3s ease;
-    }
-
-    .btn-secondary:hover {
-      background: var(--purple-dark);
-      transform: translateY(-2px);
+    .floating-btn:hover {
+      transform: translateY(-3px); /* More pronounced lift */
+      box-shadow: 0 18px 40px -10px rgba(79, 70, 229, 0.5);
     }
 
     .drop-zone-active {
-      border-color: var(--blue) !important;
-      background-color: rgba(59, 130, 246, 0.05) !important;
+      border-color: var(--primary-blue) !important;
+      background-color: rgba(79, 70, 229, 0.08) !important; /* Lighter blue tint */
     }
 
+    /* Pulse animation using new primary color */
     .pulse-animation {
       animation: pulse 2s infinite;
     }
 
     @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
     }
 
     .slide-in {
-      animation: slideIn 0.5s ease-out forwards;
+      animation: slideIn 0.6s forwards cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Smoother animation */
     }
 
     @keyframes slideIn {
-      from { opacity: 0; transform: translateY(20px); }
+      from { opacity: 0; transform: translateY(30px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
     .fade-in {
-      animation: fadeIn 0.5s ease-in;
+      animation: fadeIn 0.6s ease-in; /* Smoother fade */
     }
 
     @keyframes fadeIn {
@@ -265,31 +288,47 @@
         display: none;
       }
     }
+
+    /* Custom Styles for Buttons, Inputs, etc. */
+    button, .btn {
+      transition: all 0.2s ease-in-out;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .profile-dropdown-item:hover {
+      background-color: var(--accent-light-blue);
+      color: var(--primary-blue);
+    }
   </style>
 </head>
-<body class="min-h-screen">
-  <!-- Header -->
-  <header class="sticky top-0 z-50 bg-white">
-    <div class="container mx-auto px-4 py-4">
-      <nav class="flex items-center justify-between card px-6 py-4">
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+  <header class="sticky top-0 z-50 backdrop-blur-md bg-white bg-opacity-80">
+    <div class="container mx-auto px-4 py-3">
+      <nav class="flex items-center justify-between glass-card px-6 py-3">
         <div class="flex items-center space-x-3">
-          <div class="bg-blue-100 p-2 rounded-lg text-blue-600">
+          <div class="gradient-bg p-2 rounded-xl text-white shadow-md">
             <i class="fas fa-square-root-alt text-xl"></i>
           </div>
-          <h1 class="text-xl font-bold text-blue-600">MathSolve AI</h1>
+          <h1 class="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">MathSolve AI</h1>
         </div>
+        
         <div class="flex items-center space-x-4 desktop-nav">
-          <div id="desktopUsageDisplay" class="hidden md:flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-full">
+          <div id="desktopUsageDisplay" class="hidden md:flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
             <span id="usageDisplay" class="text-xs font-medium text-blue-700"></span>
             <div class="w-2 h-2 rounded-full bg-blue-500 pulse-animation"></div>
           </div>
+          
           <div class="relative">
-            <button id="profileBtn" class="flex items-center focus:outline-none">
-              <div class="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium shadow-md">
+            <button id="profileBtn" class="flex items-center focus:outline-none rounded-full transition-shadow duration-200 hover:shadow-md">
+              <div class="w-9 h-9 rounded-full gradient-bg text-white flex items-center justify-center font-medium shadow-md">
                 <span id="profileInitial">U</span>
               </div>
             </button>
-            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-100">
+            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100 animate-fade-in">
               <div class="px-4 py-3 border-b border-gray-100">
                 <p class="text-sm font-semibold text-gray-800" id="profileName"></p>
                 <p class="text-xs text-gray-500 truncate" id="profileEmail"></p>
@@ -298,37 +337,37 @@
                   <div class="w-2 h-2 rounded-full bg-blue-500 pulse-animation"></div>
                 </div>
               </div>
-              <a href="/history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
-                <i class="fas fa-history mr-2 text-blue-400"></i>
+              <a href="/history.html" class="profile-dropdown-item block px-4 py-2 text-sm text-gray-700 flex items-center">
+                <i class="fas fa-history mr-2 text-gray-400"></i>
                 Riwayat
               </a>
-              <button id="socialMenuBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
-                <i class="fas fa-users mr-2 text-blue-400"></i>
+              <button id="socialMenuBtn" class="profile-dropdown-item block w-full text-left px-4 py-2 text-sm text-gray-700 flex items-center">
+                <i class="fas fa-users mr-2 text-gray-400"></i>
                 Bersosialisasi
               </button>
-              <a href="/api/auth/logout" id="logoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
-                <i class="fas fa-sign-out-alt mr-2 text-blue-400"></i>
+              <a href="/api/auth/logout" id="logoutBtn" class="profile-dropdown-item block px-4 py-2 text-sm text-gray-700 flex items-center">
+                <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
                 Logout
               </a>
-              <button id="deleteAccountBtn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
+              <button id="deleteAccountBtn" class="profile-dropdown-item block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
                 <i class="fas fa-trash-alt mr-2 text-red-400"></i>
                 Hapus Akun
               </button>
             </div>
           </div>
         </div>
-        <button id="hamburgerBtn" class="hamburger-menu md:hidden focus:outline-none">
-          <i class="fas fa-bars text-2xl text-gray-700"></i>
+
+        <button id="hamburgerBtn" class="hamburger-menu md:hidden focus:outline-none text-gray-700 hover:text-gray-900 transition-colors duration-200">
+          <i class="fas fa-bars text-2xl"></i>
         </button>
       </nav>
     </div>
   </header>
 
-  <!-- Hamburger Menu Dropdown -->
-  <div id="hamburgerMenu" class="hidden md:hidden fixed top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 z-50">
-    <div class="bg-white w-64 h-full p-4 card">
-      <button id="closeHamburgerBtn" class="mb-4">
-        <i class="fas fa-times text-2xl text-gray-700"></i>
+  <div id="hamburgerMenu" class="hidden md:hidden fixed top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 z-50 animate-fade-in">
+    <div class="bg-white w-64 h-full p-4 shadow-lg">
+      <button id="closeHamburgerBtn" class="mb-6 text-gray-700 hover:text-gray-900 transition-colors duration-200">
+        <i class="fas fa-times text-2xl"></i>
       </button>
       <div class="mb-4 border-b border-gray-200 pb-4">
         <p class="text-sm font-semibold text-gray-800" id="mobileProfileName"></p>
@@ -338,192 +377,197 @@
           <div class="w-2 h-2 rounded-full bg-blue-500 pulse-animation"></div>
         </div>
       </div>
-      <a href="/dashboard.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
-        <i class="fas fa-home mr-2 text-blue-400"></i>
+      <a href="/dashboard.html" class="profile-dropdown-item block px-4 py-2 text-sm text-gray-700 flex items-center">
+        <i class="fas fa-home mr-2 text-gray-400"></i>
         Dashboard
       </a>
-      <a href="/history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
-        <i class="fas fa-history mr-2 text-blue-400"></i>
+      <a href="/history.html" class="profile-dropdown-item block px-4 py-2 text-sm text-gray-700 flex items-center">
+        <i class="fas fa-history mr-2 text-gray-400"></i>
         Riwayat
       </a>
-      <button id="mobileSocialMenuBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
-        <i class="fas fa-users mr-2 text-blue-400"></i>
+      <button id="mobileSocialMenuBtn" class="profile-dropdown-item block w-full text-left px-4 py-2 text-sm text-gray-700 flex items-center">
+        <i class="fas fa-users mr-2 text-gray-400"></i>
         Bersosialisasi
       </button>
-      <a href="/api/auth/logout" id="mobileLogoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
-        <i class="fas fa-sign-out-alt mr-2 text-blue-400"></i>
+      <a href="/api/auth/logout" id="mobileLogoutBtn" class="profile-dropdown-item block px-4 py-2 text-sm text-gray-700 flex items-center">
+        <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
         Logout
       </a>
-      <button id="mobileDeleteAccountBtn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
+      <button id="mobileDeleteAccountBtn" class="profile-dropdown-item block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
         <i class="fas fa-trash-alt mr-2 text-red-400"></i>
         Hapus Akun
       </button>
     </div>
   </div>
 
-  <!-- Social Menu Dropdown -->
-  <div id="socialDropdown" class="hidden fixed top-16 right-4 w-72 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-100">
+  <div id="socialDropdown" class="hidden fixed top-20 right-4 w-72 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100 animate-fade-in">
     <div class="px-4 py-3 border-b border-gray-100">
       <h3 class="text-sm font-semibold text-gray-800">Bersosialisasi dengan Pengguna</h3>
       <p class="text-xs text-gray-500">Temukan dan hubungi pengguna lain</p>
     </div>
-    <div id="userList" class="max-h-64 overflow-y-auto"></div>
+    <div id="userList" class="max-h-64 overflow-y-auto">
+      </div>
   </div>
 
-  <!-- Main Content -->
   <main class="container mx-auto px-4 py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- Upload Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       <div class="lg:col-span-8">
-        <div class="card p-6 slide-in">
-          <div class="mb-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Pemecah Masalah Matematika</h2>
-            <p class="text-gray-600 text-sm">Unggah soal matematika dan dapatkan solusi langkah demi langkah dengan AI canggih</p>
+        <div class="glass-card p-8 slide-in">
+          <div class="mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Pemecah Masalah Matematika</h2>
+            <p class="text-gray-600 text-lg">Unggah soal matematika dan dapatkan solusi langkah demi langkah dengan AI canggih</p>
           </div>
+          
           <form id="uploadForm">
-            <div id="dropZone" class="drop-zone border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6 cursor-pointer transition-all duration-300 hover:border-blue-400">
+            <div id="dropZone" class="drop-zone border-2 border-dashed border-blue-300 rounded-2xl p-10 text-center mb-6 cursor-pointer transition-all duration-300 hover:border-blue-500 hover:bg-blue-50">
               <input type="file" id="fileInput" accept="image/*" class="hidden">
               <div class="max-w-md mx-auto">
-                <div class="bg-blue-100 w-16 h-16 mx-auto rounded-lg flex items-center justify-center mb-4 text-blue-600 shadow-md">
-                  <i class="fas fa-cloud-upload-alt text-2xl"></i>
+                <div class="gradient-bg w-20 h-20 mx-auto rounded-3xl flex items-center justify-center mb-5 text-white shadow-xl">
+                  <i class="fas fa-cloud-upload-alt text-3xl"></i>
                 </div>
-                <h3 class="font-semibold text-gray-700 text-lg mb-1">Seret gambar ke sini</h3>
-                <p class="text-gray-500 text-sm mb-3">atau klik untuk memilih file</p>
-                <div class="inline-flex items-center px-4 py-1 bg-gray-100 rounded-full">
-                  <i class="fas fa-camera mr-2 text-blue-500"></i>
-                  <span class="text-xs text-gray-600">Format: JPG, PNG (Maks 5MB)</span>
+                <h3 class="font-semibold text-gray-700 text-xl mb-2">Seret gambar ke sini</h3>
+                <p class="text-gray-500 mb-4 text-sm">atau klik untuk memilih file</p>
+                <div class="inline-flex items-center px-5 py-2 bg-blue-100 rounded-full text-blue-700 font-medium">
+                  <i class="fas fa-camera mr-2"></i>
+                  <span class="text-sm">Format: JPG, PNG (Maks 5MB)</span>
                 </div>
               </div>
             </div>
-            <div id="previewContainer" class="hidden mb-6">
+            
+            <div id="previewContainer" class="hidden mb-6 bg-gray-50 rounded-xl p-4 border border-gray-200">
               <div class="flex justify-between items-center mb-3">
                 <span class="text-sm font-semibold text-gray-700 flex items-center">
                   <i class="fas fa-image mr-2 text-blue-500"></i>
                   Pratinjau Gambar
                 </span>
-                <button type="button" id="clearPreview" class="text-xs text-red-500 hover:text-red-600 flex items-center">
+                <button type="button" id="clearPreview" class="text-xs text-red-500 hover:text-red-600 flex items-center px-3 py-1 rounded-full bg-red-50 hover:bg-red-100 transition-colors">
                   <i class="fas fa-trash-alt mr-1"></i>
                   Hapus
                 </button>
               </div>
               <div class="relative">
-                <img id="previewImage" class="w-full max-h-72 object-contain rounded-lg border border-gray-200" alt="Pratinjau Gambar">
-                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-lg hidden" id="processingOverlay">
+                <img id="previewImage" class="w-full max-h-80 object-contain rounded-xl border-2 border-gray-200" alt="Pratinjau Gambar">
+                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 rounded-xl hidden" id="processingOverlay">
                   <div class="text-white text-center">
                     <div class="spinner rounded-full h-8 w-8 border-t-2 border-b-2 border-white mb-2 mx-auto animate-spin"></div>
-                    <p class="text-sm">Memproses...</p>
+                    <p class="text-sm">Memproses gambar...</p>
                   </div>
                 </div>
               </div>
             </div>
-            <button type="submit" id="submitBtn" class="w-full btn-primary font-semibold py-3 px-4 rounded-lg focus:outline-none flex items-center justify-center">
+            
+            <button type="submit" id="submitBtn" class="w-full gradient-bg hover:opacity-90 text-white font-semibold py-4 px-4 rounded-xl focus:outline-none transition-all duration-300 floating-btn flex items-center justify-center text-lg">
               <span id="submitText">
                 <i class="fas fa-robot mr-2"></i>
                 Selesaikan Soal
               </span>
-              <svg id="submitSpinner" class="hidden animate-spin ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg id="submitSpinner" class="hidden animate-spin ml-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             </button>
           </form>
         </div>
-        <!-- Features Section -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div class="card p-4 rounded-lg flex items-start">
-            <div class="bg-blue-100 p-2 rounded-lg mr-3 text-blue-600">
-              <i class="fas fa-bolt"></i>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+          <div class="glass-card p-5 rounded-xl flex items-start shadow-sm">
+            <div class="bg-blue-100 p-3 rounded-lg mr-4 text-blue-600">
+              <i class="fas fa-bolt text-xl"></i>
             </div>
             <div>
-              <h3 class="font-semibold text-gray-800">Cepat</h3>
-              <p class="text-xs text-gray-600">Solusi instan dalam hitungan detik</p>
+              <h3 class="font-semibold text-gray-800 text-lg">Cepat</h3>
+              <p class="text-sm text-gray-600">Solusi instan dalam hitungan detik</p>
             </div>
           </div>
-          <div class="card p-4 rounded-lg flex items-start">
-            <div class="bg-purple-100 p-2 rounded-lg mr-3 text-purple-600">
-              <i class="fas fa-list-ol"></i>
+          <div class="glass-card p-5 rounded-xl flex items-start shadow-sm">
+            <div class="bg-purple-100 p-3 rounded-lg mr-4 text-purple-600">
+              <i class="fas fa-list-ol text-xl"></i>
             </div>
             <div>
-              <h3 class="font-semibold text-gray-800">Langkah Demi Langkah</h3>
-              <p class="text-xs text-gray-600">Penjelasan detail setiap langkah</p>
+              <h3 class="font-semibold text-gray-800 text-lg">Langkah Demi Langkah</h3>
+              <p class="text-sm text-gray-600">Penjelasan detail setiap langkah</p>
             </div>
           </div>
-          <div class="card p-4 rounded-lg flex items-start">
-            <div class="bg-blue-100 p-2 rounded-lg mr-3 text-blue-600">
-              <i class="fas fa-infinity"></i>
+          <div class="glass-card p-5 rounded-xl flex items-start shadow-sm">
+            <div class="bg-pink-100 p-3 rounded-lg mr-4 text-pink-600">
+              <i class="fas fa-infinity text-xl"></i>
             </div>
             <div>
-              <h3 class="font-semibold text-gray-800">Multi Topik</h3>
-              <p class="text-xs text-gray-600">Aljabar, Geometri, Kalkulus, dll</p>
+              <h3 class="font-semibold text-gray-800 text-lg">Multi Topik</h3>
+              <p class="text-sm text-gray-600">Aljabar, Geometri, Kalkulus, dll</p>
             </div>
           </div>
         </div>
       </div>
-      <!-- Solution Section -->
+      
       <div class="lg:col-span-4">
-        <div class="card p-6 h-full">
+        <div class="glass-card p-8 h-full flex flex-col">
           <div class="flex items-center justify-between mb-6">
             <div>
-              <h2 class="text-xl font-bold text-gray-800">Solusi Matematika</h2>
+              <h2 class="text-2xl font-bold text-gray-800">Solusi Matematika</h2>
               <p class="text-sm text-gray-600">Hasil analisis akan muncul di sini</p>
             </div>
-            <div class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
-              <i class="fas fa-circle text-xs mr-1"></i>
+            <div class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium border border-blue-200">
+              <i class="fas fa-circle text-xs mr-1 animate-pulse"></i>
               AI Aktif
             </div>
           </div>
-          <div id="solutionContent" class="min-h-[300px]">
-            <div id="emptyState" class="flex flex-col items-center justify-center py-12 text-center">
-              <div class="bg-blue-100 rounded-lg p-4 mb-5 text-blue-600 shadow-md">
-                <i class="fas fa-lightbulb text-3xl"></i>
+          
+          <div id="solutionContent" class="flex-grow flex flex-col">
+            <div id="emptyState" class="flex flex-col items-center justify-center py-12 text-center flex-grow">
+              <div class="gradient-bg rounded-2xl p-5 mb-5 text-white shadow-xl">
+                <i class="fas fa-lightbulb text-4xl"></i>
               </div>
-              <h3 class="font-semibold text-gray-700 text-lg mb-2">Belum ada soal yang diunggah</h3>
+              <h3 class="font-semibold text-gray-700 text-xl mb-2">Belum ada soal yang diunggah</h3>
               <p class="text-gray-500 max-w-xs text-sm">Unggah gambar soal matematika untuk melihat solusi cerdas</p>
-              <div class="mt-4 flex space-x-2">
+              <div class="mt-6 flex space-x-2">
                 <div class="w-3 h-3 rounded-full bg-blue-200 animate-bounce" style="animation-delay: 0s"></div>
                 <div class="w-3 h-3 rounded-full bg-blue-300 animate-bounce" style="animation-delay: 0.2s"></div>
                 <div class="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style="animation-delay: 0.4s"></div>
               </div>
             </div>
-            <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12">
-              <div class="relative w-16 h-16 mb-5">
+            
+            <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12 flex-grow">
+              <div class="relative w-20 h-20 mb-5">
                 <div class="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-blue-500 border-b-transparent border-l-transparent animate-spin"></div>
-                <div class="absolute inset-2 rounded-full border-4 border-t-blue-400 border-r-blue-400 border-b-transparent border-l-transparent animate-spin" style="animation-direction: reverse"></div>
+                <div class="absolute inset-2 rounded-full border-4 border-t-purple-400 border-r-purple-400 border-b-transparent border-l-transparent animate-spin" style="animation-direction: reverse"></div>
               </div>
-              <p class="text-gray-600 font-medium">Menganalisis soal...</p>
+              <p class="text-gray-600 font-medium text-lg">Menganalisis soal...</p>
               <p class="text-xs text-gray-500 mt-1">Tunggu sebentar, AI sedang bekerja</p>
             </div>
-            <div id="solutionResult" class="hidden h-full">
+            
+            <div id="solutionResult" class="hidden h-full flex-grow flex flex-col">
               <div class="flex justify-between items-center mb-4">
-                <h3 class="font-semibold text-gray-800 flex items-center">
+                <h3 class="font-semibold text-gray-800 text-lg flex items-center">
                   <i class="fas fa-clipboard-list mr-2 text-blue-500"></i>
                   Detail Solusi
                 </h3>
                 <div class="flex space-x-2">
-                  <button id="copySolution" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-full flex items-center transition-colors">
+                  <button id="copySolution" class="text-sm bg-blue-50 text-blue-600 hover:bg-blue-100 px-4 py-2 rounded-full flex items-center transition-colors shadow-sm">
                     <i class="fas fa-copy mr-1"></i>
                     Salin
                   </button>
-                  <button id="downloadSolution" class="text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 px-3 py-1 rounded-full flex items-center transition-colors">
+                  <button id="downloadSolution" class="text-sm bg-gray-100 text-gray-600 hover:bg-gray-200 px-4 py-2 rounded-full flex items-center transition-colors shadow-sm">
                     <i class="fas fa-download mr-1"></i>
                     PDF
                   </button>
                 </div>
               </div>
-              <div id="solutionText" class="prose max-w-none solution-text-container bg-gray-50 rounded-lg p-4 max-h-[500px] overflow-y-auto"></div>
-              <div class="mt-4 pt-4 border-t border-gray-200">
+              <div id="solutionText" class="prose max-w-none solution-text-container bg-blue-50 rounded-xl p-5 max-h-[500px] overflow-y-auto border border-blue-100"></div>
+              
+              <div class="mt-6 pt-4 border-t border-gray-200">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center">
-                    <div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2">
-                      <i class="fas fa-thumbs-up text-sm"></i>
+                    <div class="w-9 h-9 rounded-full gradient-bg text-white flex items-center justify-center mr-3 shadow-md">
+                      <i class="fas fa-thumbs-up text-base"></i>
                     </div>
-                    <span class="text-sm text-gray-600">Apakah solusi ini membantu?</span>
+                    <span class="text-sm text-gray-600 font-medium">Apakah solusi ini membantu?</span>
                   </div>
-                  <div class="flex space-x-2">
-                    <button class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                  <div class="flex space-x-3">
+                    <button class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 flex items-center justify-center transition-colors shadow-sm">
                       <i class="fas fa-thumbs-up"></i>
                     </button>
-                    <button class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors">
+                    <button class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 flex items-center justify-center transition-colors shadow-sm">
                       <i class="fas fa-thumbs-down"></i>
                     </button>
                   </div>
@@ -536,20 +580,19 @@
     </div>
   </main>
 
-  <!-- Floating Help Button -->
-  <button class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-purple-500 text-white shadow-lg flex items-center justify-center btn-secondary z-40">
-    <i class="fas fa-question text-xl"></i>
+  <button class="fixed bottom-8 right-8 w-16 h-16 rounded-full gradient-bg text-white shadow-xl flex items-center justify-center floating-btn z-40">
+    <i class="fas fa-question text-2xl"></i>
   </button>
 
-  <!-- Modern Toast Notification -->
-  <div id="toastContainer" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 space-y-2 z-50 w-full max-w-xs sm:max-w-md px-4"></div>
+  <div id="toastContainer" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 space-y-3 z-50 w-full max-w-sm sm:max-w-lg px-4"></div>
 
   <script>
-    // JavaScript tetap sama, tidak diubah karena terkait backend
+    // Validate JWT token format
     function isValidJwt(token) {
       return token && typeof token === 'string' && token.match(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/);
     }
 
+    // Check authentication
     let token = new URLSearchParams(window.location.search).get('token') || localStorage.getItem('token');
     if (!isValidJwt(token)) {
       localStorage.removeItem('token');
@@ -558,6 +601,7 @@
       localStorage.setItem('token', token);
     }
 
+    // DOM Elements
     const profileBtn = document.getElementById('profileBtn');
     const profileDropdown = document.getElementById('profileDropdown');
     const socialMenuBtn = document.getElementById('socialMenuBtn');
@@ -589,11 +633,13 @@
     const logoutBtn = document.getElementById('logoutBtn');
     const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
 
+    // Load user profile
     async function loadProfile() {
       try {
         const res = await fetch('/api/auth/profile', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        
         if (!res.ok) {
           if (res.status === 401 || res.status === 403 || res.status === 400) {
             localStorage.removeItem('token');
@@ -601,6 +647,7 @@
           }
           throw new Error('Failed to load profile');
         }
+        
         const data = await res.json();
         if (data.name && data.email) {
           document.getElementById('profileInitial').textContent = data.name.charAt(0).toUpperCase();
@@ -617,42 +664,49 @@
       }
     }
 
-    async function deleteAccount() {
-      if (!confirm('Apakah Anda yakin ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data Anda.')) {
-        return;
-      }
-      try {
-        const res = await fetch('/api/auth/delete-account', {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) {
-          if (res.status === 401 || res.status === 403 || res.status === 400) {
-            localStorage.removeItem('token');
-            window.location.href = '/login.html';
-          }
-          const data = await res.json();
-          throw new Error(data.error || 'Failed to delete account');
-        }
-        showToast('Akun Anda telah dihapus', 'success');
+    // Delete account
+async function deleteAccount() {
+  if (!confirm('Apakah Anda yakin ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data Anda.')) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/auth/delete-account', {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      if (res.status === 401 || res.status === 403 || res.status === 400) {
         localStorage.removeItem('token');
-        setTimeout(() => {
-          window.location.href = '/login.html';
-        }, 1000);
-      } catch (err) {
-        console.error('Delete account error:', err);
-        showToast(err.message || 'Gagal menghapus akun', 'error');
+        window.location.href = '/login.html';
       }
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to delete account');
     }
 
-    document.getElementById('deleteAccountBtn').addEventListener('click', deleteAccount);
-    document.getElementById('mobileDeleteAccountBtn').addEventListener('click', deleteAccount);
+    showToast('Akun Anda telah dihapus', 'success');
+    localStorage.removeItem('token');
+    setTimeout(() => {
+      window.location.href = '/login.html';
+    }, 1000);
+  } catch (err) {
+    console.error('Delete account error:', err);
+    showToast(err.message || 'Gagal menghapus akun', 'error');
+  }
+}
 
+// Add delete account button listeners
+document.getElementById('deleteAccountBtn').addEventListener('click', deleteAccount);
+document.getElementById('mobileDeleteAccountBtn').addEventListener('click', deleteAccount);
+
+    // Load social users
     async function loadSocialUsers() {
       try {
         const res = await fetch('/api/social/users', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        
         if (!res.ok) {
           if (res.status === 401 || res.status === 403 || res.status === 400) {
             localStorage.removeItem('token');
@@ -660,26 +714,30 @@
           }
           throw new Error('Failed to load users');
         }
+        
         const users = await res.json();
         userList.innerHTML = '';
+        
         if (users.length === 0) {
           userList.innerHTML = '<p class="px-4 py-2 text-sm text-gray-500">Tidak ada pengguna lain ditemukan</p>';
         } else {
           users.forEach(user => {
             const userItem = document.createElement('div');
-            userItem.className = 'px-4 py-2 hover:bg-blue-50 flex items-center justify-between';
+            userItem.className = 'px-4 py-2 hover:bg-blue-50 flex items-center justify-between profile-dropdown-item';
             userItem.innerHTML = `
               <div>
                 <p class="text-sm font-semibold text-gray-800">${user.display_name}</p>
                 <p class="text-xs text-gray-500 truncate">${user.email}</p>
               </div>
-              <button class="connect-btn text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-full flex items-center transition-colors" data-email="${user.email}">
+              <button class="connect-btn text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-full flex items-center transition-colors">
                 <i class="fas fa-user-plus mr-1"></i>
                 Hubungi
               </button>
             `;
             userList.appendChild(userItem);
           });
+          
+          // Add connect button listeners
           document.querySelectorAll('.connect-btn').forEach(btn => {
             btn.addEventListener('click', () => {
               const email = btn.dataset.email;
@@ -693,6 +751,7 @@
       }
     }
 
+    // Toggle profile dropdown
     profileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       profileDropdown.classList.toggle('hidden');
@@ -700,6 +759,7 @@
       hamburgerMenu.classList.add('hidden');
     });
 
+    // Toggle social dropdown
     socialMenuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       socialDropdown.classList.toggle('hidden');
@@ -715,6 +775,7 @@
       loadSocialUsers();
     });
 
+    // Toggle hamburger menu
     hamburgerBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       hamburgerMenu.classList.toggle('hidden');
@@ -726,6 +787,7 @@
       hamburgerMenu.classList.add('hidden');
     });
 
+    // Handle logout
     function handleLogout() {
       localStorage.removeItem('token');
       window.location.href = '/login.html';
@@ -734,14 +796,16 @@
     logoutBtn.addEventListener('click', handleLogout);
     mobileLogoutBtn.addEventListener('click', handleLogout);
 
+    // Close dropdowns when clicking outside
     document.addEventListener('click', () => {
       profileDropdown.classList.add('hidden');
       socialDropdown.classList.add('hidden');
       hamburgerMenu.classList.add('hidden');
     });
 
+    // File upload handling
     dropZone.addEventListener('click', () => fileInput.click());
-
+    
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
       dropZone.addEventListener(eventName, preventDefaults, false);
     });
@@ -754,14 +818,16 @@
     ['dragenter', 'dragover'].forEach(eventName => {
       dropZone.addEventListener(eventName, () => {
         dropZone.classList.add('drop-zone-active');
-        dropZone.classList.add('border-blue-400');
+        dropZone.classList.add('border-blue-500');
+        dropZone.classList.add('bg-blue-50');
       }, false);
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
       dropZone.addEventListener(eventName, () => {
         dropZone.classList.remove('drop-zone-active');
-        dropZone.classList.remove('border-blue-400');
+        dropZone.classList.remove('border-blue-500');
+        dropZone.classList.remove('bg-blue-50');
       }, false);
     });
 
@@ -793,12 +859,15 @@
         showToast('Hanya file gambar yang diperbolehkan', 'error');
         return;
       }
+      
       if (file.size > 5 * 1024 * 1024) {
         showToast('Ukuran file terlalu besar. Maksimum 5MB.', 'error');
         fileInput.value = '';
         return;
       }
+      
       processingOverlay.classList.remove('hidden');
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         previewImage.src = e.target.result;
@@ -810,28 +879,36 @@
       reader.readAsDataURL(file);
     }
 
+    // Form submission
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      
       const imageFile = fileInput.files[0];
       if (!imageFile) {
         showToast('Pilih gambar terlebih dahulu', 'error');
         return;
       }
+
       emptyState.classList.add('hidden');
       solutionResult.classList.add('hidden');
       loadingState.classList.remove('hidden');
+      
       submitBtn.disabled = true;
       submitText.innerHTML = '<i class="fas fa-cog animate-spin mr-2"></i> Memproses...';
       submitSpinner.classList.remove('hidden');
+
       const formData = new FormData();
       formData.append('image', imageFile);
+
       try {
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` },
           body: formData
         });
+        
         const data = await res.json();
+        
         if (!res.ok) {
           if (res.status === 401 || res.status === 403 || res.status === 400) {
             localStorage.removeItem('token');
@@ -839,16 +916,20 @@
           }
           throw new Error(data.error || 'Server error');
         }
+
         loadingState.classList.add('hidden');
         solutionText.innerHTML = data.formatted_response || data.response;
         solutionResult.classList.remove('hidden');
         solutionResult.classList.add('fade-in');
+        
         if (data.usage) {
           updateUsageDisplay(data.usage.used, data.usage.limit);
         }
+        
         if (data.warning) {
           showToast(data.warning, 'warning');
         }
+        
         if (window.MathJax) {
           MathJax.typesetPromise();
         }
@@ -864,6 +945,7 @@
       }
     });
 
+    // Copy solution
     copySolutionBtn.addEventListener('click', () => {
       const solution = solutionText.textContent;
       navigator.clipboard.writeText(solution).then(() => {
@@ -874,102 +956,93 @@
       });
     });
 
+    // Download as PDF (mock functionality)
     document.getElementById('downloadSolution').addEventListener('click', () => {
       showToast('Fitur ekspor PDF akan segera hadir!', 'info');
     });
 
+    // Update usage display
     function updateUsageDisplay(used, limit) {
       const percentage = Math.round((used / limit) * 100);
       const usageText = `${used} dari ${limit} (${percentage}%)`;
       usageDisplay.textContent = usageText;
       mobileUsageText.textContent = usageText;
       document.getElementById('mobileHamburgerUsageText').textContent = usageText;
-      if (percentage >= 80) {
-        usageDisplay.classList.add('text-red-500');
-        usageDisplay.classList.remove('text-blue-700');
-        mobileUsageText.classList.add('text-red-500');
-        mobileUsageText.classList.remove('text-blue-700');
-        document.getElementById('mobileHamburgerUsageText').classList.add('text-red-500');
-        document.getElementById('mobileHamburgerUsageText').classList.remove('text-blue-700');
-      } else {
-        usageDisplay.classList.remove('text-red-500');
-        usageDisplay.classList.add('text-blue-700');
-        mobileUsageText.classList.remove('text-red-500');
-        mobileUsageText.classList.add('text-blue-700');
-        document.getElementById('mobileHamburgerUsageText').classList.remove('text-red-500');
-        document.getElementById('mobileHamburgerUsageText').classList.add('text-blue-700');
-      }
+      
+      const usageElements = [usageDisplay, mobileUsageText, document.getElementById('mobileHamburgerUsageText')];
+      
+      usageElements.forEach(el => {
+        if (percentage >= 80) {
+          el.classList.add('text-red-500');
+          el.classList.remove('text-blue-700');
+        } else {
+          el.classList.remove('text-red-500');
+          el.classList.add('text-blue-700');
+        }
+      });
     }
 
+    // Show modern toast notification
     function showToast(message, type = 'info') {
       const toastContainer = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      toast.className = 'flex items-center w-full p-4 rounded-lg shadow-lg text-white overflow-hidden transform transition-all duration-300 slide-in';
+      
+      toast.className = 'flex items-center w-full p-4 rounded-lg shadow-lg text-white overflow-hidden transform transition-all duration-300 opacity-0'; /* Start hidden */
+      
+      let iconClass = '';
+      let bgColorClass = '';
+
       if (type === 'error') {
-        toast.className += ' bg-red-500';
-        toast.innerHTML = `
-          <div class="mr-3 flex-shrink-0">
-            <i class="fas fa-exclamation-circle text-xl"></i>
-          </div>
-          <div class="flex-grow">
-            ${message}
-          </div>
-          <button class="ml-3 text-white opacity-70 hover:opacity-100">
-            <i class="fas fa-times"></i>
-          </button>
-        `;
+        bgColorClass = 'bg-red-500';
+        iconClass = 'fas fa-exclamation-circle';
       } else if (type === 'success') {
-        toast.className += ' bg-green-500';
-        toast.innerHTML = `
-          <div class="mr-3 flex-shrink-0">
-            <i class="fas fa-check-circle text-xl"></i>
-          </div>
-          <div class="flex-grow">
-            ${message}
-          </div>
-          <button class="ml-3 text-white opacity-70 hover:opacity-100">
-            <i class="fas fa-times"></i>
-          </button>
-        `;
+        bgColorClass = 'bg-green-500';
+        iconClass = 'fas fa-check-circle';
       } else if (type === 'warning') {
-        toast.className += ' bg-yellow-500';
-        toast.innerHTML = `
-          <div class="mr-3 flex-shrink-0">
-            <i class="fas fa-exclamation-triangle text-xl"></i>
-          </div>
-          <div class="flex-grow">
-            ${message}
-          </div>
-          <button class="ml-3 text-white opacity-70 hover:opacity-100">
-            <i class="fas fa-times"></i>
-          </button>
-        `;
-      } else {
-        toast.className += ' bg-blue-500';
-        toast.innerHTML = `
-          <div class="mr-3 flex-shrink-0">
-            <i class="fas fa-info-circle text-xl"></i>
-          </div>
-          <div class="flex-grow">
-            ${message}
-          </div>
-          <button class="ml-3 text-white opacity-70 hover:opacity-100">
-            <i class="fas fa-times"></i>
-          </button>
-        `;
+        bgColorClass = 'bg-yellow-500';
+        iconClass = 'fas fa-exclamation-triangle';
+      } else { /* info */
+        bgColorClass = 'bg-blue-500';
+        iconClass = 'fas fa-info-circle';
       }
+      
+      toast.classList.add(bgColorClass);
+      toast.innerHTML = `
+        <div class="mr-3 flex-shrink-0">
+          <i class="${iconClass} text-xl"></i>
+        </div>
+        <div class="flex-grow text-sm font-medium">
+          ${message}
+        </div>
+        <button class="ml-3 text-white opacity-70 hover:opacity-100">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      
       const closeBtn = toast.querySelector('button');
       closeBtn.addEventListener('click', () => {
-        toast.classList.add('opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-4', 'opacity-0');
         setTimeout(() => toast.remove(), 300);
       });
+      
       toastContainer.appendChild(toast);
+      
+      // Animate in
       setTimeout(() => {
-        toast.classList.add('opacity-0');
+        toast.classList.remove('opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+      }, 10); // Small delay to allow render before animation
+
+      // Animate out after 3 seconds
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-4', 'opacity-0');
         setTimeout(() => toast.remove(), 300);
       }, 3000);
     }
 
+    // Initialize
     loadProfile();
     updateUsageDisplay(0, 10);
   </script>
