@@ -7,153 +7,132 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #6C63FF;
-      --primary-light: #8B85FF;
-      --primary-dark: #534BC7;
-      --secondary: #FF6584;
-      --dark: #1A1A2E;
-      --light: #F8F9FF;
-      --gray: #E2E8F0;
-      --dark-gray: #94A3B8;
+      --white: #FFFFFF;
+      --blue: #3B82F6; /* Blue-500 */
+      --blue-dark: #1E40AF; /* Blue-800 */
+      --purple: #8B5CF6; /* Purple-500 */
+      --purple-dark: #6D28D9; /* Purple-700 */
+      --gray: #E5E7EB; /* Gray-200 */
+      --dark-gray: #6B7280; /* Gray-500 */
+      --dark: #111827; /* Gray-900 */
     }
-    
+
     body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: var(--light);
+      font-family: 'Inter', sans-serif;
+      background-color: var(--white);
       color: var(--dark);
       overflow-x: hidden;
     }
 
-    .glass-card {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+    .card {
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid var(--gray);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
     }
 
     ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
     }
 
     ::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.05);
+      background: var(--gray);
     }
 
     ::-webkit-scrollbar-thumb {
-      background: var(--primary);
-      border-radius: 10px;
+      background: var(--blue);
+      border-radius: 6px;
     }
 
     .math-solution {
       font-family: 'Inter', sans-serif;
-      line-height: 1.6;
-      color: #374151;
+      line-height: 1.7;
+      color: var(--dark);
       word-break: break-word;
       overflow-wrap: anywhere;
       white-space: normal;
       max-width: 100%;
-      overflow-x: hidden;
-      padding: 0.5rem;
-      box-sizing: border-box;
-      font-size: 1.05rem;
+      padding: 1rem;
+      font-size: 1rem;
     }
 
     .math-solution h2 {
-      font-size: 1.75rem;
-      font-weight: 600;
-      color: #1f2937;
-      margin-bottom: 1rem;
-      max-width: 100%;
-      overflow-x: hidden;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 1.5rem;
     }
 
     .math-solution h3 {
-      font-size: 1.5rem;
+      font-size: 1.25rem;
       font-weight: 600;
-      color: #1f2937;
+      color: var(--dark);
       margin: 1.5rem 0 1rem;
-      max-width: 100%;
-      overflow-x: hidden;
     }
 
     .math-solution p {
       margin-bottom: 1rem;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-      max-width: 100%;
-      overflow-x: hidden;
-      font-size: 1.05rem;
+      font-size: 1rem;
     }
 
     .solution-step {
       position: relative;
       padding-left: 2rem;
       margin-bottom: 1.5rem;
-      word-break: break-word;
-      overflow-wrap: anywhere;
-      max-width: 100%;
-      overflow-x: hidden;
     }
 
     .solution-step .step-number {
       position: absolute;
       left: 0;
       top: 0;
-      color: var(--primary);
+      color: var(--blue);
       font-weight: 600;
     }
 
     .math-step {
       margin-bottom: 1.5rem;
       padding-left: 1.5rem;
-      border-left: 3px solid var(--primary);
-      max-width: 100%;
-      overflow-x: hidden;
+      border-left: 3px solid var(--blue);
     }
 
     .math-step-header {
       font-weight: 600;
-      color: var(--primary);
+      color: var(--blue);
       margin-bottom: 0.5rem;
-      max-width: 100%;
-      overflow-x: hidden;
     }
 
     .math-expression {
-      display: inline-block;
-      margin: 0.5rem 0;
-      padding: 0.5rem;
-      background-color: #f3f4f6;
-      border-radius: 0.375rem;
+      display: block;
+      margin: 0.75rem 0;
+      padding: 1rem;
+      background-color: var(--gray);
+      border-radius: 8px;
       font-family: 'Times New Roman', serif;
       word-break: break-word;
-      overflow-wrap: anywhere;
-      max-width: 100%;
       overflow-x: auto;
       white-space: nowrap;
-      box-sizing: border-box;
     }
 
     .math-section {
       margin-bottom: 2rem;
-      max-width: 100%;
-      overflow-x: hidden;
     }
 
     .math-section-title {
       font-weight: 600;
-      color: #1f2937;
+      color: var(--dark);
       margin-bottom: 0.75rem;
       padding-bottom: 0.25rem;
-      border-bottom: 1px solid #e5e7eb;
-      max-width: 100%;
-      overflow-x: hidden;
+      border-bottom: 1px solid var(--gray);
     }
 
     .MathJax, .MathJax_Display {
@@ -163,30 +142,24 @@
       overflow-wrap: break-word !important;
       word-break: break-all !important;
       overflow-x: auto !important;
-      box-sizing: border-box !important;
-      padding: 0.2rem !important;
-      font-size: 1em !important;
+      padding: 0.3rem !important;
+      font-size: 1rem !important;
     }
 
     .solution-text-container {
       max-width: 100%;
       overflow-x: hidden;
       word-break: break-word;
-      overflow-wrap: anywhere;
-      padding: 0.5rem;
-      box-sizing: border-box;
+      padding: 1rem;
     }
 
     @media (max-width: 768px) {
       .MathJax, .MathJax_Display {
-        font-size: 0.9em !important;
-        max-width: 100% !important;
-        overflow-x: auto !important;
-        display: inline-block !important;
+        font-size: 0.95rem !important;
       }
       .math-solution {
         font-size: 0.95rem;
-        padding: 0.5rem;
+        padding: 0.75rem;
       }
       .math-solution p {
         font-size: 0.95rem;
@@ -195,7 +168,7 @@
         padding-left: 1.5rem;
       }
       .math-expression {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         white-space: normal;
         overflow-x: auto;
       }
@@ -203,39 +176,53 @@
 
     @media (max-width: 480px) {
       .MathJax, .MathJax_Display {
-        font-size: 0.85em !important;
+        font-size: 0.9rem !important;
       }
       .math-solution {
         font-size: 0.9rem;
       }
       .math-solution h2 {
-        font-size: 1.5rem;
-      }
-      .math-solution h3 {
         font-size: 1.3rem;
       }
+      .math-solution h3 {
+        font-size: 1.2rem;
+      }
       .math-expression {
-        font-size: 0.85rem;
+        font-size: 0.9rem;
       }
     }
 
-    .gradient-bg {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    .btn-primary {
+      background: var(--blue);
+      color: var(--white);
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: background 0.3s ease, transform 0.3s ease;
     }
 
-    .floating-btn {
-      box-shadow: 0 10px 25px -5px rgba(108, 99, 255, 0.4);
-      transition: all 0.3s ease;
-    }
-
-    .floating-btn:hover {
+    .btn-primary:hover {
+      background: var(--blue-dark);
       transform: translateY(-2px);
-      box-shadow: 0 15px 30px -5px rgba(108, 99, 255, 0.5);
+    }
+
+    .btn-secondary {
+      background: var(--purple);
+      color: var(--white);
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+
+    .btn-secondary:hover {
+      background: var(--purple-dark);
+      transform: translateY(-2px);
     }
 
     .drop-zone-active {
-      border-color: var(--primary) !important;
-      background-color: rgba(108, 99, 255, 0.05) !important;
+      border-color: var(--blue) !important;
+      background-color: rgba(59, 130, 246, 0.05) !important;
     }
 
     .pulse-animation {
@@ -243,13 +230,13 @@
     }
 
     @keyframes pulse {
-      0% { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(108, 99, 255, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0); }
+      0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
     }
 
     .slide-in {
-      animation: slideIn 0.5s forwards;
+      animation: slideIn 0.5s ease-out forwards;
     }
 
     @keyframes slideIn {
@@ -280,64 +267,56 @@
     }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
+<body class="min-h-screen">
   <!-- Header -->
-  <header class="sticky top-0 z-50">
-    <div class="container mx-auto px-4 py-3">
-      <nav class="flex items-center justify-between glass-card px-6 py-3">
+  <header class="sticky top-0 z-50 bg-white">
+    <div class="container mx-auto px-4 py-4">
+      <nav class="flex items-center justify-between card px-6 py-4">
         <div class="flex items-center space-x-3">
-          <div class="gradient-bg p-2 rounded-xl text-white">
+          <div class="bg-blue-100 p-2 rounded-lg text-blue-600">
             <i class="fas fa-square-root-alt text-xl"></i>
           </div>
-          <h1 class="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">MathSolve AI</h1>
+          <h1 class="text-xl font-bold text-blue-600">MathSolve AI</h1>
         </div>
-        
         <div class="flex items-center space-x-4 desktop-nav">
-          <div id="desktopUsageDisplay" class="hidden md:flex items-center space-x-2 bg-indigo-50 px-3 py-1 rounded-full">
-            <span id="usageDisplay" class="text-xs font-medium text-indigo-700"></span>
-            <div class="w-2 h-2 rounded-full bg-indigo-500 pulse-animation"></div>
+          <div id="desktopUsageDisplay" class="hidden md:flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-full">
+            <span id="usageDisplay" class="text-xs font-medium text-blue-700"></span>
+            <div class="w-2 h-2 rounded-full bg-blue-500 pulse-animation"></div>
           </div>
-          
           <div class="relative">
             <button id="profileBtn" class="flex items-center focus:outline-none">
-              <div class="w-9 h-9 rounded-full gradient-bg text-white flex items-center justify-center font-medium shadow-md">
+              <div class="w-9 h-9 rounded-full bg-blue-500 text-white flex items-center justify-center font-medium shadow-md">
                 <span id="profileInitial">U</span>
               </div>
             </button>
-            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100">
+            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-100">
               <div class="px-4 py-3 border-b border-gray-100">
                 <p class="text-sm font-semibold text-gray-800" id="profileName"></p>
                 <p class="text-xs text-gray-500 truncate" id="profileEmail"></p>
                 <div id="mobileUsageDisplay" class="flex items-center space-x-2 mt-2 md:hidden">
-                  <span id="mobileUsageText" class="text-xs font-medium text-indigo-700"></span>
-                  <div class="w-2 h-2 rounded-full bg-indigo-500 pulse-animation"></div>
+                  <span id="mobileUsageText" class="text-xs font-medium text-blue-700"></span>
+                  <div class="w-2 h-2 rounded-full bg-blue-500 pulse-animation"></div>
                 </div>
               </div>
-              <a href="/history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-                <i class="fas fa-history mr-2 text-gray-400"></i>
+              <a href="/history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
+                <i class="fas fa-history mr-2 text-blue-400"></i>
                 Riwayat
               </a>
-              <button id="socialMenuBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-                <i class="fas fa-users mr-2 text-gray-400"></i>
+              <button id="socialMenuBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
+                <i class="fas fa-users mr-2 text-blue-400"></i>
                 Bersosialisasi
               </button>
-              <a href="/api/auth/logout" id="logoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-                <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
+              <a href="/api/auth/logout" id="logoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
+                <i class="fas fa-sign-out-alt mr-2 text-blue-400"></i>
                 Logout
               </a>
               <button id="deleteAccountBtn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
                 <i class="fas fa-trash-alt mr-2 text-red-400"></i>
                 Hapus Akun
               </button>
-            
-              <a href="/api/auth/logout" id="logoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-                <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
-                Logout
-              </a>
             </div>
           </div>
         </div>
-
         <button id="hamburgerBtn" class="hamburger-menu md:hidden focus:outline-none">
           <i class="fas fa-bars text-2xl text-gray-700"></i>
         </button>
@@ -347,7 +326,7 @@
 
   <!-- Hamburger Menu Dropdown -->
   <div id="hamburgerMenu" class="hidden md:hidden fixed top-0 left-0 w-full h-full bg-gray-900 bg-opacity-50 z-50">
-    <div class="bg-white w-64 h-full p-4">
+    <div class="bg-white w-64 h-full p-4 card">
       <button id="closeHamburgerBtn" class="mb-4">
         <i class="fas fa-times text-2xl text-gray-700"></i>
       </button>
@@ -355,24 +334,24 @@
         <p class="text-sm font-semibold text-gray-800" id="mobileProfileName"></p>
         <p class="text-xs text-gray-500 truncate" id="mobileProfileEmail"></p>
         <div class="flex items-center space-x-2 mt-2">
-          <span id="mobileHamburgerUsageText" class="text-xs font-medium text-indigo-700"></span>
-          <div class="w-2 h-2 rounded-full bg-indigo-500 pulse-animation"></div>
+          <span id="mobileHamburgerUsageText" class="text-xs font-medium text-blue-700"></span>
+          <div class="w-2 h-2 rounded-full bg-blue-500 pulse-animation"></div>
         </div>
       </div>
-      <a href="/dashboard.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-        <i class="fas fa-home mr-2 text-gray-400"></i>
+      <a href="/dashboard.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
+        <i class="fas fa-home mr-2 text-blue-400"></i>
         Dashboard
       </a>
-      <a href="/history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-        <i class="fas fa-history mr-2 text-gray-400"></i>
+      <a href="/history.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
+        <i class="fas fa-history mr-2 text-blue-400"></i>
         Riwayat
       </a>
-      <button id="mobileSocialMenuBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-        <i class="fas fa-users mr-2 text-gray-400"></i>
+      <button id="mobileSocialMenuBtn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
+        <i class="fas fa-users mr-2 text-blue-400"></i>
         Bersosialisasi
       </button>
-      <a href="/api/auth/logout" id="mobileLogoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center">
-        <i class="fas fa-sign-out-alt mr-2 text-gray-400"></i>
+      <a href="/api/auth/logout" id="mobileLogoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 flex items-center">
+        <i class="fas fa-sign-out-alt mr-2 text-blue-400"></i>
         Logout
       </a>
       <button id="mobileDeleteAccountBtn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center">
@@ -383,14 +362,12 @@
   </div>
 
   <!-- Social Menu Dropdown -->
-  <div id="socialDropdown" class="hidden fixed top-16 right-4 w-72 bg-white rounded-xl shadow-xl py-2 z-50 border border-gray-100">
+  <div id="socialDropdown" class="hidden fixed top-16 right-4 w-72 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-100">
     <div class="px-4 py-3 border-b border-gray-100">
       <h3 class="text-sm font-semibold text-gray-800">Bersosialisasi dengan Pengguna</h3>
       <p class="text-xs text-gray-500">Temukan dan hubungi pengguna lain</p>
     </div>
-    <div id="userList" class="max-h-64 overflow-y-auto">
-      <!-- User list will be populated here -->
-    </div>
+    <div id="userList" class="max-h-64 overflow-y-auto"></div>
   </div>
 
   <!-- Main Content -->
@@ -398,32 +375,30 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
       <!-- Upload Section -->
       <div class="lg:col-span-8">
-        <div class="glass-card p-6 slide-in">
+        <div class="card p-6 slide-in">
           <div class="mb-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-2">Pemecah Masalah Matematika</h2>
-            <p class="text-gray-600">Unggah soal matematika dan dapatkan solusi langkah demi langkah dengan AI canggih</p>
+            <p class="text-gray-600 text-sm">Unggah soal matematika dan dapatkan solusi langkah demi langkah dengan AI canggih</p>
           </div>
-          
           <form id="uploadForm">
-            <div id="dropZone" class="drop-zone border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center mb-6 cursor-pointer transition-all duration-300 hover:border-indigo-400">
+            <div id="dropZone" class="drop-zone border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6 cursor-pointer transition-all duration-300 hover:border-blue-400">
               <input type="file" id="fileInput" accept="image/*" class="hidden">
               <div class="max-w-md mx-auto">
-                <div class="gradient-bg w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg">
+                <div class="bg-blue-100 w-16 h-16 mx-auto rounded-lg flex items-center justify-center mb-4 text-blue-600 shadow-md">
                   <i class="fas fa-cloud-upload-alt text-2xl"></i>
                 </div>
                 <h3 class="font-semibold text-gray-700 text-lg mb-1">Seret gambar ke sini</h3>
-                <p class="text-gray-500 mb-3">atau klik untuk memilih file</p>
-                <div class="inline-flex items-center px-4 py-2 bg-gray-100 rounded-full">
-                  <i class="fas fa-camera mr-2 text-indigo-500"></i>
+                <p class="text-gray-500 text-sm mb-3">atau klik untuk memilih file</p>
+                <div class="inline-flex items-center px-4 py-1 bg-gray-100 rounded-full">
+                  <i class="fas fa-camera mr-2 text-blue-500"></i>
                   <span class="text-xs text-gray-600">Format: JPG, PNG (Maks 5MB)</span>
                 </div>
               </div>
             </div>
-            
             <div id="previewContainer" class="hidden mb-6">
               <div class="flex justify-between items-center mb-3">
                 <span class="text-sm font-semibold text-gray-700 flex items-center">
-                  <i class="fas fa-image mr-2 text-indigo-500"></i>
+                  <i class="fas fa-image mr-2 text-blue-500"></i>
                   Pratinjau Gambar
                 </span>
                 <button type="button" id="clearPreview" class="text-xs text-red-500 hover:text-red-600 flex items-center">
@@ -432,8 +407,8 @@
                 </button>
               </div>
               <div class="relative">
-                <img id="previewImage" class="w-full max-h-72 object-contain rounded-xl border-2 border-gray-200" alt="Pratinjau Gambar">
-                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-xl hidden" id="processingOverlay">
+                <img id="previewImage" class="w-full max-h-72 object-contain rounded-lg border border-gray-200" alt="Pratinjau Gambar">
+                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-lg hidden" id="processingOverlay">
                   <div class="text-white text-center">
                     <div class="spinner rounded-full h-8 w-8 border-t-2 border-b-2 border-white mb-2 mx-auto animate-spin"></div>
                     <p class="text-sm">Memproses...</p>
@@ -441,8 +416,7 @@
                 </div>
               </div>
             </div>
-            
-            <button type="submit" id="submitBtn" class="w-full gradient-bg hover:opacity-90 text-white font-semibold py-3 px-4 rounded-xl focus:outline-none transition-all duration-300 floating-btn flex items-center justify-center">
+            <button type="submit" id="submitBtn" class="w-full btn-primary font-semibold py-3 px-4 rounded-lg focus:outline-none flex items-center justify-center">
               <span id="submitText">
                 <i class="fas fa-robot mr-2"></i>
                 Selesaikan Soal
@@ -454,11 +428,10 @@
             </button>
           </form>
         </div>
-
         <!-- Features Section -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          <div class="glass-card p-4 rounded-xl flex items-start">
-            <div class="bg-indigo-100 p-2 rounded-lg mr-3 text-indigo-600">
+          <div class="card p-4 rounded-lg flex items-start">
+            <div class="bg-blue-100 p-2 rounded-lg mr-3 text-blue-600">
               <i class="fas fa-bolt"></i>
             </div>
             <div>
@@ -466,7 +439,7 @@
               <p class="text-xs text-gray-600">Solusi instan dalam hitungan detik</p>
             </div>
           </div>
-          <div class="glass-card p-4 rounded-xl flex items-start">
+          <div class="card p-4 rounded-lg flex items-start">
             <div class="bg-purple-100 p-2 rounded-lg mr-3 text-purple-600">
               <i class="fas fa-list-ol"></i>
             </div>
@@ -475,8 +448,8 @@
               <p class="text-xs text-gray-600">Penjelasan detail setiap langkah</p>
             </div>
           </div>
-          <div class="glass-card p-4 rounded-xl flex items-start">
-            <div class="bg-pink-100 p-2 rounded-lg mr-3 text-pink-600">
+          <div class="card p-4 rounded-lg flex items-start">
+            <div class="bg-blue-100 p-2 rounded-lg mr-3 text-blue-600">
               <i class="fas fa-infinity"></i>
             </div>
             <div>
@@ -486,52 +459,48 @@
           </div>
         </div>
       </div>
-      
       <!-- Solution Section -->
       <div class="lg:col-span-4">
-        <div class="glass-card p-6 h-full">
+        <div class="card p-6 h-full">
           <div class="flex items-center justify-between mb-6">
             <div>
               <h2 class="text-xl font-bold text-gray-800">Solusi Matematika</h2>
               <p class="text-sm text-gray-600">Hasil analisis akan muncul di sini</p>
             </div>
-            <div class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-medium">
+            <div class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium">
               <i class="fas fa-circle text-xs mr-1"></i>
               AI Aktif
             </div>
           </div>
-          
           <div id="solutionContent" class="min-h-[300px]">
             <div id="emptyState" class="flex flex-col items-center justify-center py-12 text-center">
-              <div class="gradient-bg rounded-2xl p-4 mb-5 text-white shadow-lg">
+              <div class="bg-blue-100 rounded-lg p-4 mb-5 text-blue-600 shadow-md">
                 <i class="fas fa-lightbulb text-3xl"></i>
               </div>
               <h3 class="font-semibold text-gray-700 text-lg mb-2">Belum ada soal yang diunggah</h3>
               <p class="text-gray-500 max-w-xs text-sm">Unggah gambar soal matematika untuk melihat solusi cerdas</p>
               <div class="mt-4 flex space-x-2">
-                <div class="w-3 h-3 rounded-full bg-indigo-200 animate-bounce" style="animation-delay: 0s"></div>
-                <div class="w-3 h-3 rounded-full bg-indigo-300 animate-bounce" style="animation-delay: 0.2s"></div>
-                <div class="w-3 h-3 rounded-full bg-indigo-400 animate-bounce" style="animation-delay: 0.4s"></div>
+                <div class="w-3 h-3 rounded-full bg-blue-200 animate-bounce" style="animation-delay: 0s"></div>
+                <div class="w-3 h-3 rounded-full bg-blue-300 animate-bounce" style="animation-delay: 0.2s"></div>
+                <div class="w-3 h-3 rounded-full bg-blue-400 animate-bounce" style="animation-delay: 0.4s"></div>
               </div>
             </div>
-            
             <div id="loadingState" class="hidden flex flex-col items-center justify-center py-12">
               <div class="relative w-16 h-16 mb-5">
-                <div class="absolute inset-0 rounded-full border-4 border-t-indigo-500 border-r-indigo-500 border-b-transparent border-l-transparent animate-spin"></div>
-                <div class="absolute inset-2 rounded-full border-4 border-t-indigo-400 border-r-indigo-400 border-b-transparent border-l-transparent animate-spin" style="animation-direction: reverse"></div>
+                <div class="absolute inset-0 rounded-full border-4 border-t-blue-500 border-r-blue-500 border-b-transparent border-l-transparent animate-spin"></div>
+                <div class="absolute inset-2 rounded-full border-4 border-t-blue-400 border-r-blue-400 border-b-transparent border-l-transparent animate-spin" style="animation-direction: reverse"></div>
               </div>
               <p class="text-gray-600 font-medium">Menganalisis soal...</p>
               <p class="text-xs text-gray-500 mt-1">Tunggu sebentar, AI sedang bekerja</p>
             </div>
-            
             <div id="solutionResult" class="hidden h-full">
               <div class="flex justify-between items-center mb-4">
                 <h3 class="font-semibold text-gray-800 flex items-center">
-                  <i class="fas fa-clipboard-list mr-2 text-indigo-500"></i>
+                  <i class="fas fa-clipboard-list mr-2 text-blue-500"></i>
                   Detail Solusi
                 </h3>
                 <div class="flex space-x-2">
-                  <button id="copySolution" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center transition-colors">
+                  <button id="copySolution" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-full flex items-center transition-colors">
                     <i class="fas fa-copy mr-1"></i>
                     Salin
                   </button>
@@ -541,12 +510,11 @@
                   </button>
                 </div>
               </div>
-              <div id="solutionText" class="prose max-w-none solution-text-container bg-gray-50 rounded-xl p-4 max-h-[500px] overflow-y-auto"></div>
-              
+              <div id="solutionText" class="prose max-w-none solution-text-container bg-gray-50 rounded-lg p-4 max-h-[500px] overflow-y-auto"></div>
               <div class="mt-4 pt-4 border-t border-gray-200">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center">
-                    <div class="w-8 h-8 rounded-full gradient-bg text-white flex items-center justify-center mr-2">
+                    <div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center mr-2">
                       <i class="fas fa-thumbs-up text-sm"></i>
                     </div>
                     <span class="text-sm text-gray-600">Apakah solusi ini membantu?</span>
@@ -569,7 +537,7 @@
   </main>
 
   <!-- Floating Help Button -->
-  <button class="fixed bottom-6 right-6 w-14 h-14 rounded-full gradient-bg text-white shadow-xl flex items-center justify-center floating-btn z-40">
+  <button class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-purple-500 text-white shadow-lg flex items-center justify-center btn-secondary z-40">
     <i class="fas fa-question text-xl"></i>
   </button>
 
@@ -577,12 +545,11 @@
   <div id="toastContainer" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 space-y-2 z-50 w-full max-w-xs sm:max-w-md px-4"></div>
 
   <script>
-    // Validate JWT token format
+    // JavaScript tetap sama, tidak diubah karena terkait backend
     function isValidJwt(token) {
       return token && typeof token === 'string' && token.match(/^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+$/);
     }
 
-    // Check authentication
     let token = new URLSearchParams(window.location.search).get('token') || localStorage.getItem('token');
     if (!isValidJwt(token)) {
       localStorage.removeItem('token');
@@ -591,7 +558,6 @@
       localStorage.setItem('token', token);
     }
 
-    // DOM Elements
     const profileBtn = document.getElementById('profileBtn');
     const profileDropdown = document.getElementById('profileDropdown');
     const socialMenuBtn = document.getElementById('socialMenuBtn');
@@ -623,13 +589,11 @@
     const logoutBtn = document.getElementById('logoutBtn');
     const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
 
-    // Load user profile
     async function loadProfile() {
       try {
         const res = await fetch('/api/auth/profile', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        
         if (!res.ok) {
           if (res.status === 401 || res.status === 403 || res.status === 400) {
             localStorage.removeItem('token');
@@ -637,7 +601,6 @@
           }
           throw new Error('Failed to load profile');
         }
-        
         const data = await res.json();
         if (data.name && data.email) {
           document.getElementById('profileInitial').textContent = data.name.charAt(0).toUpperCase();
@@ -654,49 +617,42 @@
       }
     }
 
-    // Delete account
-async function deleteAccount() {
-  if (!confirm('Apakah Anda yakin ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data Anda.')) {
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/auth/delete-account', {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
-    if (!res.ok) {
-      if (res.status === 401 || res.status === 403 || res.status === 400) {
-        localStorage.removeItem('token');
-        window.location.href = '/login.html';
+    async function deleteAccount() {
+      if (!confirm('Apakah Anda yakin ingin menghapus akun Anda? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data Anda.')) {
+        return;
       }
-      const data = await res.json();
-      throw new Error(data.error || 'Failed to delete account');
+      try {
+        const res = await fetch('/api/auth/delete-account', {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403 || res.status === 400) {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+          }
+          const data = await res.json();
+          throw new Error(data.error || 'Failed to delete account');
+        }
+        showToast('Akun Anda telah dihapus', 'success');
+        localStorage.removeItem('token');
+        setTimeout(() => {
+          window.location.href = '/login.html';
+        }, 1000);
+      } catch (err) {
+        console.error('Delete account error:', err);
+        showToast(err.message || 'Gagal menghapus akun', 'error');
+      }
     }
 
-    showToast('Akun Anda telah dihapus', 'success');
-    localStorage.removeItem('token');
-    setTimeout(() => {
-      window.location.href = '/login.html';
-    }, 1000);
-  } catch (err) {
-    console.error('Delete account error:', err);
-    showToast(err.message || 'Gagal menghapus akun', 'error');
-  }
-}
+    document.getElementById('deleteAccountBtn').addEventListener('click', deleteAccount);
+    document.getElementById('mobileDeleteAccountBtn').addEventListener('click', deleteAccount);
 
-// Add delete account button listeners
-document.getElementById('deleteAccountBtn').addEventListener('click', deleteAccount);
-document.getElementById('mobileDeleteAccountBtn').addEventListener('click', deleteAccount);
-
-    // Load social users
     async function loadSocialUsers() {
       try {
         const res = await fetch('/api/social/users', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        
         if (!res.ok) {
           if (res.status === 401 || res.status === 403 || res.status === 400) {
             localStorage.removeItem('token');
@@ -704,30 +660,26 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
           }
           throw new Error('Failed to load users');
         }
-        
         const users = await res.json();
         userList.innerHTML = '';
-        
         if (users.length === 0) {
           userList.innerHTML = '<p class="px-4 py-2 text-sm text-gray-500">Tidak ada pengguna lain ditemukan</p>';
         } else {
           users.forEach(user => {
             const userItem = document.createElement('div');
-            userItem.className = 'px-4 py-2 hover:bg-gray-50 flex items-center justify-between';
+            userItem.className = 'px-4 py-2 hover:bg-blue-50 flex items-center justify-between';
             userItem.innerHTML = `
               <div>
                 <p class="text-sm font-semibold text-gray-800">${user.display_name}</p>
                 <p class="text-xs text-gray-500 truncate">${user.email}</p>
               </div>
-              <button class="connect-btn text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1 rounded-full flex items-center transition-colors" data-email="${user.email}">
+              <button class="connect-btn text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1 rounded-full flex items-center transition-colors" data-email="${user.email}">
                 <i class="fas fa-user-plus mr-1"></i>
                 Hubungi
               </button>
             `;
             userList.appendChild(userItem);
           });
-          
-          // Add connect button listeners
           document.querySelectorAll('.connect-btn').forEach(btn => {
             btn.addEventListener('click', () => {
               const email = btn.dataset.email;
@@ -741,7 +693,6 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
       }
     }
 
-    // Toggle profile dropdown
     profileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       profileDropdown.classList.toggle('hidden');
@@ -749,7 +700,6 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
       hamburgerMenu.classList.add('hidden');
     });
 
-    // Toggle social dropdown
     socialMenuBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       socialDropdown.classList.toggle('hidden');
@@ -765,7 +715,6 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
       loadSocialUsers();
     });
 
-    // Toggle hamburger menu
     hamburgerBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       hamburgerMenu.classList.toggle('hidden');
@@ -777,7 +726,6 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
       hamburgerMenu.classList.add('hidden');
     });
 
-    // Handle logout
     function handleLogout() {
       localStorage.removeItem('token');
       window.location.href = '/login.html';
@@ -786,16 +734,14 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
     logoutBtn.addEventListener('click', handleLogout);
     mobileLogoutBtn.addEventListener('click', handleLogout);
 
-    // Close dropdowns when clicking outside
     document.addEventListener('click', () => {
       profileDropdown.classList.add('hidden');
       socialDropdown.classList.add('hidden');
       hamburgerMenu.classList.add('hidden');
     });
 
-    // File upload handling
     dropZone.addEventListener('click', () => fileInput.click());
-    
+
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
       dropZone.addEventListener(eventName, preventDefaults, false);
     });
@@ -808,14 +754,14 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
     ['dragenter', 'dragover'].forEach(eventName => {
       dropZone.addEventListener(eventName, () => {
         dropZone.classList.add('drop-zone-active');
-        dropZone.classList.add('border-indigo-400');
+        dropZone.classList.add('border-blue-400');
       }, false);
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
       dropZone.addEventListener(eventName, () => {
         dropZone.classList.remove('drop-zone-active');
-        dropZone.classList.remove('border-indigo-400');
+        dropZone.classList.remove('border-blue-400');
       }, false);
     });
 
@@ -847,15 +793,12 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
         showToast('Hanya file gambar yang diperbolehkan', 'error');
         return;
       }
-      
       if (file.size > 5 * 1024 * 1024) {
         showToast('Ukuran file terlalu besar. Maksimum 5MB.', 'error');
         fileInput.value = '';
         return;
       }
-      
       processingOverlay.classList.remove('hidden');
-      
       const reader = new FileReader();
       reader.onload = (e) => {
         previewImage.src = e.target.result;
@@ -867,36 +810,28 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
       reader.readAsDataURL(file);
     }
 
-    // Form submission
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
       const imageFile = fileInput.files[0];
       if (!imageFile) {
         showToast('Pilih gambar terlebih dahulu', 'error');
         return;
       }
-
       emptyState.classList.add('hidden');
       solutionResult.classList.add('hidden');
       loadingState.classList.remove('hidden');
-      
       submitBtn.disabled = true;
       submitText.innerHTML = '<i class="fas fa-cog animate-spin mr-2"></i> Memproses...';
       submitSpinner.classList.remove('hidden');
-
       const formData = new FormData();
       formData.append('image', imageFile);
-
       try {
         const res = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` },
           body: formData
         });
-        
         const data = await res.json();
-        
         if (!res.ok) {
           if (res.status === 401 || res.status === 403 || res.status === 400) {
             localStorage.removeItem('token');
@@ -904,20 +839,16 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
           }
           throw new Error(data.error || 'Server error');
         }
-
         loadingState.classList.add('hidden');
         solutionText.innerHTML = data.formatted_response || data.response;
         solutionResult.classList.remove('hidden');
         solutionResult.classList.add('fade-in');
-        
         if (data.usage) {
           updateUsageDisplay(data.usage.used, data.usage.limit);
         }
-        
         if (data.warning) {
           showToast(data.warning, 'warning');
         }
-        
         if (window.MathJax) {
           MathJax.typesetPromise();
         }
@@ -933,7 +864,6 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
       }
     });
 
-    // Copy solution
     copySolutionBtn.addEventListener('click', () => {
       const solution = solutionText.textContent;
       navigator.clipboard.writeText(solution).then(() => {
@@ -944,43 +874,37 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
       });
     });
 
-    // Download as PDF (mock functionality)
     document.getElementById('downloadSolution').addEventListener('click', () => {
       showToast('Fitur ekspor PDF akan segera hadir!', 'info');
     });
 
-    // Update usage display
     function updateUsageDisplay(used, limit) {
       const percentage = Math.round((used / limit) * 100);
       const usageText = `${used} dari ${limit} (${percentage}%)`;
       usageDisplay.textContent = usageText;
       mobileUsageText.textContent = usageText;
       document.getElementById('mobileHamburgerUsageText').textContent = usageText;
-      
       if (percentage >= 80) {
         usageDisplay.classList.add('text-red-500');
-        usageDisplay.classList.remove('text-indigo-700');
+        usageDisplay.classList.remove('text-blue-700');
         mobileUsageText.classList.add('text-red-500');
-        mobileUsageText.classList.remove('text-indigo-700');
+        mobileUsageText.classList.remove('text-blue-700');
         document.getElementById('mobileHamburgerUsageText').classList.add('text-red-500');
-        document.getElementById('mobileHamburgerUsageText').classList.remove('text-indigo-700');
+        document.getElementById('mobileHamburgerUsageText').classList.remove('text-blue-700');
       } else {
         usageDisplay.classList.remove('text-red-500');
-        usageDisplay.classList.add('text-indigo-700');
+        usageDisplay.classList.add('text-blue-700');
         mobileUsageText.classList.remove('text-red-500');
-        mobileUsageText.classList.add('text-indigo-700');
+        mobileUsageText.classList.add('text-blue-700');
         document.getElementById('mobileHamburgerUsageText').classList.remove('text-red-500');
-        document.getElementById('mobileHamburgerUsageText').classList.add('text-indigo-700');
+        document.getElementById('mobileHamburgerUsageText').classList.add('text-blue-700');
       }
     }
 
-    // Show modern toast notification
     function showToast(message, type = 'info') {
       const toastContainer = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      
       toast.className = 'flex items-center w-full p-4 rounded-lg shadow-lg text-white overflow-hidden transform transition-all duration-300 slide-in';
-      
       if (type === 'error') {
         toast.className += ' bg-red-500';
         toast.innerHTML = `
@@ -1021,7 +945,7 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
           </button>
         `;
       } else {
-        toast.className += ' bg-indigo-500';
+        toast.className += ' bg-blue-500';
         toast.innerHTML = `
           <div class="mr-3 flex-shrink-0">
             <i class="fas fa-info-circle text-xl"></i>
@@ -1034,22 +958,18 @@ document.getElementById('mobileDeleteAccountBtn').addEventListener('click', dele
           </button>
         `;
       }
-      
       const closeBtn = toast.querySelector('button');
       closeBtn.addEventListener('click', () => {
         toast.classList.add('opacity-0');
         setTimeout(() => toast.remove(), 300);
       });
-      
       toastContainer.appendChild(toast);
-      
       setTimeout(() => {
         toast.classList.add('opacity-0');
         setTimeout(() => toast.remove(), 300);
       }, 3000);
     }
 
-    // Initialize
     loadProfile();
     updateUsageDisplay(0, 10);
   </script>
