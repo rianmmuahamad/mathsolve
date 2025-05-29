@@ -59,9 +59,9 @@
       color: var(--text-medium);
       word-break: break-word;
       overflow-wrap: anywhere;
+      /* REMOVED: overflow-x: hidden; */
       white-space: normal;
       max-width: 100%;
-      overflow-x: hidden;
       padding: 1rem; /* Slightly more padding */
       box-sizing: border-box;
       font-size: 1rem; /* Slightly smaller base font size */
@@ -72,8 +72,7 @@
       font-weight: 700; /* Bolder */
       color: var(--text-dark);
       margin-bottom: 1.25rem;
-      max-width: 100%;
-      overflow-x: hidden;
+      /* REMOVED: max-width: 100%; overflow-x: hidden; */
     }
 
     .math-solution h3 {
@@ -81,16 +80,14 @@
       font-weight: 600;
       color: var(--text-dark);
       margin: 2rem 0 1rem; /* More vertical spacing */
-      max-width: 100%;
-      overflow-x: hidden;
+      /* REMOVED: max-width: 100%; overflow-x: hidden; */
     }
 
     .math-solution p {
       margin-bottom: 1rem;
       word-break: break-word;
       overflow-wrap: anywhere;
-      max-width: 100%;
-      overflow-x: hidden;
+      /* REMOVED: max-width: 100%; overflow-x: hidden; */
       font-size: 1rem;
     }
 
@@ -100,8 +97,7 @@
       margin-bottom: 1.5rem;
       word-break: break-word;
       overflow-wrap: anywhere;
-      max-width: 100%;
-      overflow-x: hidden;
+      /* REMOVED: max-width: 100%; overflow-x: hidden; */
     }
 
     .solution-step .step-number {
@@ -116,20 +112,18 @@
       margin-bottom: 1.5rem;
       padding-left: 1.5rem;
       border-left: 3px solid var(--secondary-purple); /* Changed to purple for distinction */
-      max-width: 100%;
-      overflow-x: hidden;
+      /* REMOVED: max-width: 100%; overflow-x: hidden; */
     }
 
     .math-step-header {
       font-weight: 600;
       color: var(--primary-blue);
       margin-bottom: 0.5rem;
-      max-width: 100%;
-      overflow-x: hidden;
+      /* REMOVED: max-width: 100%; overflow-x: hidden; */
     }
 
     .math-expression {
-      display: inline-block;
+      display: block; /* Changed from inline-block to block for better wrapping */
       margin: 0.5rem 0;
       padding: 0.75rem 1rem; /* Increased padding */
       background-color: var(--accent-light-blue); /* Lighter background for expressions */
@@ -138,8 +132,8 @@
       word-break: break-word;
       overflow-wrap: anywhere;
       max-width: 100%;
-      overflow-x: auto;
-      white-space: normal; /* Allow wrapping */
+      overflow-x: auto; /* Keep auto for potential very long inline equations, but prefer wrapping */
+      white-space: normal; /* ALLOW TEXT TO WRAP */
       box-sizing: border-box;
       color: var(--text-dark); /* Ensure good contrast */
       font-size: 1.1rem; /* Slightly larger math font */
@@ -147,8 +141,7 @@
 
     .math-section {
       margin-bottom: 2rem;
-      max-width: 100%;
-      overflow-x: hidden;
+      /* REMOVED: max-width: 100%; overflow-x: hidden; */
     }
 
     .math-section-title {
@@ -157,18 +150,17 @@
       margin-bottom: 1rem; /* More space */
       padding-bottom: 0.5rem;
       border-bottom: 1px solid var(--border-light);
-      max-width: 100%;
-      overflow-x: hidden;
+      /* REMOVED: max-width: 100%; overflow-x: hidden; */
     }
 
     /* MathJax specific styling for better rendering */
     .MathJax, .MathJax_Display {
-      display: inline-block !important;
+      display: inline-block !important; /* Keep as inline-block for proper MathJax rendering */
       max-width: 100% !important;
-      white-space: normal !important;
+      white-space: normal !important; /* IMPORTANT: Allow MathJax content to wrap */
       overflow-wrap: break-word !important;
       word-break: break-all !important;
-      overflow-x: auto !important; /* Ensure horizontal scroll if needed */
+      overflow-x: auto !important; /* Keep auto to handle very long single lines within MathJax if needed */
       box-sizing: border-box !important;
       padding: 0.2rem !important;
       font-size: 1em !important;
@@ -176,7 +168,7 @@
 
     .solution-text-container {
       max-width: 100%;
-      overflow-x: hidden;
+      /* REMOVED: overflow-x: hidden; */
       word-break: break-word;
       overflow-wrap: anywhere;
       padding: 1rem; /* Consistent padding */
@@ -202,8 +194,8 @@
       }
       .math-expression {
         font-size: 0.9rem;
-        white-space: normal;
-        overflow-x: auto;
+        white-space: normal; /* Ensure wrapping on smaller screens */
+        overflow-x: auto; /* Keep auto for safety */
         padding: 0.6rem 0.8rem;
       }
     }
